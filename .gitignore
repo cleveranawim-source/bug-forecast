@@ -1,0 +1,25 @@
+# 의존성
+node_modules
+
+# 빌드 산출물
+dist
+
+# 환경변수(인증키 — 절대 커밋 금지)
+.env
+.env.local
+.env.*.local
+
+# 로그
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+
+# 네이티브 빌드
+ios/App/Pods
+ios/App/build
+android/.gradle
+android/app/build
+android/build
+android/local.properties

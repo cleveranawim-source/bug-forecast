@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 시민 제보(reports)
+    //  - 읽기: 예보를 모두에게 보여주기 위해 공개
+    //  - 생성: 로그인한 본인 명의(uid 일치)만 허용
+    //  - 수정·삭제: 금지(등록된 제보 조작 방지)
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // 그 외 모든 경로는 거부
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

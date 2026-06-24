@@ -1,0 +1,1329 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import {
+  AlertTriangle,
+  Bell,
+  Bug,
+  CloudRain,
+  Droplets,
+  MapPin,
+  Navigation,
+  Plus,
+  Search,
+  Sun,
+  ThermometerSun,
+  Wind,
+} from 'lucide-react';
+import './styles.css';
+import seoulGeo from './seoul_municipalities_geo_simple.json';
+import { getRisk } from './lib/risk.js';
+import { addReport, subscribeReports, countByDong } from './lib/reports.js';
+import { fetchAllDistricts } from './lib/weather.js';
+import { signInWithGoogle, signOutUser } from './lib/auth.js';
+
+const CITIZEN_SESSION_KEY = 'neighborhood-bug-forecast-citizen';
+
+const REGIONS = [
+  {
+    id: 'eunpyeong',
+    name: '은평구',
+    zone: '서울 서북권',
+    temp: 26,
+    humidity: 76,
+    rain: 51,
+    wind: 1.2,
+    reports: 25,
+    trend: '+11',
+    map: { col: 2, row: 3 },
+    note: '비 온 뒤 아파트 단지 조명 주변 출몰이 늘었어요.',
+  },
+  {
+    id: 'dobong',
+    name: '도봉구',
+    zone: '서울 동북권',
+    temp: 25,
+    humidity: 69,
+    rain: 34,
+    wind: 2,
+    reports: 10,
+    trend: '+3',
+    map: { col: 5, row: 1 },
+    note: '산지와 주거지 경계에서 산발 제보가 들어오고 있어요.',
+  },
+  {
+    id: 'nowon',
+    name: '노원구',
+    zone: '서울 동북권',
+    temp: 26,
+    humidity: 71,
+    rain: 39,
+    wind: 1.8,
+    reports: 17,
+    trend: '+6',
+    map: { col: 6, row: 1 },
+    note: '하천 주변과 단지 조명 주변 관찰이 조금 늘었어요.',
+  },
+  {
+    id: 'gangbuk',
+    name: '강북구',
+    zone: '서울 동북권',
+    temp: 25,
+    humidity: 72,
+    rain: 41,
+    wind: 1.7,
+    reports: 14,
+    trend: '+4',
+    map: { col: 4, row: 2 },
+    note: '주택가 골목 조명과 공원 입구에서 제보가 있어요.',
+  },
+  {
+    id: 'seongbuk',
+    name: '성북구',
+    zone: '서울 동북권',
+    temp: 26,
+    humidity: 68,
+    rain: 33,
+    wind: 2.1,
+    reports: 12,
+    trend: '+2',
+    map: { col: 5, row: 2 },
+    note: '대학가와 공원 주변으로 보통 수준의 관찰이 있어요.',
+  },
+  {
+    id: 'jongno',
+    name: '종로구',
+    zone: '서울 도심권',
+    temp: 28,
+    humidity: 64,
+    rain: 30,
+    wind: 2.4,
+    reports: 9,
+    trend: '+2',
+    map: { col: 4, row: 3 },
+    note: '공원 입구와 골목 조명 근처에서 산발 제보가 있어요.',
+  },
+  {
+    id: 'dongdaemun',
+    name: '동대문구',
+    zone: '서울 동북권',
+    temp: 27,
+    humidity: 70,
+    rain: 38,
+    wind: 1.9,
+    reports: 16,
+    trend: '+5',
+    map: { col: 5, row: 3 },
+    note: '청계천 주변과 상가 조명 주변 출몰 가능성이 있어요.',
+  },
+  {
+    id: 'jungnang',
+    name: '중랑구',
+    zone: '서울 동북권',
+    temp: 27,
+    humidity: 74,
+    rain: 44,
+    wind: 1.5,
+    reports: 20,
+    trend: '+7',
+    map: { col: 6, row: 3 },
+    note: '중랑천 산책로 중심으로 저녁 시간대 주의가 필요해요.',
+  },
+  {
+    id: 'seodaemun',
+    name: '서대문구',
+    zone: '서울 서북권',
+    temp: 27,
+    humidity: 73,
+    rain: 43,
+    wind: 1.6,
+    reports: 19,
+    trend: '+6',
+    map: { col: 3, row: 4 },
+    note: '학교와 주거지 사이 녹지 주변에서 제보가 많아요.',
+  },
+  {
+    id: 'jung',
+    name: '중구',
+    zone: '서울 도심권',
+    temp: 28,
+    humidity: 62,
+    rain: 27,
+    wind: 2.5,
+    reports: 8,
+    trend: '+1',
+    map: { col: 4, row: 4 },
+    note: '도심권은 낮지만 조명 밀집 구역은 부분 주의가 필요해요.',
+  },
+  {
+    id: 'seongdong',
+    name: '성동구',
+    zone: '서울 동북권',
+    temp: 28,
+    humidity: 72,
+    rain: 41,
+    wind: 1.7,
+    reports: 22,
+    trend: '+8',
+    map: { col: 5, row: 4 },
+    note: '한강과 중랑천 인접 구역에서 위험도가 올라가고 있어요.',
+  },
+  {
+    id: 'gwangjin',
+    name: '광진구',
+    zone: '서울 동부권',
+    temp: 28,
+    humidity: 75,
+    rain: 46,
+    wind: 1.5,
+    reports: 24,
+    trend: '+10',
+    map: { col: 6, row: 4 },
+    note: '한강변 공원과 주거지 조명 주변 제보가 늘었어요.',
+  },
+  {
+    id: 'mapo',
+    name: '마포구',
+    zone: '서울 서북권',
+    temp: 27,
+    humidity: 72,
+    rain: 42,
+    wind: 1.8,
+    reports: 18,
+    trend: '+7',
+    map: { col: 2, row: 5 },
+    note: '하천 산책로와 밝은 상가 주변 제보가 많아요.',
+  },
+  {
+    id: 'yongsan',
+    name: '용산구',
+    zone: '서울 도심권',
+    temp: 28,
+    humidity: 66,
+    rain: 32,
+    wind: 2.2,
+    reports: 11,
+    trend: '+3',
+    map: { col: 4, row: 5 },
+    note: '한강 접근부와 공원 주변에서 보통 수준으로 관찰돼요.',
+  },
+  {
+    id: 'gangdong',
+    name: '강동구',
+    zone: '서울 동부권',
+    temp: 28,
+    humidity: 77,
+    rain: 50,
+    wind: 1.3,
+    reports: 28,
+    trend: '+12',
+    map: { col: 8, row: 5 },
+    note: '고덕천과 한강변 중심으로 높은 위험도가 예상돼요.',
+  },
+  {
+    id: 'gangseo',
+    name: '강서구',
+    zone: '서울 서남권',
+    temp: 27,
+    humidity: 78,
+    rain: 55,
+    wind: 1.4,
+    reports: 30,
+    trend: '+13',
+    map: { col: 1, row: 6 },
+    note: '습도가 높고 하천 주변 제보가 많아 강한 주의가 필요해요.',
+  },
+  {
+    id: 'yangcheon',
+    name: '양천구',
+    zone: '서울 서남권',
+    temp: 27,
+    humidity: 74,
+    rain: 45,
+    wind: 1.7,
+    reports: 21,
+    trend: '+7',
+    map: { col: 2, row: 6 },
+    note: '안양천 주변과 아파트 단지 조명 주변 위험도가 높아요.',
+  },
+  {
+    id: 'yeongdeungpo',
+    name: '영등포구',
+    zone: '서울 서남권',
+    temp: 28,
+    humidity: 71,
+    rain: 40,
+    wind: 1.9,
+    reports: 18,
+    trend: '+6',
+    map: { col: 3, row: 6 },
+    note: '한강변과 상업지 조명 주변에서 제보가 이어져요.',
+  },
+  {
+    id: 'dongjak',
+    name: '동작구',
+    zone: '서울 서남권',
+    temp: 27,
+    humidity: 70,
+    rain: 37,
+    wind: 2,
+    reports: 15,
+    trend: '+4',
+    map: { col: 4, row: 6 },
+    note: '학교 주변과 산책로 중심으로 보통 수준의 주의가 필요해요.',
+  },
+  {
+    id: 'seocho',
+    name: '서초구',
+    zone: '서울 동남권',
+    temp: 29,
+    humidity: 67,
+    rain: 34,
+    wind: 2.1,
+    reports: 14,
+    trend: '+3',
+    map: { col: 5, row: 6 },
+    note: '도심 열기와 공원 주변 조건이 겹치는 구간을 살펴야 해요.',
+  },
+  {
+    id: 'gangnam',
+    name: '강남구',
+    zone: '서울 동남권',
+    temp: 29,
+    humidity: 68,
+    rain: 36,
+    wind: 2,
+    reports: 17,
+    trend: '+5',
+    map: { col: 6, row: 6 },
+    note: '상가 조명과 탄천 주변으로 저녁 제보가 늘 수 있어요.',
+  },
+  {
+    id: 'songpa',
+    name: '송파구',
+    zone: '서울 동남권',
+    temp: 29,
+    humidity: 75,
+    rain: 49,
+    wind: 1.4,
+    reports: 29,
+    trend: '+12',
+    map: { col: 7, row: 6 },
+    note: '탄천과 한강변 영향으로 매우 높은 위험도가 예상돼요.',
+  },
+  {
+    id: 'guro',
+    name: '구로구',
+    zone: '서울 서남권',
+    temp: 27,
+    humidity: 73,
+    rain: 42,
+    wind: 1.8,
+    reports: 19,
+    trend: '+6',
+    map: { col: 2, row: 7 },
+    note: '안양천 인접 구역과 주거지 조명 주변을 확인해 주세요.',
+  },
+  {
+    id: 'geumcheon',
+    name: '금천구',
+    zone: '서울 서남권',
+    temp: 27,
+    humidity: 69,
+    rain: 35,
+    wind: 2.2,
+    reports: 12,
+    trend: '+3',
+    map: { col: 3, row: 7 },
+    note: '전반적으로 보통이지만 하천 산책로는 부분 주의가 필요해요.',
+  },
+  {
+    id: 'gwanak',
+    name: '관악구',
+    zone: '서울 서남권',
+    temp: 26,
+    humidity: 72,
+    rain: 40,
+    wind: 1.9,
+    reports: 16,
+    trend: '+5',
+    map: { col: 4, row: 7 },
+    note: '공원과 학교 주변에서 산발 제보가 이어지고 있어요.',
+  },
+];
+
+const DISTRICT_DONGS = {
+  eunpyeong: ['녹번동', '불광1동', '불광2동', '갈현1동', '갈현2동', '구산동', '대조동', '응암1동', '응암2동', '응암3동', '역촌동', '신사1동', '신사2동', '증산동', '수색동', '진관동'],
+  dobong: ['쌍문1동', '쌍문2동', '쌍문3동', '쌍문4동', '방학1동', '방학2동', '방학3동', '창1동', '창2동', '창3동', '창4동', '창5동', '도봉1동', '도봉2동'],
+  nowon: ['월계1동', '월계2동', '월계3동', '공릉1동', '공릉2동', '하계1동', '하계2동', '중계본동', '중계1동', '중계2,3동', '중계4동', '상계1동', '상계2동', '상계3,4동', '상계5동', '상계6,7동', '상계8동', '상계9동', '상계10동'],
+  gangbuk: ['삼양동', '미아동', '송중동', '송천동', '삼각산동', '번1동', '번2동', '번3동', '수유1동', '수유2동', '수유3동', '우이동', '인수동'],
+  seongbuk: ['성북동', '삼선동', '동선동', '돈암1동', '돈암2동', '안암동', '보문동', '정릉1동', '정릉2동', '정릉3동', '정릉4동', '길음1동', '길음2동', '종암동', '월곡1동', '월곡2동', '장위1동', '장위2동', '장위3동', '석관동'],
+  jongno: ['청운효자동', '사직동', '삼청동', '부암동', '평창동', '무악동', '교남동', '가회동', '종로1.2.3.4가동', '종로5.6가동', '이화동', '혜화동', '창신1동', '창신2동', '창신3동', '숭인1동', '숭인2동'],
+  dongdaemun: ['신설동', '용두동', '제기동', '전농1동', '전농2동', '답십리1동', '답십리2동', '장안1동', '장안2동', '청량리동', '회기동', '휘경1동', '휘경2동', '이문1동', '이문2동'],
+  jungnang: ['면목본동', '면목2동', '면목3.8동', '면목4동', '면목5동', '면목7동', '상봉1동', '상봉2동', '중화1동', '중화2동', '묵1동', '묵2동', '망우본동', '망우3동', '신내1동', '신내2동'],
+  seodaemun: ['충현동', '천연동', '북아현동', '신촌동', '연희동', '홍제1동', '홍제2동', '홍제3동', '홍은1동', '홍은2동', '남가좌1동', '남가좌2동', '북가좌1동', '북가좌2동'],
+  jung: ['소공동', '회현동', '명동', '필동', '장충동', '광희동', '을지로동', '신당동', '다산동', '약수동', '청구동', '신당5동', '동화동', '황학동', '중림동'],
+  seongdong: ['왕십리2동', '왕십리도선동', '마장동', '사근동', '행당1동', '행당2동', '응봉동', '금호1가동', '금호2,3가동', '금호4가동', '옥수동', '성수1가1동', '성수1가2동', '성수2가1동', '성수2가3동', '송정동', '용답동'],
+  gwangjin: ['중곡1동', '중곡2동', '중곡3동', '중곡4동', '능동', '구의1동', '구의2동', '구의3동', '광장동', '자양1동', '자양2동', '자양3동', '자양4동', '화양동', '군자동'],
+  mapo: ['아현동', '공덕동', '도화동', '용강동', '대흥동', '염리동', '신수동', '서강동', '서교동', '합정동', '망원1동', '망원2동', '연남동', '성산1동', '성산2동', '상암동'],
+  yongsan: ['후암동', '용산2가동', '남영동', '청파동', '원효로1동', '원효로2동', '효창동', '용문동', '한강로동', '이촌1동', '이촌2동', '이태원1동', '이태원2동', '한남동', '서빙고동', '보광동'],
+  gangdong: ['강일동', '상일1동', '상일2동', '명일1동', '명일2동', '고덕1동', '고덕2동', '암사1동', '암사2동', '암사3동', '천호1동', '천호2동', '천호3동', '성내1동', '성내2동', '성내3동', '길동', '둔촌1동', '둔촌2동'],
+  gangseo: ['염창동', '등촌1동', '등촌2동', '등촌3동', '화곡본동', '화곡1동', '화곡2동', '화곡3동', '화곡4동', '화곡6동', '화곡8동', '우장산동', '가양1동', '가양2동', '가양3동', '발산1동', '공항동', '방화1동', '방화2동', '방화3동'],
+  yangcheon: ['목1동', '목2동', '목3동', '목4동', '목5동', '신월1동', '신월2동', '신월3동', '신월4동', '신월5동', '신월6동', '신월7동', '신정1동', '신정2동', '신정3동', '신정4동', '신정6동', '신정7동'],
+  yeongdeungpo: ['영등포본동', '영등포동', '여의동', '당산1동', '당산2동', '도림동', '문래동', '양평1동', '양평2동', '신길1동', '신길3동', '신길4동', '신길5동', '신길6동', '신길7동', '대림1동', '대림2동', '대림3동'],
+  dongjak: ['노량진1동', '노량진2동', '상도1동', '상도2동', '상도3동', '상도4동', '흑석동', '사당1동', '사당2동', '사당3동', '사당4동', '사당5동', '대방동', '신대방1동', '신대방2동'],
+  seocho: ['서초1동', '서초2동', '서초3동', '서초4동', '잠원동', '반포본동', '반포1동', '반포2동', '반포3동', '반포4동', '방배본동', '방배1동', '방배2동', '방배3동', '방배4동', '양재1동', '양재2동', '내곡동'],
+  gangnam: ['신사동', '논현1동', '논현2동', '압구정동', '청담동', '삼성1동', '삼성2동', '대치1동', '대치2동', '대치4동', '역삼1동', '역삼2동', '도곡1동', '도곡2동', '개포1동', '개포2동', '개포3동', '개포4동', '일원본동', '일원1동', '수서동', '세곡동'],
+  songpa: ['풍납1동', '풍납2동', '거여1동', '거여2동', '마천1동', '마천2동', '방이1동', '방이2동', '오륜동', '오금동', '송파1동', '송파2동', '석촌동', '삼전동', '가락본동', '가락1동', '가락2동', '문정1동', '문정2동', '장지동', '위례동', '잠실본동', '잠실2동', '잠실3동', '잠실4동', '잠실6동', '잠실7동'],
+  guro: ['신도림동', '구로1동', '구로2동', '구로3동', '구로4동', '구로5동', '가리봉동', '고척1동', '고척2동', '개봉1동', '개봉2동', '개봉3동', '오류1동', '오류2동', '항동', '수궁동'],
+  geumcheon: ['가산동', '독산1동', '독산2동', '독산3동', '독산4동', '시흥1동', '시흥2동', '시흥3동', '시흥4동', '시흥5동'],
+  gwanak: ['은천동', '성현동', '청룡동', '보라매동', '청림동', '행운동', '낙성대동', '중앙동', '인헌동', '남현동', '서원동', '신원동', '서림동', '난곡동', '신사동', '신림동', '삼성동', '난향동', '조원동', '대학동', '미성동'],
+};
+
+const FORECAST_OFFSETS = [
+  { day: '오늘', temp: 0, humidity: 0, rain: 0, reports: 0, weather: '습도 관찰' },
+  { day: '내일', temp: -1, humidity: 2, rain: 5, reports: 1, weather: '흐림' },
+  { day: '3일 뒤', temp: 1, humidity: 6, rain: 12, reports: 2, weather: '비 뒤 갬' },
+  { day: '4일 뒤', temp: 2, humidity: -4, rain: -10, reports: -2, weather: '맑음' },
+  { day: '5일 뒤', temp: 0, humidity: -1, rain: -4, reports: -1, weather: '구름' },
+];
+
+const HOTSPOTS = [
+  { place: '하천 산책로', count: 22, risk: '🔴 출몰 많음' },
+  { place: '아파트 외벽 조명', count: 18, risk: '🟠 출몰 주의' },
+  { place: '학교 운동장 주변', count: 11, risk: '🟡 출몰 보통' },
+  { place: '버스정류장', count: 7, risk: '🟡 출몰 보통' },
+];
+
+const ACTION_GUIDES = [
+  { icon: '💡', title: '조명 낮추기', detail: '저녁 시간에는 현관, 베란다, 교실 창가 조명을 필요한 만큼만 켜요.' },
+  { icon: '🪟', title: '방충망 확인', detail: '창문 틈, 방충망 찢어진 곳, 배수구 주변을 먼저 확인해요.' },
+  { icon: '🚿', title: '물청소 우선', detail: '차량이나 창문에 붙었을 때는 오래 문지르기보다 물로 씻어내요.' },
+  { icon: '🏫', title: '학교 주변 점검', detail: '운동장 조명, 급식실 출입구, 쓰레기장 주변을 하교 전후로 살펴요.' },
+];
+
+const APP_TABS = [
+  { id: 'main', label: '📍 현재 내위치' },
+  { id: 'map', label: '🗺️ 지역별 현황' },
+  { id: 'report', label: '📝 시민관측' },
+  { id: 'forecast', label: '☁️ 예보' },
+  { id: 'places', label: '🔎 출몰장소' },
+  { id: 'guide', label: '🛡️ 행동안내' },
+];
+
+const MAP_WIDTH = 940;
+const MAP_HEIGHT = 620;
+const MAP_PADDING = 28;
+
+function getGeoBounds(geo) {
+  const values = geo.features.flatMap((feature) => flattenCoordinates(feature.geometry.coordinates));
+  return values.reduce(
+    (bounds, [lon, lat]) => ({
+      minLon: Math.min(bounds.minLon, lon),
+      maxLon: Math.max(bounds.maxLon, lon),
+      minLat: Math.min(bounds.minLat, lat),
+      maxLat: Math.max(bounds.maxLat, lat),
+    }),
+    { minLon: Infinity, maxLon: -Infinity, minLat: Infinity, maxLat: -Infinity }
+  );
+}
+
+function flattenCoordinates(coordinates) {
+  if (typeof coordinates[0][0] === 'number') return coordinates;
+  return coordinates.flatMap((item) => flattenCoordinates(item));
+}
+
+function projectPoint([lon, lat], bounds) {
+  const usableWidth = MAP_WIDTH - MAP_PADDING * 2;
+  const usableHeight = MAP_HEIGHT - MAP_PADDING * 2;
+  const rawX = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
+  const rawY = (bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat);
+  return [MAP_PADDING + rawX * usableWidth, MAP_PADDING + rawY * usableHeight];
+}
+
+function geometryToPath(geometry, bounds) {
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  return polygons
+    .map((polygon) =>
+      polygon
+        .map((ring) =>
+          ring
+            .map((point, index) => {
+              const [x, y] = projectPoint(point, bounds);
+              return `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+            })
+            .join(' ') + ' Z'
+        )
+        .join(' ')
+    )
+    .join(' ');
+}
+
+function getFeatureCenter(geometry, bounds) {
+  const points = flattenCoordinates(geometry.coordinates).map((point) => projectPoint(point, bounds));
+  const totals = points.reduce((sum, [x, y]) => ({ x: sum.x + x, y: sum.y + y }), { x: 0, y: 0 });
+  return [totals.x / points.length, totals.y / points.length];
+}
+
+function isPointInRing([lon, lat], ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [lonI, latI] = ring[i];
+    const [lonJ, latJ] = ring[j];
+    const intersects =
+      latI > lat !== latJ > lat &&
+      lon < ((lonJ - lonI) * (lat - latI)) / (latJ - latI || Number.EPSILON) + lonI;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function isPointInPolygon(point, polygon) {
+  const [outerRing, ...holes] = polygon;
+  return isPointInRing(point, outerRing) && !holes.some((ring) => isPointInRing(point, ring));
+}
+
+function geometryContainsPoint(geometry, point) {
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  return polygons.some((polygon) => isPointInPolygon(point, polygon));
+}
+
+function findFeatureByCoordinate(geo, longitude, latitude) {
+  return geo.features.find((feature) => geometryContainsPoint(feature.geometry, [longitude, latitude]));
+}
+
+function getForecastRiskLabel(risk) {
+  if (risk.tone === 'danger') return '🔴 출몰 많음';
+  if (risk.tone === 'warning') return '🟠 출몰 주의';
+  if (risk.tone === 'notice') return '🟡 출몰 보통';
+  return '🟢 출몰 적음';
+}
+
+// 오늘로부터 index일 뒤의 표시 라벨. 오늘/내일은 상대표현, 그 외는 날짜(요일).
+function formatForecastDay(index) {
+  const date = new Date();
+  date.setDate(date.getDate() + index);
+  const md = `${date.getMonth() + 1}/${date.getDate()}`;
+  const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+  const relative = ['오늘', '내일'][index];
+  return relative ? `${relative} ${md}` : `${md}(${weekday})`;
+}
+
+function makeForecast(region, reportCount, dongRisk) {
+  return FORECAST_OFFSETS.map((day) => {
+    const dongAdjustment = dongRisk ? Math.round((dongRisk.score - 55) / 8) : 0;
+    const simulated = {
+      ...region,
+      temp: region.temp + day.temp,
+      humidity: Math.max(35, Math.min(95, region.humidity + day.humidity)),
+      rain: Math.max(0, Math.min(100, region.rain + day.rain)),
+      reports: Math.max(0, reportCount + day.reports + dongAdjustment),
+    };
+    return {
+      ...day,
+      temp: simulated.temp,
+      risk: getRisk(simulated),
+    };
+  });
+}
+
+function getDongRisk(region, reportCount, dongCounts = {}) {
+  const dongs = DISTRICT_DONGS[region.id] ?? [`${region.name.replace('구', '')}1동`];
+  const avgDong = dongs.length ? reportCount / dongs.length : reportCount;
+  return dongs.map((name) => {
+    const dongReports = dongCounts[name] ?? 0;
+    // 동은 구의 환경을 공유한다. 구 전체 관측수를 기준선으로 두고,
+    // 평균보다 제보가 많은 동은 위험도를 올리고 적은 동은 약간 낮춘다.
+    const reports = Math.max(0, reportCount + (dongReports - avgDong) * 4);
+    return {
+      name,
+      risk: getRisk({ ...region, reports }),
+      reports: dongReports,
+    };
+  });
+}
+
+function readCitizenSession() {
+  try {
+    const saved = window.sessionStorage.getItem(CITIZEN_SESSION_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+}
+
+function App() {
+  const [selectedId, setSelectedId] = useState('eunpyeong');
+  const [query, setQuery] = useState('');
+  const [showNearby, setShowNearby] = useState(false);
+  const [activeTab, setActiveTab] = useState('main');
+  const [forecastRegionId, setForecastRegionId] = useState('eunpyeong');
+  const [forecastDong, setForecastDong] = useState('녹번동');
+  const [citizen, setCitizen] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [locationAuth, setLocationAuth] = useState({
+    status: 'idle',
+    message: '현재위치를 인증하면 시민관측을 등록할 수 있어요.',
+    coords: null,
+  });
+  const nearbyRef = useRef(null);
+  const [loginForm, setLoginForm] = useState({
+    nickname: '',
+    regionId: 'eunpyeong',
+    dong: '녹번동',
+  });
+  const [reportForm, setReportForm] = useState({
+    dong: '',
+    place: '학교 주변',
+    amount: '많음',
+    memo: '',
+  });
+  const [liveWeather, setLiveWeather] = useState({});
+
+  // 기상청 실날씨를 머지한 자치구 목록. liveWeather가 채워지면 해당 구의 날씨를 덮어쓴다.
+  const regions = useMemo(
+    () => REGIONS.map((region) => (liveWeather[region.id] ? { ...region, ...liveWeather[region.id] } : region)),
+    [liveWeather]
+  );
+  const selected = regions.find((region) => region.id === selectedId);
+
+  const filteredRegions = useMemo(() => {
+    return REGIONS.filter((region) =>
+      `${region.name} ${region.zone}`.toLowerCase().includes(query.toLowerCase())
+    );
+  }, [query]);
+
+  const filteredIds = new Set(filteredRegions.map((region) => region.id));
+  const totalReports = selected.reports + reports.filter((item) => item.regionId === selected.id).length;
+  const updatedSelected = { ...selected, reports: totalReports };
+  const updatedRisk = getRisk(updatedSelected);
+  const selectedDongs = getDongRisk(selected, totalReports, countByDong(reports, selected.id));
+  const forecastRegion = regions.find((region) => region.id === forecastRegionId) ?? selected;
+  const forecastTotalReports =
+    forecastRegion.reports + reports.filter((item) => item.regionId === forecastRegion.id).length;
+  const forecastDongs = getDongRisk(forecastRegion, forecastTotalReports, countByDong(reports, forecastRegion.id));
+  const sortedForecastRegions = useMemo(
+    () => [...REGIONS].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    []
+  );
+  const loginRegion = regions.find((region) => region.id === loginForm.regionId) ?? selected;
+  const loginDongs = useMemo(
+    () => getDongRisk(loginRegion, loginRegion.reports).sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    [loginRegion]
+  );
+  const sortedForecastDongs = useMemo(
+    () => [...forecastDongs].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    [forecastDongs]
+  );
+  const activeForecastDong = forecastDongs.some((dong) => dong.name === forecastDong)
+    ? forecastDong
+    : forecastDongs[0]?.name;
+  const activeForecastDongRisk = forecastDongs.find((dong) => dong.name === activeForecastDong)?.risk;
+  const forecast = makeForecast(forecastRegion, forecastTotalReports, activeForecastDongRisk);
+  const riskSummary = regions.reduce(
+    (summary, region) => {
+      const regionRisk = getRisk({
+        ...region,
+        reports: region.reports + reports.filter((item) => item.regionId === region.id).length,
+      });
+      summary[regionRisk.tone] += 1;
+      return summary;
+    },
+    { calm: 0, notice: 0, warning: 0, danger: 0 }
+  );
+  const geoBounds = useMemo(() => getGeoBounds(seoulGeo), []);
+  const regionByName = useMemo(
+    () => Object.fromEntries(regions.map((region) => [region.name, region])),
+    [regions]
+  );
+  const geoFeatures = useMemo(
+    () =>
+      seoulGeo.features
+        .map((feature) => {
+          const region = regionByName[feature.properties.name];
+          if (!region) return null;
+          const regionReportCount =
+            region.reports + reports.filter((item) => item.regionId === region.id).length;
+          const risk = getRisk({ ...region, reports: regionReportCount });
+          const [labelX, labelY] = getFeatureCenter(feature.geometry, geoBounds);
+          return {
+            feature,
+            region,
+            regionReportCount,
+            risk,
+            path: geometryToPath(feature.geometry, geoBounds),
+            labelX,
+            labelY,
+          };
+        })
+        .filter(Boolean),
+    [geoBounds, regionByName, reports]
+  );
+
+  useEffect(() => {
+    const savedCitizen = readCitizenSession();
+    if (savedCitizen) {
+      setCitizen(savedCitizen);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Firestore 제보를 실시간 구독. 화면을 떠나면 자동 해제.
+    const unsubscribe = subscribeReports(setReports);
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    // 25개 구 기상청 실날씨를 일괄 조회해 머지. 실패해도 기존(하드코딩) 값으로 동작.
+    fetchAllDistricts()
+      .then((data) => setLiveWeather(data))
+      .catch((error) => console.warn('기상청 일괄 조회 실패:', error.message));
+  }, []);
+
+  function scrollToRef(ref) {
+    window.requestAnimationFrame(() => {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  function openNearby() {
+    setActiveTab('main');
+    setShowNearby(true);
+    scrollToRef(nearbyRef);
+  }
+
+  async function submitReport(event) {
+    event.preventDefault();
+    if (!citizen || locationAuth.status !== 'verified') return;
+    try {
+      await addReport({
+        uid: citizen.uid,
+        regionId: selected.id,
+        regionName: selected.name,
+        reporterName: citizen.nickname || citizen.name || '동네관찰러',
+        reporterDong: `${citizen.regionName} ${citizen.dong}`,
+        locationVerified: true,
+        locationLabel: locationAuth.coords
+          ? `위치 인증 ${locationAuth.coords.latitude.toFixed(3)}, ${locationAuth.coords.longitude.toFixed(3)}`
+          : '위치 인증 완료',
+        lat: locationAuth.coords?.latitude ?? null,
+        lng: locationAuth.coords?.longitude ?? null,
+        place: reportForm.place,
+        amount: reportForm.amount,
+        memo: reportForm.memo,
+        dong: reportForm.dong || selectedDongs[0]?.name || selected.name,
+      });
+      setReportForm({ dong: '', place: '학교 주변', amount: '많음', memo: '' });
+    } catch (error) {
+      console.error('제보 저장 실패:', error);
+      alert('제보 저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    }
+  }
+
+  async function submitLogin(event) {
+    event.preventDefault();
+    try {
+      const user = await signInWithGoogle();
+      const region = regions.find((item) => item.id === loginForm.regionId) ?? selected;
+      const nextCitizen = {
+        uid: user.uid,
+        nickname: loginForm.nickname.trim() || user.displayName || '동네관찰러',
+        provider: 'Google',
+        email: user.email ?? null,
+        photoURL: user.photoURL ?? null,
+        regionId: loginForm.regionId,
+        regionName: region.name,
+        dong: loginForm.dong,
+        verifiedAt: new Date().toISOString(),
+      };
+      window.sessionStorage.setItem(CITIZEN_SESSION_KEY, JSON.stringify(nextCitizen));
+      setCitizen(nextCitizen);
+    } catch (error) {
+      // 사용자가 팝업을 닫은 경우는 조용히 넘어간다.
+      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+        console.error('Google 로그인 실패:', error);
+        alert('Google 로그인에 실패했어요. 잠시 후 다시 시도해 주세요.');
+      }
+    }
+  }
+
+  function logoutCitizen() {
+    signOutUser().catch((error) => console.error('로그아웃 실패:', error));
+    window.sessionStorage.removeItem(CITIZEN_SESSION_KEY);
+    setCitizen(null);
+    setLocationAuth({
+      status: 'idle',
+      message: '현재위치를 인증하면 시민관측을 등록할 수 있어요.',
+      coords: null,
+    });
+  }
+
+  function applyCurrentLocation(position) {
+    const coords = {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+    };
+    const feature = findFeatureByCoordinate(seoulGeo, coords.longitude, coords.latitude);
+    const matchedRegion = feature ? regionByName[feature.properties.name] : null;
+
+    if (!matchedRegion) {
+      setLocationAuth({
+        status: 'error',
+        message: '현재 위치가 서울 자치구 경계 밖으로 확인되어 지역 예보에 적용하지 않았어요.',
+        coords,
+      });
+      return;
+    }
+
+    const nextDongs = getDongRisk(matchedRegion, matchedRegion.reports).sort((a, b) =>
+      a.name.localeCompare(b.name, 'ko')
+    );
+    setSelectedId(matchedRegion.id);
+    setForecastRegionId(matchedRegion.id);
+    setForecastDong(nextDongs[0]?.name ?? '');
+    setLoginForm((current) => ({
+      ...current,
+      regionId: matchedRegion.id,
+      dong: nextDongs[0]?.name ?? current.dong,
+    }));
+    setLocationAuth({
+      status: 'verified',
+      message: `${matchedRegion.name} 현재위치가 인증되어 예보와 제보 기준에 적용됐어요.`,
+      coords,
+    });
+  }
+
+  function verifyCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocationAuth({
+        status: 'error',
+        message: '이 브라우저에서는 현재위치 인증을 사용할 수 없어요.',
+        coords: null,
+      });
+      return;
+    }
+
+    setLocationAuth({
+      status: 'checking',
+      message: '현재위치로 지역을 찾는 중이에요.',
+      coords: null,
+    });
+
+    navigator.geolocation.getCurrentPosition(
+      applyCurrentLocation,
+      () => {
+        setLocationAuth({
+          status: 'error',
+          message: '위치 권한이 허용되지 않아 제보 등록을 잠시 막아두었어요.',
+          coords: null,
+        });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  return (
+    <main className="app-shell">
+      <section className="topbar" aria-label="앱 상단">
+        <div>
+          <p className="eyebrow">지역 제보 기반 예측</p>
+          <h1>🐞 우리동네 벌레예보</h1>
+        </div>
+        <button className="icon-button" aria-label="알림 설정">
+          <Bell size={21} />
+        </button>
+      </section>
+
+      <nav className="app-tabs" aria-label="앱 화면 탭">
+        {APP_TABS.map((tab) => (
+          <button
+            className={activeTab === tab.id ? 'active' : ''}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
+      {activeTab === 'main' && (
+        <>
+      <section className={`hero risk-${updatedRisk.tone}`}>
+        <div className="hero-copy">
+          <div className="location-pill">
+            <MapPin size={17} />
+            {selected.name} · {selected.zone}
+          </div>
+          <h2>오늘 {getForecastRiskLabel(updatedRisk)}</h2>
+          <p>{selected.note}</p>
+          <div className="hero-actions">
+            <button
+              className="secondary-action"
+              onClick={verifyCurrentLocation}
+              disabled={locationAuth.status === 'checking'}
+            >
+              <MapPin size={18} />
+              현재 위치 적용
+            </button>
+            <button className="primary-action" onClick={openNearby}>
+              <Navigation size={18} />
+              내 주변 보기
+            </button>
+          </div>
+          <span className={`location-status ${locationAuth.status}`}>{locationAuth.message}</span>
+        </div>
+        <div className="risk-gauge" aria-label={`위험도 ${updatedRisk.score}점`}>
+          <span className="gauge-eyebrow">현재 위치 기준</span>
+          <div className="gauge-ring" style={{ '--score': `${updatedRisk.score}%` }}>
+            <div className="gauge-core">
+              <Bug size={35} />
+              <strong>{updatedRisk.score}</strong>
+            </div>
+          </div>
+          <span className="gauge-label">위험 지수</span>
+          <b className={`gauge-status ${updatedRisk.tone}`}>{getForecastRiskLabel(updatedRisk)}</b>
+        </div>
+      </section>
+
+      <section className="metric-grid" aria-label="현재 조건">
+        <Metric icon={<ThermometerSun />} label="기온" value={`${selected.temp}°C`} />
+        <Metric icon={<Droplets />} label="습도" value={`${selected.humidity}%`} />
+        <Metric icon={<CloudRain />} label="강수 가능" value={`${selected.rain}%`} />
+        <Metric icon={<Wind />} label="바람" value={`${selected.wind}m/s`} />
+      </section>
+
+      <section className={`nearby-panel ${showNearby ? 'open' : ''}`} ref={nearbyRef} aria-label="내 주변 현황">
+        <div className="section-heading compact">
+          <div>
+            <p className="eyebrow">선택 지역 기준</p>
+            <h3>내 주변 보기</h3>
+          </div>
+          <Navigation size={20} />
+        </div>
+        <div className="nearby-grid">
+          <div className="nearby-main">
+            <span className={`risk-dot ${updatedRisk.tone}`} />
+            <div>
+              <strong>{selected.name} 주변 {getForecastRiskLabel(updatedRisk)}</strong>
+              <p>위치 권한 없이 선택한 구를 기준으로 동별 위험지수와 제보 수를 보여줘요.</p>
+            </div>
+          </div>
+          <div className="nearby-stat">
+            <b>{totalReports}</b>
+            <span>현재 제보</span>
+          </div>
+          <div className="nearby-stat">
+            <b>{HOTSPOTS[0].place}</b>
+            <span>가장 많은 장소</span>
+          </div>
+        </div>
+        <div className="nearby-dong-board" aria-label={`${selected.name} 동별 수치`}>
+          {selectedDongs.map((dong) => (
+            <button
+              className="nearby-dong-row"
+              key={dong.name}
+              onClick={() => setReportForm({ ...reportForm, dong: dong.name })}
+            >
+              <span className={`legend-dot ${dong.risk.tone}`} />
+              <strong>{dong.name}</strong>
+              <b>{dong.risk.score}</b>
+              <small>{getForecastRiskLabel(dong.risk)} · 제보 {dong.reports}건</small>
+            </button>
+          ))}
+        </div>
+      </section>
+        </>
+      )}
+
+      {activeTab === 'map' && (
+      <div className="content-grid single-view">
+        <section className="panel region-panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">지역별 현황</p>
+              <h3>벌레예보 지도</h3>
+            </div>
+            <div className="search-box">
+              <Search size={17} />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="지역 검색"
+                aria-label="지역 검색"
+              />
+            </div>
+          </div>
+
+          <div className="seoul-map-wrap">
+            <div className="map-summary" aria-label="서울시 위험도 요약">
+                    <span><b>{riskSummary.danger}개 구</b> 🔴 출몰 많음</span>
+                    <span><b>{riskSummary.warning}개 구</b> 🟠 출몰 주의</span>
+                    <span><b>{riskSummary.notice}개 구</b> 🟡 출몰 보통</span>
+                    <span><b>{riskSummary.calm}개 구</b> 🟢 출몰 적음</span>
+            </div>
+            <div className="seoul-map" role="group" aria-label="서울시 구별 벌레예보 지도">
+              <svg
+                className="seoul-map-svg"
+                viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+                role="img"
+                aria-label="서울시 자치구 경계 지도"
+              >
+                <path
+                  className="han-river-svg"
+                  d="M72 319 C180 350 246 370 340 332 C445 288 534 354 650 311 C756 274 826 250 895 238 L908 262 C820 286 756 320 656 348 C537 384 452 326 352 370 C250 414 163 378 62 344 Z"
+                />
+                {geoFeatures.map(({ region, regionReportCount, risk, path, labelX, labelY }) => {
+                  const isFilteredOut = query && !filteredIds.has(region.id);
+                  return (
+                    <g
+                      className={`district-group ${region.id === selectedId ? 'selected' : ''} ${
+                        isFilteredOut ? 'muted' : ''
+                      }`}
+                      key={region.id}
+                    >
+                      <path
+                        className={`district-shape ${risk.tone}`}
+                        d={path}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedId(region.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            setSelectedId(region.id);
+                          }
+                        }}
+                        aria-label={`${region.name} ${getForecastRiskLabel(risk)} 제보 ${regionReportCount}건`}
+                      />
+                      <text className="district-label" x={labelX} y={labelY - 6}>
+                        {region.name.replace('구', '')}
+                      </text>
+                      <text className="district-score" x={labelX} y={labelY + 13}>
+                        {risk.score}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+            <div className="map-legend" aria-label="위험도 범례">
+              <span><i className="legend-dot calm" />출몰 적음</span>
+              <span><i className="legend-dot notice" />출몰 보통</span>
+              <span><i className="legend-dot warning" />출몰 주의</span>
+              <span><i className="legend-dot danger" />출몰 많음</span>
+            </div>
+          </div>
+
+          <div className="selected-district">
+            <div>
+              <p className="eyebrow">선택 지역</p>
+              <strong>{selected.name}</strong>
+              <span>{selected.zone} · 제보 {totalReports}건</span>
+            </div>
+            <b className={`selected-risk ${updatedRisk.tone}`}>{getForecastRiskLabel(updatedRisk)}</b>
+          </div>
+
+          <div className="dong-list" aria-label={`${selected.name} 동별 위험도`}>
+            {selectedDongs.map((dong) => (
+              <button className="dong-chip" key={dong.name} onClick={() => setReportForm({ ...reportForm, dong: dong.name })}>
+                <span className={`legend-dot ${dong.risk.tone}`} />
+                <strong>{dong.name}</strong>
+                <small>{getForecastRiskLabel(dong.risk)} · 제보 {dong.reports}건</small>
+              </button>
+            ))}
+          </div>
+
+        </section>
+      </div>
+      )}
+
+      {['report', 'forecast', 'places', 'guide'].includes(activeTab) && (
+        <section className="panel action-panel single-panel">
+          {activeTab === 'report' && (
+            <div className="tab-pane">
+              <div className="section-heading compact">
+                <div>
+                  <p className="eyebrow">시민 관측</p>
+                  <h3>{citizen ? '현재위치 인증 후 제보하기' : 'Google 로그인으로 시작하기'}</h3>
+                </div>
+              </div>
+
+              {!citizen ? (
+                <form onSubmit={submitLogin} className="login-form">
+                  <p className="trust-copy">
+                    신뢰할 수 있는 관측 정보로 쓰기 위해 Google 계정 인증과 현재위치 인증을 거친 뒤 기록해요. 공개 화면에는 닉네임만 표시됩니다.
+                  </p>
+                  <div className="google-auth-preview">
+                    <span>G</span>
+                    <div>
+                      <strong>Google 계정 인증</strong>
+                      <small>Google 계정으로 안전하게 로그인해요. 공개 화면엔 닉네임만 보여요.</small>
+                    </div>
+                  </div>
+                  <label>
+                    닉네임
+                    <input
+                      value={loginForm.nickname}
+                      onChange={(event) => setLoginForm({ ...loginForm, nickname: event.target.value })}
+                      placeholder="예: 은평관찰러"
+                      required
+                    />
+                  </label>
+                  <label>
+                    거주 구
+                    <select
+                      value={loginForm.regionId}
+                      onChange={(event) => {
+                        const nextRegion = REGIONS.find((region) => region.id === event.target.value);
+                        const nextDongs = getDongRisk(nextRegion, nextRegion.reports).sort((a, b) =>
+                          a.name.localeCompare(b.name, 'ko')
+                        );
+                        setLoginForm({
+                          ...loginForm,
+                          regionId: event.target.value,
+                          dong: nextDongs[0]?.name ?? '',
+                        });
+                      }}
+                    >
+                      {sortedForecastRegions.map((region) => (
+                        <option value={region.id} key={region.id}>{region.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    거주 동
+                    <select
+                      value={loginForm.dong}
+                      onChange={(event) => setLoginForm({ ...loginForm, dong: event.target.value })}
+                    >
+                      {loginDongs.map((dong) => (
+                        <option value={dong.name} key={dong.name}>{dong.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <button className="primary-action full" type="submit">
+                    <span className="google-mark">G</span>
+                    Google로 로그인
+                  </button>
+                </form>
+              ) : (
+                <>
+                  <div className="citizen-card">
+                    <div>
+                      <p className="eyebrow">Google 인증 제보자</p>
+                      <strong>{citizen.nickname || citizen.name || '동네관찰러'}</strong>
+                      <span>{citizen.regionName} {citizen.dong} · 닉네임으로 공개</span>
+                    </div>
+                    <button className="text-action" onClick={logoutCitizen}>로그아웃</button>
+                  </div>
+
+                  <div className={`location-verification ${locationAuth.status}`}>
+                    <div>
+                      <p className="eyebrow">현재위치 인증</p>
+                      <strong>
+                        {locationAuth.status === 'verified'
+                          ? '인증 완료'
+                          : locationAuth.status === 'checking'
+                            ? '확인 중'
+                            : '인증 필요'}
+                      </strong>
+                      <span>{locationAuth.message}</span>
+                    </div>
+                    <button
+                      className="secondary-action"
+                      type="button"
+                      onClick={verifyCurrentLocation}
+                      disabled={locationAuth.status === 'checking'}
+                    >
+                      <MapPin size={17} />
+                      현재위치 인증
+                    </button>
+                  </div>
+
+                  <form onSubmit={submitReport} className="report-form">
+                    <label>
+                      발견 동
+                      <select
+                        value={reportForm.dong}
+                        onChange={(event) => setReportForm({ ...reportForm, dong: event.target.value })}
+                      >
+                        <option value="">대표 동 선택</option>
+                        {selectedDongs.map((dong) => (
+                          <option value={dong.name} key={dong.name}>{dong.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      발견 위치
+                      <select
+                        value={reportForm.place}
+                        onChange={(event) => setReportForm({ ...reportForm, place: event.target.value })}
+                      >
+                        <option>학교 주변</option>
+                        <option>하천 산책로</option>
+                        <option>아파트 단지</option>
+                        <option>버스정류장</option>
+                        <option>상가 조명 주변</option>
+                      </select>
+                    </label>
+                    <label>
+                      체감 규모
+                      <select
+                        value={reportForm.amount}
+                        onChange={(event) => setReportForm({ ...reportForm, amount: event.target.value })}
+                      >
+                        <option>조금</option>
+                        <option>많음</option>
+                        <option>매우 많음</option>
+                      </select>
+                    </label>
+                    <label>
+                      메모
+                      <input
+                        value={reportForm.memo}
+                        onChange={(event) => setReportForm({ ...reportForm, memo: event.target.value })}
+                        placeholder="예: 운동장 조명 근처"
+                      />
+                    </label>
+                    <button
+                      className="primary-action full"
+                      type="submit"
+                      disabled={locationAuth.status !== 'verified'}
+                    >
+                      <Plus size={18} />
+                      {locationAuth.status === 'verified' ? `${selected.name} 인증 제보 등록` : '현재위치 인증 후 등록 가능'}
+                    </button>
+                  </form>
+                </>
+              )}
+
+              <div className="recent-reports">
+                {(reports.length ? reports : [
+                  { id: 'sample-1', regionName: selected.name, place: '하천 산책로', amount: '많음', time: '오후 7:20', memo: '가로등 주변', reporterName: '동네관찰러', verified: true, locationVerified: true },
+                  { id: 'sample-2', regionName: selected.name, place: '아파트 단지', amount: '조금', time: '오후 6:45', memo: '현관 근처', reporterName: '초록알림이', verified: true, locationVerified: true },
+                ]).slice(0, 3).map((item) => (
+                  <div className="report-item" key={item.id}>
+                    <Bug size={18} />
+                    <span>
+                      <strong>{item.regionName}{item.dong ? ` ${item.dong}` : ''} · {item.place}</strong>
+                      <small>
+                        {item.verified ? '✅ 인증 제보' : '제보'}{item.locationVerified ? ' · 📍 위치 인증' : ''} · {item.reporterName ? `${item.reporterName} · ` : ''}
+                        {item.amount} · {item.time}{item.memo ? ` · ${item.memo}` : ''}
+                      </small>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'forecast' && (
+            <div className="tab-pane">
+              <div className="section-heading compact">
+                <div>
+                  <p className="eyebrow">5일 예보 · 샘플 모델</p>
+                  <h3>{forecastRegion.name} {activeForecastDong} 출몰위험도 예보</h3>
+                  <p className="forecast-note">
+                    기준: 선택한 구·동의 기온, 습도, 강수 가능성, 바람, 누적 제보 수를 조합해 위험도를 계산해요.
+                  </p>
+                </div>
+              </div>
+              <div className="forecast-picker" aria-label="예보 동네 선택">
+                <label>
+                  구 선택
+                  <select
+                    value={forecastRegionId}
+                    onChange={(event) => {
+                      const nextRegion = REGIONS.find((region) => region.id === event.target.value);
+                      const nextDongs = getDongRisk(nextRegion, nextRegion.reports).sort((a, b) =>
+                        a.name.localeCompare(b.name, 'ko')
+                      );
+                      setForecastRegionId(event.target.value);
+                      setForecastDong(nextDongs[0]?.name ?? '');
+                    }}
+                  >
+                    {sortedForecastRegions.map((region) => (
+                      <option value={region.id} key={region.id}>{region.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  동 선택
+                  <select value={activeForecastDong} onChange={(event) => setForecastDong(event.target.value)}>
+                    {sortedForecastDongs.map((dong) => (
+                      <option value={dong.name} key={dong.name}>{dong.name}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="forecast-list">
+                {forecast.map((day, index) => (
+                  <div className="forecast-card" key={day.day}>
+                    {day.weather.includes('비') ? <CloudRain size={21} /> : <Sun size={21} />}
+                    <strong>{formatForecastDay(index)}</strong>
+                    <span>{day.temp}°C</span>
+                    <small>{day.weather}</small>
+                    <b>{getForecastRiskLabel(day.risk)} · 지수 {day.risk.score}</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'places' && (
+            <div className="tab-pane">
+              <div className="section-heading compact">
+                <div>
+                  <p className="eyebrow">출몰 장소</p>
+                  <h3>핫스팟 순위</h3>
+                </div>
+                <AlertTriangle size={20} />
+              </div>
+              <div className="hotspot-list">
+                {HOTSPOTS.map((spot, index) => (
+                  <div className="hotspot-row" key={spot.place}>
+                    <span>{index + 1}</span>
+                    <strong>{spot.place}</strong>
+                    <small>{spot.count}건</small>
+                    <b>{spot.risk}</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'guide' && (
+            <div className="tab-pane">
+              <div className="section-heading compact">
+                <div>
+                  <p className="eyebrow">행동 안내</p>
+                  <h3>오늘의 대응 가이드</h3>
+                </div>
+                <Bug size={20} />
+              </div>
+              <div className="guide-list">
+                {ACTION_GUIDES.map((item) => (
+                  <div className="guide-card" key={item.title}>
+                    <strong><span aria-hidden="true">{item.icon}</span> {item.title}</strong>
+                    <p>{item.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+    </main>
+  );
+}
+
+function Metric({ icon, label, value }) {
+  return (
+    <div className="metric-card">
+      {React.cloneElement(icon, { size: 22 })}
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+createRoot(document.getElementById('root')).render(<App />);

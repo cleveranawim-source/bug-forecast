@@ -1,0 +1,18 @@
+{
+  "name": "우리동네 벌레예보",
+  "short_name": "벌레예보",
+  "description": "현재 위치와 시민관측을 바탕으로 동네별 벌레 출몰 위험을 알려주는 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f7f4",
+  "theme_color": "#1c584a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
