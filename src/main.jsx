@@ -595,12 +595,11 @@ function makeForecast(region, reportCount, dongRisk) {
 
 function getDongRisk(region, reportCount, dongCounts = {}) {
   const dongs = DISTRICT_DONGS[region.id] ?? [`${region.name.replace('구', '')}1동`];
-  const avgDong = dongs.length ? reportCount / dongs.length : reportCount;
   return dongs.map((name) => {
     const dongReports = dongCounts[name] ?? 0;
-    // 동은 구의 환경을 공유한다. 구 전체 관측수를 기준선으로 두고,
-    // 평균보다 제보가 많은 동은 위험도를 올리고 적은 동은 약간 낮춘다.
-    const reports = Math.max(0, reportCount + (dongReports - avgDong) * 4);
+    // 동은 구의 환경·관측수준을 그대로 물려받고(=구 지수가 기본값), 실제 동 제보가 있으면
+    // 그 위로 가산한다. → 제보 전엔 동=구로 일치하고, 상·하위 지수가 어긋나지 않는다.
+    const reports = reportCount + dongReports * 3;
     return {
       name,
       risk: getRisk({ ...region, reports }),
@@ -746,7 +745,8 @@ function App() {
     return features.map((feature) => {
       const name = feature.properties.name;
       const info = infoByName[name];
-      const risk = info ? info.risk : getRisk({ ...selected, reports: 0 });
+      // 이름이 안 맞는 동(통폐합 등)은 구 지수를 그대로 따른다(상·하위 어긋남 방지).
+      const risk = info ? info.risk : getRisk(selected);
       const [cx, cy] = dongCenter(feature.geometry, proj);
       return {
         name,
@@ -1176,10 +1176,10 @@ function App() {
                           onClick={() => setReportForm({ ...reportForm, dong: dong.name })}
                           aria-label={`${dong.name} ${getForecastRiskLabel(dong.risk)}`}
                         />
-                        <text className="district-label dong-label" x={dong.cx} y={dong.cy - 3}>
+                        <text className="district-label dong-label" x={dong.cx} y={dong.cy - 1}>
                           {dong.name}
                         </text>
-                        <text className="district-score" x={dong.cx} y={dong.cy + 14}>
+                        <text className="district-score" x={dong.cx} y={dong.cy + 10}>
                           {dong.risk.score}
                         </text>
                       </g>
@@ -1475,6 +1475,23 @@ function App() {
                     <p>{item.detail}</p>
                   </div>
                 ))}
+              </div>
+
+              <div className="index-explainer">
+                <h4>🐞 출몰지수는 어떻게 나오나요?</h4>
+                <p>
+                  각 동네의 <b>날씨</b>(기온·습도·강수·바람)와 <b>지형</b>(산자락 인접도), 그리고
+                  <b> 시민 제보</b>를 합쳐 0~100으로 계산해요. 러브버그는 25~30℃·고습·약풍·비 온
+                  직후·산 근처에서 많이 나오는 특성을 반영합니다.
+                </p>
+                <ul className="index-factors">
+                  <li><b>🌡️ 날씨·지형 60%</b> — 기상청 실시간 예보로 ‘오늘 나오기 좋은 조건인지’ 판단</li>
+                  <li><b>📝 시민 제보 40%</b> — 실제 목격담. 쌓일수록 추정이 실측으로 바뀌어 정확해져요</li>
+                </ul>
+                <p className="index-note">
+                  💡 지금은 제보 초기라 날씨·지형 비중이 커요. <b>제보가 모일수록</b> 우리 동네 예보가
+                  더 정확해집니다. 같은 구라도 제보가 많은 동이 더 높게 표시돼요.
+                </p>
               </div>
             </div>
           )}

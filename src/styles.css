@@ -859,11 +859,56 @@ h3 {
 }
 
 .dong-label {
-  font-size: 14px;
+  font-size: 11px;
+  stroke-width: 2.6px;
 }
 
 .dong-map .district-score {
-  font-size: 12px;
+  font-size: 9.5px;
+  stroke-width: 2px;
+}
+
+.index-explainer {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(240, 247, 241, 0.86));
+  border: 1px solid #dfe8e1;
+}
+
+.index-explainer h4 {
+  margin: 0 0 10px;
+  font-size: 1.02rem;
+  color: #1d2c27;
+}
+
+.index-explainer p {
+  margin: 0 0 10px;
+  color: #45554d;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.index-factors {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.index-factors li {
+  color: #45554d;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.index-note {
+  margin: 0 !important;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: rgba(63, 142, 110, 0.1);
+  color: #2c5446 !important;
+  font-size: 0.88rem !important;
 }
 
 .map-legend span {
