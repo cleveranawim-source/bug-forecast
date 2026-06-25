@@ -594,7 +594,7 @@ function makeForecast(region, reportCount, dongRisk) {
 }
 
 function getDongRisk(region, reportCount, dongCounts = {}) {
-  const dongs = DISTRICT_DONGS[region.id] ?? [`${region.name.replace('구', '')}1동`];
+  const dongs = DISTRICT_DONGS[region.id] ?? [`${region.name.replace(/구$/, '')}1동`];
   return dongs.map((name) => {
     const dongReports = dongCounts[name] ?? 0;
     // 동은 구의 환경·관측수준을 그대로 물려받고(=구 지수가 기본값), 실제 동 제보가 있으면
@@ -717,7 +717,7 @@ function App() {
         const reportCount =
           region.reports + reports.filter((item) => item.regionId === region.id).length;
         const risk = getRisk({ ...region, reports: reportCount });
-        return { region, risk, reportCount, d: d.d, cx: d.cx, cy: d.cy };
+        return { region, risk, reportCount, d: d.d, labelX: d.labelX, labelY: d.labelY };
       })
       .filter(Boolean);
   }, [regionByName, reports]);
@@ -1104,7 +1104,7 @@ function App() {
                 aria-label="서울시 자치구 벌레예보"
               >
                 {aiMap.river && <path className="ai-river" d={aiMap.river} />}
-                {aiFeatures.map(({ region, risk, reportCount, d, cx, cy }) => {
+                {aiFeatures.map(({ region, risk, reportCount, d, labelX, labelY }) => {
                   const isFilteredOut = query && !filteredIds.has(region.id);
                   return (
                     <g
@@ -1127,10 +1127,10 @@ function App() {
                         }}
                         aria-label={`${region.name} ${getForecastRiskLabel(risk)} 제보 ${reportCount}건`}
                       />
-                      <text className="district-label" x={cx} y={cy - 6}>
-                        {region.name.replace('구', '')}
+                      <text className="district-label" x={labelX} y={labelY}>
+                        {region.name.replace(/구$/, '')}
                       </text>
-                      <text className="district-score" x={cx} y={cy + 18}>
+                      <text className="district-score" x={labelX} y={labelY + 24}>
                         {risk.score}
                       </text>
                     </g>

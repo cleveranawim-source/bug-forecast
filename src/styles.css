@@ -744,11 +744,13 @@ h3 {
 .seoul-map-ai .district-label {
   font-size: 22px;
   stroke-width: 4px;
+  text-anchor: start;
 }
 
 .seoul-map-ai .district-score {
   font-size: 19px;
   stroke-width: 3.4px;
+  text-anchor: start;
 }
 
 .seoul-map-svg {
