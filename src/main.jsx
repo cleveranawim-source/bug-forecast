@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import seoulGeo from './seoul_municipalities_geo_simple.json';
+import seoulSubGeo from './seoul_submunicipalities_geo_simple.json';
 import { getRisk } from './lib/risk.js';
 import { addReport, subscribeReports, countByDong } from './lib/reports.js';
 import { fetchAllDistricts } from './lib/weather.js';
@@ -464,6 +465,57 @@ function getFeatureCenter(geometry, bounds) {
   return [totals.x / points.length, totals.y / points.length];
 }
 
+// 동 지도용 투영 — 한 구만 종횡비를 유지하며 정사각 뷰박스 중앙에 배치(경도 cos 보정).
+const DONG_VIEW = 600;
+
+function makeDongView(features, size, pad) {
+  const bounds = getGeoBounds({ features });
+  const midLat = (bounds.minLat + bounds.maxLat) / 2;
+  const cosLat = Math.cos((midLat * Math.PI) / 180);
+  const lonSpan = (bounds.maxLon - bounds.minLon) * cosLat;
+  const latSpan = bounds.maxLat - bounds.minLat;
+  const scale = Math.min((size - pad * 2) / lonSpan, (size - pad * 2) / latSpan);
+  return {
+    minLon: bounds.minLon,
+    maxLat: bounds.maxLat,
+    cosLat,
+    scale,
+    offsetX: (size - lonSpan * scale) / 2,
+    offsetY: (size - latSpan * scale) / 2,
+  };
+}
+
+function projectDong([lon, lat], proj) {
+  return [
+    proj.offsetX + (lon - proj.minLon) * proj.cosLat * proj.scale,
+    proj.offsetY + (proj.maxLat - lat) * proj.scale,
+  ];
+}
+
+function dongGeometryToPath(geometry, proj) {
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  return polygons
+    .map((polygon) =>
+      polygon
+        .map((ring) =>
+          ring
+            .map((point, index) => {
+              const [x, y] = projectDong(point, proj);
+              return `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+            })
+            .join(' ') + ' Z'
+        )
+        .join(' ')
+    )
+    .join(' ');
+}
+
+function dongCenter(geometry, proj) {
+  const points = flattenCoordinates(geometry.coordinates).map((point) => projectDong(point, proj));
+  const totals = points.reduce((sum, [x, y]) => ({ x: sum.x + x, y: sum.y + y }), { x: 0, y: 0 });
+  return [totals.x / points.length, totals.y / points.length];
+}
+
 function isPointInRing([lon, lat], ring) {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -635,6 +687,42 @@ function App() {
     () => Object.fromEntries(regions.map((region) => [region.name, region])),
     [regions]
   );
+
+  // region.id → 자치구 코드(동 코드 앞 5자리와 매칭하기 위함)
+  const regionCodeById = useMemo(() => {
+    const map = {};
+    seoulGeo.features.forEach((feature) => {
+      const region = regionByName[feature.properties.name];
+      if (region) map[region.id] = feature.properties.code;
+    });
+    return map;
+  }, [regionByName]);
+
+  // 선택한 구의 행정동을 확대 투영한 동 지도 데이터
+  const selectedDongMap = useMemo(() => {
+    const code = regionCodeById[selectedId];
+    if (!code) return null;
+    const features = seoulSubGeo.features.filter(
+      (feature) => feature.properties.code.slice(0, 5) === code
+    );
+    if (!features.length) return null;
+    const proj = makeDongView(features, DONG_VIEW, 22);
+    const infoByName = Object.fromEntries(selectedDongs.map((dong) => [dong.name, dong]));
+    return features.map((feature) => {
+      const name = feature.properties.name;
+      const info = infoByName[name];
+      const risk = info ? info.risk : getRisk({ ...selected, reports: 0 });
+      const [cx, cy] = dongCenter(feature.geometry, proj);
+      return {
+        name,
+        path: dongGeometryToPath(feature.geometry, proj),
+        risk,
+        reports: info?.reports ?? 0,
+        cx,
+        cy,
+      };
+    });
+  }, [selectedId, regionCodeById, selectedDongs, selected]);
   const geoFeatures = useMemo(
     () =>
       seoulGeo.features
@@ -1036,6 +1124,41 @@ function App() {
             </div>
             <b className={`selected-risk ${updatedRisk.tone}`}>{getForecastRiskLabel(updatedRisk)}</b>
           </div>
+
+          {selectedDongMap && (
+            <div className="dong-map-block">
+              <p className="eyebrow">{selected.name} 동별 지도 · 탭하면 발견 동으로 선택돼요</p>
+              <div className="seoul-map-scroll">
+                <div className="seoul-map dong-map">
+                  <svg
+                    className="seoul-map-svg"
+                    viewBox={`0 0 ${DONG_VIEW} ${DONG_VIEW}`}
+                    role="img"
+                    aria-label={`${selected.name} 동별 위험도 지도`}
+                  >
+                    {selectedDongMap.map((dong) => (
+                      <g className="district-group" key={dong.name}>
+                        <path
+                          className={`district-shape ${dong.risk.tone}`}
+                          d={dong.path}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setReportForm({ ...reportForm, dong: dong.name })}
+                          aria-label={`${dong.name} ${getForecastRiskLabel(dong.risk)}`}
+                        />
+                        <text className="district-label dong-label" x={dong.cx} y={dong.cy - 3}>
+                          {dong.name}
+                        </text>
+                        <text className="district-score" x={dong.cx} y={dong.cy + 14}>
+                          {dong.risk.score}
+                        </text>
+                      </g>
+                    ))}
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="dong-list" aria-label={`${selected.name} 동별 위험도`}>
             {selectedDongs.map((dong) => (

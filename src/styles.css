@@ -708,6 +708,17 @@ h3 {
   filter: drop-shadow(0 8px 14px rgba(28, 88, 74, 0.24));
 }
 
+/* 마우스·터치 클릭 시 브라우저 기본 포커스 사각형 제거(선택은 stroke로 표시). */
+.district-shape:focus {
+  outline: none;
+}
+
+/* 키보드 탐색 시에만 접근성용 포커스 표시 유지. */
+.district-shape:focus-visible {
+  outline: 2px solid #1c584a;
+  outline-offset: 2px;
+}
+
 .district-group.muted {
   opacity: 0.24;
 }
@@ -757,6 +768,26 @@ h3 {
   color: #60746a;
   font-size: 0.86rem;
   font-weight: 800;
+}
+
+.dong-map-block {
+  margin-top: 18px;
+}
+
+.dong-map-block .eyebrow {
+  margin-bottom: 8px;
+}
+
+.dong-map {
+  aspect-ratio: 1 / 1;
+}
+
+.dong-label {
+  font-size: 14px;
+}
+
+.dong-map .district-score {
+  font-size: 12px;
 }
 
 .map-legend span {
@@ -1340,6 +1371,10 @@ h3 {
 
   .dong-list {
     grid-template-columns: 1fr;
+  }
+
+  .dong-map {
+    min-width: 0;
   }
 
   .action-tabs {
