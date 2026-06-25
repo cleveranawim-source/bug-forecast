@@ -17,6 +17,8 @@ import {
 import './styles.css';
 import seoulGeo from './seoul_municipalities_geo_simple.json';
 import seoulSubGeo from './seoul_submunicipalities_geo_simple.json';
+import seoulAreas from './seoul_areas.json';
+import aiMap from './seoul_ai_map.json';
 import { getRisk } from './lib/risk.js';
 import { addReport, subscribeReports, countByDong } from './lib/reports.js';
 import { fetchAllDistricts } from './lib/weather.js';
@@ -415,6 +417,19 @@ const MAP_WIDTH = 940;
 const MAP_HEIGHT = 620;
 const MAP_PADDING = 28;
 
+// 서울시 공식 지도 이미지(map_0.png) 크기 — area 좌표계 및 SVG 오버레이 viewBox
+const MAP_IMG_W = 533;
+const MAP_IMG_H = 437;
+
+// 한강 중심선(서→동, 주요 다리 위경도). 구 경계와 같은 투영으로 그려 정확히 맞물린다.
+const HAN_RIVER = [
+  [126.818, 37.601], [126.857, 37.567], [126.891, 37.552], [126.901, 37.539],
+  [126.928, 37.531], [126.937, 37.527], [126.958, 37.517], [126.979, 37.512],
+  [126.996, 37.512], [127.009, 37.523], [127.024, 37.530], [127.042, 37.527],
+  [127.054, 37.524], [127.082, 37.520], [127.094, 37.527], [127.103, 37.544],
+  [127.127, 37.560],
+];
+
 function getGeoBounds(geo) {
   const values = geo.features.flatMap((feature) => flattenCoordinates(feature.geometry.coordinates));
   return values.reduce(
@@ -683,10 +698,30 @@ function App() {
     { calm: 0, notice: 0, warning: 0, danger: 0 }
   );
   const geoBounds = useMemo(() => getGeoBounds(seoulGeo), []);
+  const hanRiverPath = useMemo(() => {
+    return HAN_RIVER.map((point, index) => {
+      const [x, y] = projectPoint(point, geoBounds);
+      return `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+  }, [geoBounds]);
   const regionByName = useMemo(
     () => Object.fromEntries(regions.map((region) => [region.name, region])),
     [regions]
   );
+
+  // 사용자 AI 지도(무제-2.svg)의 구 path + 위험도. 좌표계는 1310×1055.
+  const aiFeatures = useMemo(() => {
+    return aiMap.districts
+      .map((d) => {
+        const region = regionByName[d.name];
+        if (!region) return null;
+        const reportCount =
+          region.reports + reports.filter((item) => item.regionId === region.id).length;
+        const risk = getRisk({ ...region, reports: reportCount });
+        return { region, risk, reportCount, d: d.d, cx: d.cx, cy: d.cy };
+      })
+      .filter(Boolean);
+  }, [regionByName, reports]);
 
   // region.id → 자치구 코드(동 코드 앞 5자리와 매칭하기 위함)
   const regionCodeById = useMemo(() => {
@@ -1061,19 +1096,15 @@ function App() {
                     <span><b>{riskSummary.notice}개 구</b> 🟡 출몰 보통</span>
                     <span><b>{riskSummary.calm}개 구</b> 🟢 출몰 적음</span>
             </div>
-            <div className="seoul-map-scroll">
-            <div className="seoul-map" role="group" aria-label="서울시 구별 벌레예보 지도">
+            <div className="seoul-map seoul-map-ai" role="group" aria-label="서울시 구별 벌레예보 지도">
               <svg
                 className="seoul-map-svg"
-                viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+                viewBox={`0 0 ${aiMap.viewBox[0]} ${aiMap.viewBox[1]}`}
                 role="img"
-                aria-label="서울시 자치구 경계 지도"
+                aria-label="서울시 자치구 벌레예보"
               >
-                <path
-                  className="han-river-svg"
-                  d="M72 319 C180 350 246 370 340 332 C445 288 534 354 650 311 C756 274 826 250 895 238 L908 262 C820 286 756 320 656 348 C537 384 452 326 352 370 C250 414 163 378 62 344 Z"
-                />
-                {geoFeatures.map(({ region, regionReportCount, risk, path, labelX, labelY }) => {
+                {aiMap.river && <path className="ai-river" d={aiMap.river} />}
+                {aiFeatures.map(({ region, risk, reportCount, d, cx, cy }) => {
                   const isFilteredOut = query && !filteredIds.has(region.id);
                   return (
                     <g
@@ -1084,7 +1115,7 @@ function App() {
                     >
                       <path
                         className={`district-shape ${risk.tone}`}
-                        d={path}
+                        d={d}
                         role="button"
                         tabIndex={0}
                         onClick={() => setSelectedId(region.id)}
@@ -1094,19 +1125,18 @@ function App() {
                             setSelectedId(region.id);
                           }
                         }}
-                        aria-label={`${region.name} ${getForecastRiskLabel(risk)} 제보 ${regionReportCount}건`}
+                        aria-label={`${region.name} ${getForecastRiskLabel(risk)} 제보 ${reportCount}건`}
                       />
-                      <text className="district-label" x={labelX} y={labelY - 6}>
+                      <text className="district-label" x={cx} y={cy - 6}>
                         {region.name.replace('구', '')}
                       </text>
-                      <text className="district-score" x={labelX} y={labelY + 13}>
+                      <text className="district-score" x={cx} y={cy + 18}>
                         {risk.score}
                       </text>
                     </g>
                   );
                 })}
               </svg>
-            </div>
             </div>
             <div className="map-legend" aria-label="위험도 범례">
               <span><i className="legend-dot calm" />출몰 적음</span>

@@ -677,6 +677,80 @@ h3 {
     linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 247, 241, 0.9));
 }
 
+/* 서울시 공식 지도 이미지 + 위험도 폴리곤 오버레이 */
+.seoul-map-photo {
+  position: relative;
+  aspect-ratio: 533 / 437;
+  border: none;
+  border-radius: 0;
+  background: none;
+  overflow: visible;
+}
+
+.seoul-map-bg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.seoul-map-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.seoul-map-overlay .district-shape {
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 1;
+  fill-opacity: 0.85;
+  filter: none;
+}
+
+.seoul-map-overlay .district-shape:hover,
+.seoul-map-overlay .district-group.selected .district-shape {
+  stroke: #143f35;
+  stroke-width: 2;
+  fill-opacity: 1;
+  filter: drop-shadow(0 3px 5px rgba(28, 88, 74, 0.3));
+}
+
+.seoul-map-overlay .district-label {
+  font-size: 13px;
+  stroke-width: 2.4px;
+}
+
+.seoul-map-overlay .district-score {
+  font-size: 11px;
+  stroke-width: 2px;
+}
+
+/* 사용자 AI 지도(무제-2.svg) */
+.seoul-map-ai {
+  aspect-ratio: 1310 / 1055;
+  border: none;
+  border-radius: 0;
+  background: none;
+  overflow: visible;
+}
+
+.ai-river {
+  fill: #97b8e4;
+  pointer-events: none;
+}
+
+.seoul-map-ai .district-label {
+  font-size: 22px;
+  stroke-width: 4px;
+}
+
+.seoul-map-ai .district-score {
+  font-size: 19px;
+  stroke-width: 3.4px;
+}
+
 .seoul-map-svg {
   display: block;
   width: 100%;
@@ -684,17 +758,19 @@ h3 {
 }
 
 .han-river-svg {
-  fill: rgba(143, 202, 223, 0.62);
-  stroke: rgba(80, 137, 160, 0.28);
-  stroke-width: 2;
+  fill: none;
+  stroke: rgba(140, 190, 214, 0.92);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   pointer-events: none;
 }
 
 .district-shape {
   cursor: pointer;
-  stroke: rgba(36, 57, 48, 0.28);
+  stroke: rgba(36, 50, 44, 0.55);
   stroke-linejoin: round;
-  stroke-width: 1.2;
+  stroke-width: 1;
   transition:
     filter 160ms ease,
     opacity 160ms ease,
