@@ -639,6 +639,30 @@ h3 {
   color: #1c584a;
 }
 
+.map-region-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 14px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #34554b;
+}
+
+.map-region-select span {
+  white-space: nowrap;
+}
+
+.map-region-select select {
+  flex: 1;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1px solid #cfe0d4;
+  background: #fff;
+  font-weight: 700;
+  color: #183029;
+}
+
 .seoul-map {
   position: relative;
   width: 100%;
@@ -1295,16 +1319,23 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .seoul-map-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+  }
+
   .seoul-map {
-    min-height: 360px;
+    min-width: 520px;
+    min-height: 340px;
   }
 
   .district-label {
-    font-size: 9px;
+    font-size: 13px;
   }
 
   .district-score {
-    font-size: 8px;
+    font-size: 11px;
   }
 
   .dong-list {

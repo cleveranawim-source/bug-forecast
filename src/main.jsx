@@ -953,6 +953,19 @@ function App() {
             </div>
           </div>
 
+          <label className="map-region-select">
+            <span>구 선택</span>
+            <select
+              value={selectedId}
+              onChange={(event) => setSelectedId(event.target.value)}
+              aria-label="구 선택"
+            >
+              {sortedForecastRegions.map((region) => (
+                <option value={region.id} key={region.id}>{region.name}</option>
+              ))}
+            </select>
+          </label>
+
           <div className="seoul-map-wrap">
             <div className="map-summary" aria-label="서울시 위험도 요약">
                     <span><b>{riskSummary.danger}개 구</b> 🔴 출몰 많음</span>
@@ -960,6 +973,7 @@ function App() {
                     <span><b>{riskSummary.notice}개 구</b> 🟡 출몰 보통</span>
                     <span><b>{riskSummary.calm}개 구</b> 🟢 출몰 적음</span>
             </div>
+            <div className="seoul-map-scroll">
             <div className="seoul-map" role="group" aria-label="서울시 구별 벌레예보 지도">
               <svg
                 className="seoul-map-svg"
@@ -1004,6 +1018,7 @@ function App() {
                   );
                 })}
               </svg>
+            </div>
             </div>
             <div className="map-legend" aria-label="위험도 범례">
               <span><i className="legend-dot calm" />출몰 적음</span>
