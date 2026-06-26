@@ -390,11 +390,20 @@ const FORECAST_OFFSETS = [
   { day: '5일 뒤', temp: 0, humidity: -1, rain: -4, reports: -1, weather: '구름' },
 ];
 
+// 야외활동 장소별 러브버그 위험 — 나들이·런닝·자전거 타는 사람 기준
 const HOTSPOTS = [
-  { place: '하천 산책로', count: 22, risk: '🔴 출몰 많음' },
-  { place: '아파트 외벽 조명', count: 18, risk: '🟠 출몰 주의' },
-  { place: '학교 운동장 주변', count: 11, risk: '🟡 출몰 보통' },
-  { place: '버스정류장', count: 7, risk: '🟡 출몰 보통' },
+  { icon: '🌊', place: '한강공원·하천변', level: '🔴 많음', why: '물가의 습한 풀숲이라 러브버그가 가장 많이 모여요.', tip: '돗자리는 물에서 떨어진 트인 잔디에. 밝은 색 옷·텐트는 피해요.' },
+  { icon: '⛰️', place: '산 둘레길·숲길', level: '🔴 많음', why: '러브버그 발생원인 산자락이라 떼로 날아다녀요.', tip: '북한산·관악산 자락은 한낮·해질녘을 피하고 버프로 얼굴을 가려요.' },
+  { icon: '🚴', place: '자전거길(한강·안양천)', level: '🟠 주의', why: '하천변 자전거 도로는 물가라 달릴 때 얼굴에 부딪혀요.', tip: '고글·버프 착용, 빨라도 입은 다물기. 옷에 붙으면 물로 씻어내요.' },
+  { icon: '🌳', place: '도심 공원', level: '🟡 보통', why: '물·산과 멀면 비교적 적지만 저녁 조명 주변은 모여요.', tip: '조명 켜진 정자·벤치보다 트인 잔디밭이 나아요.' },
+  { icon: '🏟️', place: '운동장·아파트 단지', level: '🟡 보통', why: '밝은 외벽·운동장 조명에 끌려 몰려요.', tip: '형광·흰색 운동복은 더 꼬여요. 저녁 조명 옆은 피해요.' },
+];
+
+// 활동별 대비 팁
+const ACTIVITY_TIPS = [
+  { icon: '🏃', title: '러닝', detail: '러브버그는 한낮~해질녘에 가장 활발해요. 이른 아침이나 밤이 그나마 한산. 형광·밝은 운동복은 빛에 끌려 더 꼬이니 어두운 색이 나아요.' },
+  { icon: '🚴', title: '자전거', detail: '하천변 코스는 떼로 부딪혀요. 고글·버프로 눈·입을 막고, 속도 낼 땐 특히 입을 다물어요. 붙은 건 문지르지 말고 물로 씻어내요.' },
+  { icon: '👨‍👩‍👧', title: '나들이·소풍', detail: '돗자리는 물가·풀숲·조명에서 떨어진 트인 곳에. 밝은 색 텐트·옷은 더 모여요. 음식은 덮어두고, 저녁 랜턴은 자리에서 떨어뜨려 둬요.' },
 ];
 
 const ACTION_GUIDES = [
@@ -1441,18 +1450,30 @@ function App() {
             <div className="tab-pane">
               <div className="section-heading compact">
                 <div>
-                  <p className="eyebrow">출몰 장소</p>
-                  <h3>핫스팟 순위</h3>
+                  <p className="eyebrow">야외 나들이 가이드</p>
+                  <h3>오늘 어디가 위험할까?</h3>
                 </div>
                 <AlertTriangle size={20} />
               </div>
-              <div className="hotspot-list">
-                {HOTSPOTS.map((spot, index) => (
-                  <div className="hotspot-row" key={spot.place}>
-                    <span>{index + 1}</span>
-                    <strong>{spot.place}</strong>
-                    <small>{spot.count}건</small>
-                    <b>{spot.risk}</b>
+              <div className="outdoor-list">
+                {HOTSPOTS.map((spot) => (
+                  <div className="outdoor-card" key={spot.place}>
+                    <div className="outdoor-head">
+                      <strong><span className="outdoor-icon" aria-hidden="true">{spot.icon}</span>{spot.place}</strong>
+                      <b className="outdoor-level">{spot.level}</b>
+                    </div>
+                    <p className="outdoor-why">{spot.why}</p>
+                    <p className="outdoor-tip">💡 {spot.tip}</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="eyebrow activity-eyebrow">활동별 대비 팁</p>
+              <div className="activity-list">
+                {ACTIVITY_TIPS.map((act) => (
+                  <div className="activity-card" key={act.title}>
+                    <strong><span className="activity-icon" aria-hidden="true">{act.icon}</span>{act.title}</strong>
+                    <p>{act.detail}</p>
                   </div>
                 ))}
               </div>
