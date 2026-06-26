@@ -1429,6 +1429,121 @@ h3 {
   line-height: 1.45;
 }
 
+/* 벌레 도감 */
+.bug-intro {
+  margin-bottom: 16px;
+  color: #54665d;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.bug-group {
+  margin-top: 18px;
+  margin-bottom: 10px;
+  font-size: 0.92rem;
+}
+
+.bug-group.good {
+  color: #1c7a52;
+}
+
+.bug-group.bad {
+  color: #b4502f;
+}
+
+.bug-list {
+  display: grid;
+  gap: 10px;
+}
+
+.bug-card {
+  padding: 13px 14px;
+  border: 1px solid #dfe8e1;
+  border-left-width: 4px;
+  border-radius: 10px;
+  background: #f7faf5;
+}
+
+.bug-card.good {
+  border-left-color: #36b37e;
+}
+
+.bug-card.bad {
+  border-color: #f0ddd3;
+  border-left-color: #e08562;
+  background: #fdf6f2;
+}
+
+.bug-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bug-head strong {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 7px;
+  color: #1d2c27;
+  font-size: 1rem;
+}
+
+.bug-icon {
+  font-size: 1.2rem;
+}
+
+.bug-sub {
+  color: #8aa093;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.bug-tag {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.bug-tag.good {
+  color: #15663f;
+  background: #d8f0e4;
+}
+
+.bug-tag.bad {
+  color: #9e4124;
+  background: #f7ddd1;
+}
+
+.bug-desc {
+  margin-top: 7px;
+  color: #54665d;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.bug-tip {
+  margin-top: 7px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #eef5ed;
+  color: #1c584a;
+  font-size: 0.88rem;
+  font-weight: 720;
+  line-height: 1.45;
+}
+
+.bug-card.bad .bug-tip {
+  background: #f6e7df;
+  color: #9e4124;
+}
+
 .check-list label {
   gap: 10px;
   min-height: 44px;

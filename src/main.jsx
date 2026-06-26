@@ -413,12 +413,67 @@ const ACTION_GUIDES = [
   { icon: '🏫', title: '학교 주변 점검', detail: '운동장 조명, 급식실 출입구, 쓰레기장 주변을 하교 전후로 살펴요.' },
 ];
 
+// 출몰 곤충 도감 — good:true 이로운 곤충(익충) / false 주의해야 할 곤충
+const BUGS = [
+  {
+    icon: '🪲', name: '러브버그', sub: '붉은등우단털파리', good: true, tag: '익충',
+    desc: '애벌레는 낙엽과 흙을 분해해 땅을 기름지게 하고, 어른벌레는 꽃가루받이를 도와요. 독이 없고 병도 옮기지 않아요.',
+    tip: '사람을 물지 않아요. 2주쯤이면 자연히 사라지니, 징그러워도 죽이지 말고 기다려 주세요. 차나 옷에 붙으면 굳기 전에 물로 씻어내요.',
+  },
+  {
+    icon: '🦋', name: '동양하루살이', sub: '팅커벨', good: true, tag: '무해',
+    desc: '한강변(송파·강동·암사)에서 5~6월에 떼로 나타나요. 큰 날개에 긴 꼬리가 우아해 "팅커벨"이라 불려요. 입이 퇴화해 물지도 먹지도 못하고 며칠 살다 가요.',
+    tip: '사람을 물거나 병을 옮기지 않아요. 깨끗한 2급수에만 살아서, 오히려 한강이 맑아졌다는 신호예요. 밤 불빛에 모이니 창문·조명만 관리하면 돼요.',
+  },
+  {
+    icon: '🐞', name: '무당벌레', good: true, tag: '익충',
+    desc: '하루에 진딧물 수십 마리를 잡아먹는 농사 친구예요. 텃밭과 화단을 지켜줘요.',
+    tip: '손에 올라와도 해롭지 않아요. 그대로 두면 해충을 알아서 줄여줍니다.',
+  },
+  {
+    icon: '🐝', name: '꿀벌', good: true, tag: '익충',
+    desc: '꽃가루를 옮겨 열매와 채소가 맺히게 하는 고마운 곤충이에요. 먼저 건드리지 않으면 쏘지 않아요.',
+    tip: '주변을 날아도 손을 휘젓지 말고 가만히 있다가 천천히 자리를 옮겨요. 벌집은 직접 건드리지 말고 어른이나 전문가에게 알려요.',
+  },
+  {
+    icon: '🦋', name: '나비', good: true, tag: '익충',
+    desc: '꿀벌과 함께 꽃가루받이를 돕는 곤충이에요. 깨끗한 환경일수록 잘 보여요.',
+    tip: '물거나 쏘지 않아요. 손으로 잡으면 날개 가루가 상하니 눈으로만 구경해요.',
+  },
+  {
+    icon: '🦗', name: '잠자리', good: true, tag: '익충',
+    desc: '모기와 작은 날벌레를 잡아먹는 하늘의 사냥꾼이에요. 잠자리가 많다는 건 물가가 건강하다는 뜻이기도 해요.',
+    tip: '사람을 물지 않아요. 가까이 와도 놀라지 말고 지나가게 두면 돼요.',
+  },
+  {
+    icon: '🦟', name: '모기', good: false, tag: '해충',
+    desc: '피를 빨고 일본뇌염 같은 병을 옮길 수 있어요. 고인 물에 알을 낳아 빠르게 늘어나요.',
+    tip: '집 주변 고인 물(화분 받침·빈 그릇)을 비워요. 해질녘부터 밤까지는 긴 옷이나 기피제로 막아요.',
+  },
+  {
+    icon: '🕷️', name: '진드기', good: false, tag: '주의',
+    desc: '풀숲에 숨어 피를 빨고, 중증열성혈소판감소증(SFTS) 같은 감염병을 옮길 수 있어 특히 조심해야 해요.',
+    tip: '풀밭에선 긴 옷·양말을 신고 돗자리를 깔아요. 물렸다면 비비지 말고 핀셋으로 천천히 빼낸 뒤 병원에 가요.',
+  },
+  {
+    icon: '🪰', name: '등에', good: false, tag: '주의',
+    desc: '소나 사람의 피를 빠는 곤충이에요. 물리면 따갑고 부어올라요. 한여름 물가나 풀밭에 많아요.',
+    tip: '물가·풀밭에선 살갗을 가리고, 물렸다면 깨끗이 씻고 차갑게 식혀요. 가려워도 긁지 말아요.',
+  },
+  {
+    icon: '🐛', name: '깔따구', good: false, tag: '주의',
+    desc: '물지는 않지만 떼로 날아다녀 불쾌하고, 사체 가루가 알레르기나 천식을 일으킬 수 있어요. 물이 더러운 곳에 많아요.',
+    tip: '저녁 불빛에 모이니 창문과 조명을 관리해요. 떼를 만나면 입과 코를 막고 빠르게 벗어나요.',
+  },
+];
+
 const APP_TABS = [
   { id: 'main', label: '📍 현재 내위치' },
   { id: 'map', label: '🗺️ 지역별 현황' },
   { id: 'report', label: '📝 시민관측' },
   { id: 'forecast', label: '☁️ 예보' },
   { id: 'places', label: '🔎 출몰장소' },
+  { id: 'bugs', label: '🐞 벌레도감' },
   { id: 'guide', label: '🛡️ 행동안내' },
 ];
 
@@ -1213,7 +1268,7 @@ function App() {
       </div>
       )}
 
-      {['report', 'forecast', 'places', 'guide'].includes(activeTab) && (
+      {['report', 'forecast', 'places', 'bugs', 'guide'].includes(activeTab) && (
         <section className="panel action-panel single-panel">
           {activeTab === 'report' && (
             <div className="tab-pane">
@@ -1474,6 +1529,53 @@ function App() {
                   <div className="activity-card" key={act.title}>
                     <strong><span className="activity-icon" aria-hidden="true">{act.icon}</span>{act.title}</strong>
                     <p>{act.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'bugs' && (
+            <div className="tab-pane">
+              <div className="section-heading compact">
+                <div>
+                  <p className="eyebrow">벌레 도감</p>
+                  <h3>이 벌레, 익충일까 해충일까?</h3>
+                </div>
+                <Bug size={20} />
+              </div>
+              <p className="bug-intro">러브버그처럼 징그러워도 사람에게 이로운 곤충이 많아요. 미리 알아두면 덜 무섭고, 함부로 죽이지 않게 돼요.</p>
+
+              <p className="eyebrow bug-group good">🟢 이로운 곤충 · 익충</p>
+              <div className="bug-list">
+                {BUGS.filter((b) => b.good).map((bug) => (
+                  <div className="bug-card good" key={bug.name}>
+                    <div className="bug-head">
+                      <strong>
+                        <span className="bug-icon" aria-hidden="true">{bug.icon}</span>{bug.name}
+                        {bug.sub && <span className="bug-sub">{bug.sub}</span>}
+                      </strong>
+                      <b className="bug-tag good">{bug.tag}</b>
+                    </div>
+                    <p className="bug-desc">{bug.desc}</p>
+                    <p className="bug-tip">💡 {bug.tip}</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="eyebrow bug-group bad">🔴 주의할 곤충</p>
+              <div className="bug-list">
+                {BUGS.filter((b) => !b.good).map((bug) => (
+                  <div className="bug-card bad" key={bug.name}>
+                    <div className="bug-head">
+                      <strong>
+                        <span className="bug-icon" aria-hidden="true">{bug.icon}</span>{bug.name}
+                        {bug.sub && <span className="bug-sub">{bug.sub}</span>}
+                      </strong>
+                      <b className="bug-tag bad">{bug.tag}</b>
+                    </div>
+                    <p className="bug-desc">{bug.desc}</p>
+                    <p className="bug-tip">💡 {bug.tip}</p>
                   </div>
                 ))}
               </div>
