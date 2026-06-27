@@ -213,8 +213,8 @@ const REGIONS = [
     id: 'gangdong',
     name: '강동구',
     zone: '서울 동부권',
-    temp: 28,
-    humidity: 77,
+    temp: 27,
+    humidity: 68,
     rain: 50,
     wind: 1.3,
     reports: 28,
@@ -304,8 +304,8 @@ const REGIONS = [
     id: 'songpa',
     name: '송파구',
     zone: '서울 동남권',
-    temp: 29,
-    humidity: 75,
+    temp: 27,
+    humidity: 68,
     rain: 49,
     wind: 1.4,
     reports: 29,
@@ -708,6 +708,9 @@ function App() {
     memo: '',
   });
   const [liveWeather, setLiveWeather] = useState({});
+  // 기상청 실날씨가 로드됐는지. false면 화면이 시드(임시)값으로 계산돼 실제와 다른
+  // 지수가 잠깐 보이므로(기기마다 로드 시점이 달라 불일치), 그때는 지수를 '예보 준비 중'으로 가린다.
+  const weatherReady = Object.keys(liveWeather).length > 0;
 
   // 기상청 실날씨를 머지한 자치구 목록. liveWeather가 채워지면 해당 구의 날씨를 덮어쓴다.
   const regions = useMemo(
@@ -1155,10 +1158,16 @@ function App() {
 
           <div className="seoul-map-wrap">
             <div className="map-summary" aria-label="서울시 위험도 요약">
-                    <span><b>{riskSummary.danger}개 구</b> 🔴 출몰 많음</span>
-                    <span><b>{riskSummary.warning}개 구</b> 🟠 출몰 주의</span>
-                    <span><b>{riskSummary.notice}개 구</b> 🟡 출몰 보통</span>
-                    <span><b>{riskSummary.calm}개 구</b> 🟢 출몰 적음</span>
+              {weatherReady ? (
+                <>
+                  <span><b>{riskSummary.danger}개 구</b> 🔴 출몰 많음</span>
+                  <span><b>{riskSummary.warning}개 구</b> 🟠 출몰 주의</span>
+                  <span><b>{riskSummary.notice}개 구</b> 🟡 출몰 보통</span>
+                  <span><b>{riskSummary.calm}개 구</b> 🟢 출몰 적음</span>
+                </>
+              ) : (
+                <span className="map-loading">⏳ 기상청 예보를 불러오는 중… 잠시 후 실시간 지수가 표시돼요</span>
+              )}
             </div>
             <div className="seoul-map seoul-map-ai" role="group" aria-label="서울시 구별 벌레예보 지도">
               <svg
@@ -1178,7 +1187,7 @@ function App() {
                       key={region.id}
                     >
                       <path
-                        className={`district-shape ${risk.tone}`}
+                        className={`district-shape ${weatherReady ? risk.tone : 'loading'}`}
                         d={d}
                         role="button"
                         tabIndex={0}
@@ -1189,13 +1198,13 @@ function App() {
                             setSelectedId(region.id);
                           }
                         }}
-                        aria-label={`${region.name} ${getForecastRiskLabel(risk)} 제보 ${reportCount}건`}
+                        aria-label={weatherReady ? `${region.name} ${getForecastRiskLabel(risk)} 제보 ${reportCount}건` : `${region.name} 예보 준비 중`}
                       />
                       <text className="district-label" x={labelX} y={labelY}>
                         {region.name.replace(/구$/, '')}
                       </text>
                       <text className="district-score" x={labelX} y={labelY + 24}>
-                        {risk.score}
+                        {weatherReady ? risk.score : ''}
                       </text>
                     </g>
                   );

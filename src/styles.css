@@ -644,6 +644,12 @@ h3 {
   color: #1c584a;
 }
 
+.map-summary .map-loading {
+  color: #6a7d72;
+  background: #eef2ef;
+  font-weight: 700;
+}
+
 .map-region-select {
   display: flex;
   align-items: center;
@@ -823,6 +829,11 @@ h3 {
 
 .district-shape.danger {
   fill: #c85c3c;
+}
+
+/* 기상청 실날씨 로드 전 — 시드값으로 인한 잘못된 색이 보이지 않도록 중립 회색 */
+.district-shape.loading {
+  fill: #e2e7e3;
 }
 
 .district-label,
