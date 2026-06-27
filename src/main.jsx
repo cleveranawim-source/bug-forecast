@@ -401,7 +401,7 @@ const HOTSPOTS = [
 
 // 활동별 대비 팁
 const ACTIVITY_TIPS = [
-  { icon: '🏃', title: '러닝', detail: '러브버그는 한낮~해질녘에 가장 활발해요. 이른 아침이나 밤이 그나마 한산. 형광·밝은 운동복은 빛에 끌려 더 꼬이니 어두운 색이 나아요.' },
+  { icon: '🏃', title: '러닝', detail: '러브버그는 한낮~해질녘에 가장 활발해요. 이른 아침이 벌레가 가장 적어요. 형광·밝은 운동복은 빛에 끌려 더 꼬이니 어두운 색이 나아요. 저녁엔 가로등·조명 주변을 피하세요.' },
   { icon: '🚴', title: '자전거', detail: '하천변 코스는 떼로 부딪혀요. 고글·버프로 눈·입을 막고, 속도 낼 땐 특히 입을 다물어요. 붙은 건 문지르지 말고 물로 씻어내요.' },
   { icon: '👨‍👩‍👧', title: '나들이·소풍', detail: '돗자리는 물가·풀숲·조명에서 떨어진 트인 곳에. 밝은 색 텐트·옷은 더 모여요. 음식은 덮어두고, 저녁 랜턴은 자리에서 떨어뜨려 둬요.' },
 ];
@@ -444,6 +444,11 @@ const BUGS = [
     icon: '🦗', name: '잠자리', good: true, tag: '익충',
     desc: '모기와 작은 날벌레를 잡아먹는 하늘의 사냥꾼이에요. 잠자리가 많다는 건 물가가 건강하다는 뜻이기도 해요.',
     tip: '사람을 물지 않아요. 가까이 와도 놀라지 말고 지나가게 두면 돼요.',
+  },
+  {
+    icon: '🦋', name: '나방', good: true, tag: '무해',
+    desc: '대부분의 나방은 물거나 쏘지 않아요. 밤에 꽃가루받이를 돕고 새·박쥐의 먹이가 되는 생태계 일꾼이에요. 빛에 모이는 습성이 있어요.',
+    tip: '성충은 손대도 해롭지 않아요. 단, 털 달린 애벌레(쐐기·독나방 애벌레)는 독털이 있어 만지면 따갑고 발진이 나니 눈으로만 보세요.',
   },
   {
     icon: '🦟', name: '모기', good: false, tag: '해충',
@@ -616,10 +621,10 @@ function getPlaceRisk(regionScore, env) {
 
 // 위험도별 추천 시간 안내
 function placeTimeAdvice(tone) {
-  if (tone === 'danger') return '오늘은 실내나 다른 날을 권해요. 꼭 간다면 이른 아침(6~8시)에 짧게.';
-  if (tone === 'warning') return '이른 아침(6~8시)이나 늦은 밤이 그나마 한산해요. 한낮·해질녘은 피하세요.';
-  if (tone === 'notice') return '대체로 괜찮아요. 해질녘 한두 시간만 피하면 좋아요.';
-  return '오늘은 다녀오기 좋아요. 편하게 즐기세요.';
+  if (tone === 'danger') return '오늘은 실내나 다른 날을 권해요. 굳이 간다면 해 뜬 직후 이른 아침(6~8시)이 벌레가 가장 적어요.';
+  if (tone === 'warning') return '한낮~해질녘에 가장 많아요. 이른 아침(6~8시)이 제일 적고, 저녁 조명 주변은 빛에 꼬이니 특히 피하세요.';
+  if (tone === 'notice') return '이른 아침이 가장 좋아요. 해질녘과 저녁 조명 주변만 피하면 무난해요.';
+  return '오늘은 다녀오기 좋아요. 그래도 저녁 조명 주변은 살짝 주의하세요.';
 }
 
 // 상위 탭 3개 + 각 그룹 안의 세그먼트(서브탭). activeTab은 세그먼트 id(기존 값) 그대로 유지.
@@ -881,9 +886,10 @@ function App() {
     memo: '',
   });
   const [liveWeather, setLiveWeather] = useState({});
-  // 기상청 실날씨가 로드됐는지. false면 화면이 시드(임시)값으로 계산돼 실제와 다른
-  // 지수가 잠깐 보이므로(기기마다 로드 시점이 달라 불일치), 그때는 지수를 '예보 준비 중'으로 가린다.
-  const weatherReady = Object.keys(liveWeather).length > 0;
+  const [weatherTimedOut, setWeatherTimedOut] = useState(false);
+  // 실날씨가 로드됐거나(정상) 일정 시간이 지나면(폰에서 지연·실패 시) 시드값으로라도 표시한다.
+  // 로딩(회색)이 무한정 유지돼 지도가 '모두 회색'으로 남던 문제 방지. 시드는 현실화돼 있어 안전.
+  const weatherReady = Object.keys(liveWeather).length > 0 || weatherTimedOut;
 
   // 기상청 실날씨를 머지한 자치구 목록. liveWeather가 채워지면 해당 구의 날씨를 덮어쓴다.
   const regions = useMemo(
@@ -1040,6 +1046,12 @@ function App() {
     fetchAllDistricts()
       .then((data) => setLiveWeather(data))
       .catch((error) => console.warn('기상청 일괄 조회 실패:', error.message));
+  }, []);
+
+  useEffect(() => {
+    // 실날씨가 7초 안에 안 오면(폰 지연·실패) 시드값으로라도 표시 — 지도가 계속 회색으로 남지 않게.
+    const timeout = setTimeout(() => setWeatherTimedOut(true), 7000);
+    return () => clearTimeout(timeout);
   }, []);
 
   function scrollToRef(ref) {
@@ -1368,7 +1380,7 @@ function App() {
             <div className="seoul-map seoul-map-ai" role="group" aria-label="서울시 구별 벌레예보 지도">
               <svg
                 className="seoul-map-svg"
-                viewBox={`0 0 ${aiMap.viewBox[0]} ${aiMap.viewBox[1]}`}
+                viewBox="20 2 1268 1032"
                 role="img"
                 aria-label="서울시 자치구 벌레예보"
               >
