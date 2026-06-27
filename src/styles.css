@@ -35,7 +35,16 @@ button {
 .app-shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 24px 0 36px;
+  /* 다이내믹 아일랜드·상태바(safe-area)만큼 상단 여백 확보 + 숨 쉴 공간 */
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 0 36px;
+}
+
+/* 좌상단 워드마크 — safe-area 여백 아래에 위치(아일랜드·상태바와 안 겹침) */
+.app-wordmark {
+  margin-bottom: 10px;
+  padding-left: 2px;
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 .topbar,

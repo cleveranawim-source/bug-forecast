@@ -909,7 +909,8 @@ function App() {
   const updatedSelected = { ...selected, reports: totalReports };
   const updatedRisk = getRisk(updatedSelected);
   const selectedDongs = getDongRisk(selected, totalReports, countByDong(reports, selected.id));
-  const forecastRegion = regions.find((region) => region.id === forecastRegionId) ?? selected;
+  // 예보는 현재 위치(선택한 구)를 그대로 따른다 — 별도 구 선택 없이 selected 기준.
+  const forecastRegion = selected;
   const forecastTotalReports =
     forecastRegion.reports + reports.filter((item) => item.regionId === forecastRegion.id).length;
   const forecastDongs = getDongRisk(forecastRegion, forecastTotalReports, countByDong(reports, forecastRegion.id));
@@ -1198,16 +1199,7 @@ function App() {
 
   return (
     <main className="app-shell">
-      <section className="topbar" aria-label="앱 상단">
-        <div>
-          <p className="eyebrow">지역 제보 기반 예측</p>
-          <h1>🐞 우리동네 벌레예보</h1>
-        </div>
-        <button className="icon-button" aria-label="알림 설정">
-          <Bell size={21} />
-        </button>
-      </section>
-
+      <div className="app-wordmark" aria-label="우리동네 벌레예보">🐞</div>
       <nav className="app-tabs" aria-label="앱 화면 탭">
         {TAB_GROUPS.map((group) => {
           const active = group.id === activeTab || group.segs.some((seg) => seg.id === activeTab);
@@ -1669,7 +1661,7 @@ function App() {
             <div className="tab-pane">
               <div className="section-heading compact">
                 <div>
-                  <p className="eyebrow">5일 예보 · 샘플 모델</p>
+                  <p className="eyebrow">현재 위치 예보</p>
                   <h3>{forecastRegion.name} {activeForecastDong} 출몰위험도 예보</h3>
                   <p className="forecast-note">
                     기준: 선택한 구·동의 기온, 습도, 강수 가능성, 바람, 누적 제보 수를 조합해 위험도를 계산해요.
@@ -1677,24 +1669,6 @@ function App() {
                 </div>
               </div>
               <div className="forecast-picker" aria-label="예보 동네 선택">
-                <label>
-                  구 선택
-                  <select
-                    value={forecastRegionId}
-                    onChange={(event) => {
-                      const nextRegion = REGIONS.find((region) => region.id === event.target.value);
-                      const nextDongs = getDongRisk(nextRegion, nextRegion.reports).sort((a, b) =>
-                        a.name.localeCompare(b.name, 'ko')
-                      );
-                      setForecastRegionId(event.target.value);
-                      setForecastDong(nextDongs[0]?.name ?? '');
-                    }}
-                  >
-                    {sortedForecastRegions.map((region) => (
-                      <option value={region.id} key={region.id}>{region.name}</option>
-                    ))}
-                  </select>
-                </label>
                 <label>
                   동 선택
                   <select value={activeForecastDong} onChange={(event) => setForecastDong(event.target.value)}>
