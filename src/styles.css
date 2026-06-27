@@ -59,9 +59,9 @@ button {
   top: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 7px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   padding: 7px;
   border: 1px solid rgba(42, 61, 52, 0.1);
   border-radius: 8px;
@@ -72,12 +72,12 @@ button {
 
 .app-tabs button {
   min-width: 0;
-  min-height: 42px;
+  min-height: 44px;
   border: 0;
   border-radius: 6px;
   color: #4f6259;
   background: transparent;
-  font-size: 0.86rem;
+  font-size: 0.92rem;
   font-weight: 900;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -88,6 +88,37 @@ button {
   color: #fff;
   background: #1c584a;
   box-shadow: 0 8px 18px rgba(28, 88, 74, 0.18);
+}
+
+/* 세그먼트 바 — 상위 탭 아래 서브탭(요약·지도·예보·장소 / 출몰장소·도감·행동요령) */
+.app-segments {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 5px;
+  border-radius: 10px;
+  background: #eef2ef;
+  overflow-x: auto;
+}
+
+.app-segments button {
+  flex: 1 0 auto;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 7px;
+  color: #56685e;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.app-segments button.active {
+  color: #1c584a;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(31, 43, 37, 0.12);
 }
 
 .eyebrow {
@@ -1555,6 +1586,131 @@ h3 {
   color: #9e4124;
 }
 
+/* 동네 장소 (우리동네 장소 탭) */
+.spots-select {
+  margin-bottom: 14px;
+}
+
+.spots-loading {
+  padding: 24px 14px;
+  text-align: center;
+  color: #6a7d72;
+  background: #eef2ef;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.spots-intro {
+  margin-bottom: 14px;
+  color: #54665d;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.spots-list {
+  display: grid;
+  gap: 10px;
+}
+
+.spot-card {
+  padding: 13px 14px;
+  border: 1px solid #dfe8e1;
+  border-left-width: 4px;
+  border-radius: 10px;
+  background: #f7faf5;
+}
+
+.spot-card.calm {
+  border-left-color: #36b37e;
+}
+
+.spot-card.notice {
+  border-left-color: #e3c14e;
+}
+
+.spot-card.warning {
+  border-left-color: #e08562;
+}
+
+.spot-card.danger {
+  border-color: #f0ddd3;
+  border-left-color: #c85c3c;
+  background: #fdf6f4;
+}
+
+.spot-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.spot-title strong {
+  display: block;
+  color: #1d2c27;
+  font-size: 1rem;
+}
+
+.spot-meta {
+  display: block;
+  margin-top: 2px;
+  color: #74867b;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.spot-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.spot-badge i {
+  font-style: normal;
+  font-size: 0.9rem;
+}
+
+.spot-badge.calm {
+  color: #15663f;
+  background: #d8f0e4;
+}
+
+.spot-badge.notice {
+  color: #876a16;
+  background: #f6ecc8;
+}
+
+.spot-badge.warning {
+  color: #9e5a24;
+  background: #f7e2cf;
+}
+
+.spot-badge.danger {
+  color: #9e2f24;
+  background: #f6d5cf;
+}
+
+.spot-time {
+  margin-top: 8px;
+  color: #54665d;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.spots-empty {
+  margin-top: 12px;
+  color: #74867b;
+  font-size: 0.9rem;
+}
+
 .check-list label {
   gap: 10px;
   min-height: 44px;
@@ -1663,7 +1819,7 @@ h3 {
   }
 
   .app-tabs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .nearby-dong-board {

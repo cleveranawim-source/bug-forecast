@@ -467,14 +467,187 @@ const BUGS = [
   },
 ];
 
-const APP_TABS = [
-  { id: 'main', label: '📍 현재 내위치' },
-  { id: 'map', label: '🗺️ 지역별 현황' },
-  { id: 'report', label: '📝 시민관측' },
-  { id: 'forecast', label: '☁️ 예보' },
-  { id: 'places', label: '🔎 출몰장소' },
-  { id: 'bugs', label: '🐞 벌레도감' },
-  { id: 'guide', label: '🛡️ 행동안내' },
+// 동네별 야외 활동 장소 — 구 id별 대표 장소. env: riverside(물가) / mountain(산자락) / urban(도심)
+const DISTRICT_PLACES = {
+  gangseo: [
+    { name: '가양·방화 한강공원', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '궁산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '서울식물원', act: '👶 나들이', env: 'urban' },
+  ],
+  yangcheon: [
+    { name: '안양천 산책로', act: '🏃 러닝·라이딩', env: 'riverside' },
+    { name: '신정산 근린공원', act: '🚶 산책', env: 'mountain' },
+    { name: '파리공원', act: '👶 나들이', env: 'urban' },
+  ],
+  guro: [
+    { name: '안양천 자전거길', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '천왕산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '푸른수목원', act: '👶 나들이', env: 'urban' },
+  ],
+  geumcheon: [
+    { name: '안양천 산책로', act: '🏃 러닝', env: 'riverside' },
+    { name: '호암산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '금천한내근린공원', act: '👶 나들이', env: 'urban' },
+  ],
+  yeongdeungpo: [
+    { name: '여의도 한강공원', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '선유도공원', act: '👶 나들이', env: 'riverside' },
+    { name: '영등포공원', act: '🚶 산책', env: 'urban' },
+  ],
+  dongjak: [
+    { name: '보라매공원', act: '🏃 러닝·나들이', env: 'urban' },
+    { name: '국사봉 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '노들나루공원', act: '🚶 산책', env: 'riverside' },
+  ],
+  gwanak: [
+    { name: '관악산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '도림천 산책로', act: '🏃 러닝', env: 'riverside' },
+    { name: '낙성대공원', act: '👶 나들이', env: 'urban' },
+  ],
+  seocho: [
+    { name: '양재천 산책로', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '우면산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '양재시민의숲', act: '👶 나들이', env: 'urban' },
+  ],
+  gangnam: [
+    { name: '양재천 산책로', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '대모산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '도산공원', act: '👶 나들이', env: 'urban' },
+  ],
+  songpa: [
+    { name: '잠실 한강공원', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '석촌호수', act: '🚶 산책·나들이', env: 'urban' },
+    { name: '송파둘레길', act: '🏃 러닝·산책', env: 'riverside' },
+    { name: '성내천 산책로', act: '🚶 산책', env: 'riverside' },
+    { name: '올림픽공원', act: '👶 나들이', env: 'urban' },
+  ],
+  gangdong: [
+    { name: '암사 한강공원', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '일자산 허브천문공원', act: '🚶 산책', env: 'mountain' },
+    { name: '고덕수변생태공원', act: '👶 나들이', env: 'riverside' },
+  ],
+  gwangjin: [
+    { name: '뚝섬 한강공원', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '아차산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '어린이대공원', act: '👶 나들이', env: 'urban' },
+  ],
+  seongdong: [
+    { name: '서울숲', act: '🏃 러닝·나들이', env: 'urban' },
+    { name: '응봉산 팔각정', act: '🚶 산책', env: 'mountain' },
+    { name: '살곶이체육공원', act: '🚴 라이딩', env: 'riverside' },
+  ],
+  jungnang: [
+    { name: '중랑천 자전거길', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '봉화산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '용마폭포공원', act: '👶 나들이', env: 'urban' },
+  ],
+  dongdaemun: [
+    { name: '중랑천 산책로', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '배봉산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '청계천 산책로', act: '🚶 산책', env: 'riverside' },
+  ],
+  seongbuk: [
+    { name: '성북천 산책로', act: '🚶 산책', env: 'riverside' },
+    { name: '북악산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '오동근린공원', act: '👶 나들이', env: 'urban' },
+  ],
+  jongno: [
+    { name: '청계천 산책로', act: '🚶 산책', env: 'riverside' },
+    { name: '인왕산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '삼청공원', act: '👶 나들이', env: 'urban' },
+  ],
+  jung: [
+    { name: '청계천 산책로', act: '🏃 러닝·산책', env: 'riverside' },
+    { name: '남산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '장충단공원', act: '👶 나들이', env: 'urban' },
+  ],
+  yongsan: [
+    { name: '이촌 한강공원', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '남산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '용산가족공원', act: '👶 나들이', env: 'urban' },
+  ],
+  seodaemun: [
+    { name: '홍제천 산책로', act: '🏃 러닝·산책', env: 'riverside' },
+    { name: '안산 자락길', act: '🚶 산책', env: 'mountain' },
+    { name: '서대문독립공원', act: '👶 나들이', env: 'urban' },
+  ],
+  mapo: [
+    { name: '망원 한강공원', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '경의선숲길', act: '🚶 산책·러닝', env: 'urban' },
+    { name: '하늘공원', act: '👶 나들이', env: 'urban' },
+  ],
+  eunpyeong: [
+    { name: '불광천 산책로', act: '🏃 러닝·산책', env: 'riverside' },
+    { name: '북한산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '진관근린공원', act: '👶 나들이', env: 'urban' },
+  ],
+  gangbuk: [
+    { name: '우이천 산책로', act: '🚶 산책', env: 'riverside' },
+    { name: '북한산 우이령길', act: '🚶 산책', env: 'mountain' },
+    { name: '북서울꿈의숲', act: '👶 나들이', env: 'urban' },
+  ],
+  dobong: [
+    { name: '중랑천 자전거길', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '도봉산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '서울창포원', act: '👶 나들이', env: 'urban' },
+  ],
+  nowon: [
+    { name: '중랑천 산책로', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '불암산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '경춘선숲길', act: '🚶 산책', env: 'urban' },
+  ],
+};
+
+// 장소 환경별 러브버그 가중 — 물가·산자락은 발생원이라 구 지수에 가산, 도심은 감산
+const PLACE_ENV = {
+  riverside: { label: '물가', adj: 8 },
+  mountain: { label: '산자락', adj: 5 },
+  urban: { label: '도심', adj: -10 },
+};
+
+// 구 지수(0~100)에 장소 환경 보정을 더해 장소별 위험 산출(risk.js band와 동일 기준)
+function getPlaceRisk(regionScore, env) {
+  const score = Math.max(0, Math.min(100, regionScore + (PLACE_ENV[env]?.adj ?? 0)));
+  if (score >= 75) return { score, tone: 'danger', label: '매우 높음' };
+  if (score >= 55) return { score, tone: 'warning', label: '높음' };
+  if (score >= 35) return { score, tone: 'notice', label: '보통' };
+  return { score, tone: 'calm', label: '낮음' };
+}
+
+// 위험도별 추천 시간 안내
+function placeTimeAdvice(tone) {
+  if (tone === 'danger') return '오늘은 실내나 다른 날을 권해요. 꼭 간다면 이른 아침(6~8시)에 짧게.';
+  if (tone === 'warning') return '이른 아침(6~8시)이나 늦은 밤이 그나마 한산해요. 한낮·해질녘은 피하세요.';
+  if (tone === 'notice') return '대체로 괜찮아요. 해질녘 한두 시간만 피하면 좋아요.';
+  return '오늘은 다녀오기 좋아요. 편하게 즐기세요.';
+}
+
+// 상위 탭 3개 + 각 그룹 안의 세그먼트(서브탭). activeTab은 세그먼트 id(기존 값) 그대로 유지.
+const TAB_GROUPS = [
+  {
+    id: 'home',
+    label: '📍 우리동네',
+    segs: [
+      { id: 'main', label: '요약' },
+      { id: 'map', label: '지도' },
+      { id: 'forecast', label: '예보' },
+      { id: 'spots', label: '장소' },
+    ],
+  },
+  {
+    id: 'guideGroup',
+    label: '🐞 가이드',
+    segs: [
+      { id: 'places', label: '출몰장소' },
+      { id: 'bugs', label: '벌레도감' },
+      { id: 'guide', label: '행동요령' },
+    ],
+  },
+  {
+    id: 'report',
+    label: '✍️ 제보',
+    segs: [{ id: 'report', label: '제보' }],
+  },
 ];
 
 const MAP_WIDTH = 940;
@@ -1024,16 +1197,39 @@ function App() {
       </section>
 
       <nav className="app-tabs" aria-label="앱 화면 탭">
-        {APP_TABS.map((tab) => (
-          <button
-            className={activeTab === tab.id ? 'active' : ''}
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {TAB_GROUPS.map((group) => {
+          const active = group.id === activeTab || group.segs.some((seg) => seg.id === activeTab);
+          return (
+            <button
+              className={active ? 'active' : ''}
+              key={group.id}
+              onClick={() => setActiveTab(group.segs[0]?.id ?? group.id)}
+            >
+              {group.label}
+            </button>
+          );
+        })}
       </nav>
+
+      {(() => {
+        const group = TAB_GROUPS.find(
+          (g) => g.id === activeTab || g.segs.some((seg) => seg.id === activeTab)
+        );
+        if (!group || group.segs.length <= 1) return null;
+        return (
+          <nav className="app-segments" aria-label={`${group.label} 세부 화면`}>
+            {group.segs.map((seg) => (
+              <button
+                className={activeTab === seg.id ? 'active' : ''}
+                key={seg.id}
+                onClick={() => setActiveTab(seg.id)}
+              >
+                {seg.label}
+              </button>
+            ))}
+          </nav>
+        );
+      })()}
 
       {activeTab === 'main' && (
         <>
@@ -1277,7 +1473,7 @@ function App() {
       </div>
       )}
 
-      {['report', 'forecast', 'places', 'bugs', 'guide'].includes(activeTab) && (
+      {['report', 'forecast', 'places', 'spots', 'bugs', 'guide'].includes(activeTab) && (
         <section className="panel action-panel single-panel">
           {activeTab === 'report' && (
             <div className="tab-pane">
@@ -1541,6 +1737,53 @@ function App() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {activeTab === 'spots' && (
+            <div className="tab-pane">
+              <div className="section-heading compact">
+                <div>
+                  <p className="eyebrow">우리동네 야외장소</p>
+                  <h3>오늘, {selected.name} 어디가 좋을까?</h3>
+                </div>
+                <MapPin size={20} />
+              </div>
+              <label className="map-region-select spots-select">
+                <span>구 선택</span>
+                <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
+                  {sortedForecastRegions.map((region) => (
+                    <option key={region.id} value={region.id}>{region.name}</option>
+                  ))}
+                </select>
+              </label>
+              {!weatherReady ? (
+                <p className="spots-loading">⏳ 기상청 예보를 불러오는 중… 잠시만요</p>
+              ) : (
+                <>
+                  <p className="spots-intro">오늘 날씨로 계산한 위험도와 추천 시간이에요. <b>회피보다 대안</b> — 위험한 곳 대신 같은 동네 안전한 곳을 골라보세요.</p>
+                  <div className="spots-list">
+                    {(DISTRICT_PLACES[selectedId] ?? []).map((place) => {
+                      const placeRisk = getPlaceRisk(updatedRisk.score, place.env);
+                      return (
+                        <div className={`spot-card ${placeRisk.tone}`} key={place.name}>
+                          <div className="spot-head">
+                            <div className="spot-title">
+                              <strong>{place.name}</strong>
+                              <span className="spot-meta">{place.act} · {PLACE_ENV[place.env]?.label}</span>
+                            </div>
+                            <b className={`spot-badge ${placeRisk.tone}`}>{placeRisk.label}<i>{placeRisk.score}</i></b>
+                          </div>
+                          <p className="spot-time">🕒 {placeTimeAdvice(placeRisk.tone)}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!DISTRICT_PLACES[selectedId] && (
+                    <p className="spots-empty">이 구의 장소는 곧 추가할게요.</p>
+                  )}
+                </>
+              )}
             </div>
           )}
 
