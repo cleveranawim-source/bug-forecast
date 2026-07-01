@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   AlertTriangle,
-  Bell,
   Bug,
   CloudRain,
   Droplets,
@@ -17,7 +16,6 @@ import {
 import './styles.css';
 import seoulGeo from './seoul_municipalities_geo_simple.json';
 import seoulSubGeo from './seoul_submunicipalities_geo_simple.json';
-import seoulAreas from './seoul_areas.json';
 import aiMap from './seoul_ai_map.json';
 import { getRisk } from './lib/risk.js';
 import { addReport, subscribeReports, countByDong } from './lib/reports.js';
@@ -655,23 +653,6 @@ const TAB_GROUPS = [
   },
 ];
 
-const MAP_WIDTH = 940;
-const MAP_HEIGHT = 620;
-const MAP_PADDING = 28;
-
-// 서울시 공식 지도 이미지(map_0.png) 크기 — area 좌표계 및 SVG 오버레이 viewBox
-const MAP_IMG_W = 533;
-const MAP_IMG_H = 437;
-
-// 한강 중심선(서→동, 주요 다리 위경도). 구 경계와 같은 투영으로 그려 정확히 맞물린다.
-const HAN_RIVER = [
-  [126.818, 37.601], [126.857, 37.567], [126.891, 37.552], [126.901, 37.539],
-  [126.928, 37.531], [126.937, 37.527], [126.958, 37.517], [126.979, 37.512],
-  [126.996, 37.512], [127.009, 37.523], [127.024, 37.530], [127.042, 37.527],
-  [127.054, 37.524], [127.082, 37.520], [127.094, 37.527], [127.103, 37.544],
-  [127.127, 37.560],
-];
-
 function getGeoBounds(geo) {
   const values = geo.features.flatMap((feature) => flattenCoordinates(feature.geometry.coordinates));
   return values.reduce(
@@ -688,38 +669,6 @@ function getGeoBounds(geo) {
 function flattenCoordinates(coordinates) {
   if (typeof coordinates[0][0] === 'number') return coordinates;
   return coordinates.flatMap((item) => flattenCoordinates(item));
-}
-
-function projectPoint([lon, lat], bounds) {
-  const usableWidth = MAP_WIDTH - MAP_PADDING * 2;
-  const usableHeight = MAP_HEIGHT - MAP_PADDING * 2;
-  const rawX = (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon);
-  const rawY = (bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat);
-  return [MAP_PADDING + rawX * usableWidth, MAP_PADDING + rawY * usableHeight];
-}
-
-function geometryToPath(geometry, bounds) {
-  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
-  return polygons
-    .map((polygon) =>
-      polygon
-        .map((ring) =>
-          ring
-            .map((point, index) => {
-              const [x, y] = projectPoint(point, bounds);
-              return `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
-            })
-            .join(' ') + ' Z'
-        )
-        .join(' ')
-    )
-    .join(' ');
-}
-
-function getFeatureCenter(geometry, bounds) {
-  const points = flattenCoordinates(geometry.coordinates).map((point) => projectPoint(point, bounds));
-  const totals = points.reduce((sum, [x, y]) => ({ x: sum.x + x, y: sum.y + y }), { x: 0, y: 0 });
-  return [totals.x / points.length, totals.y / points.length];
 }
 
 // 동 지도용 투영 — 한 구만 종횡비를 유지하며 정사각 뷰박스 중앙에 배치(경도 cos 보정).
@@ -864,8 +813,8 @@ function App() {
   const [query, setQuery] = useState('');
   const [showNearby, setShowNearby] = useState(false);
   const [activeTab, setActiveTab] = useState('main');
-  const [forecastRegionId, setForecastRegionId] = useState('eunpyeong');
   const [forecastDong, setForecastDong] = useState('녹번동');
+  const [forecastRegionId, setForecastRegionId] = useState('eunpyeong');
   const [citizen, setCitizen] = useState(null);
   const [reports, setReports] = useState([]);
   const [locationAuth, setLocationAuth] = useState({
@@ -909,8 +858,8 @@ function App() {
   const updatedSelected = { ...selected, reports: totalReports };
   const updatedRisk = getRisk(updatedSelected);
   const selectedDongs = getDongRisk(selected, totalReports, countByDong(reports, selected.id));
-  // 예보는 현재 위치(선택한 구)를 그대로 따른다 — 별도 구 선택 없이 selected 기준.
-  const forecastRegion = selected;
+  // 예보 기준 구: 드롭다운 선택값(forecastRegionId), 없으면 현재 위치(selected)를 기본으로.
+  const forecastRegion = regions.find((region) => region.id === forecastRegionId) ?? selected;
   const forecastTotalReports =
     forecastRegion.reports + reports.filter((item) => item.regionId === forecastRegion.id).length;
   const forecastDongs = getDongRisk(forecastRegion, forecastTotalReports, countByDong(reports, forecastRegion.id));
@@ -943,13 +892,6 @@ function App() {
     },
     { calm: 0, notice: 0, warning: 0, danger: 0 }
   );
-  const geoBounds = useMemo(() => getGeoBounds(seoulGeo), []);
-  const hanRiverPath = useMemo(() => {
-    return HAN_RIVER.map((point, index) => {
-      const [x, y] = projectPoint(point, geoBounds);
-      return `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(' ');
-  }, [geoBounds]);
   const regionByName = useMemo(
     () => Object.fromEntries(regions.map((region) => [region.name, region])),
     [regions]
@@ -1005,30 +947,6 @@ function App() {
       };
     });
   }, [selectedId, regionCodeById, selectedDongs, selected]);
-  const geoFeatures = useMemo(
-    () =>
-      seoulGeo.features
-        .map((feature) => {
-          const region = regionByName[feature.properties.name];
-          if (!region) return null;
-          const regionReportCount =
-            region.reports + reports.filter((item) => item.regionId === region.id).length;
-          const risk = getRisk({ ...region, reports: regionReportCount });
-          const [labelX, labelY] = getFeatureCenter(feature.geometry, geoBounds);
-          return {
-            feature,
-            region,
-            regionReportCount,
-            risk,
-            path: geometryToPath(feature.geometry, geoBounds),
-            labelX,
-            labelY,
-          };
-        })
-        .filter(Boolean),
-    [geoBounds, regionByName, reports]
-  );
-
   useEffect(() => {
     const savedCitizen = readCitizenSession();
     if (savedCitizen) {
@@ -1669,6 +1587,24 @@ function App() {
                 </div>
               </div>
               <div className="forecast-picker" aria-label="예보 동네 선택">
+                <label>
+                  구 선택
+                  <select
+                    value={forecastRegionId}
+                    onChange={(event) => {
+                      const nextRegion = REGIONS.find((region) => region.id === event.target.value);
+                      const nextDongs = getDongRisk(nextRegion, nextRegion.reports).sort((a, b) =>
+                        a.name.localeCompare(b.name, 'ko')
+                      );
+                      setForecastRegionId(event.target.value);
+                      setForecastDong(nextDongs[0]?.name ?? '');
+                    }}
+                  >
+                    {sortedForecastRegions.map((region) => (
+                      <option value={region.id} key={region.id}>{region.name}</option>
+                    ))}
+                  </select>
+                </label>
                 <label>
                   동 선택
                   <select value={activeForecastDong} onChange={(event) => setForecastDong(event.target.value)}>
