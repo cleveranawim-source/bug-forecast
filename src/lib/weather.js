@@ -126,36 +126,56 @@ export function normalizeDaily(items) {
     .slice(0, 3);
 }
 
-export async function fetchWeather(lat, lon, { signal } = {}) {
-  const key = import.meta.env.VITE_KMA_KEY;
-  if (!key) {
-    throw new Error('VITE_KMA_KEY 미설정: .env에 기상청 인증키를 넣어주세요.');
+// 프록시(/api/weather) 주소 — 웹은 같은 도메인 상대경로, 네이티브(capacitor://)는 배포 도메인 절대경로.
+const PROXY_BASE =
+  typeof window !== 'undefined' && window.location.protocol.startsWith('http')
+    ? ''
+    : 'https://bug-forecast.vercel.app';
+
+// 1차: 서버 프록시(키가 서버에만 있음) → 실패 시 2차: 직접 호출(VITE_KMA_KEY 필요, 로컬 dev용).
+// vite dev/preview는 /api/*를 index.html로 돌려주므로(SPA fallback) JSON 여부까지 확인한다.
+async function fetchForecastItems(nx, ny, signal) {
+  try {
+    const res = await fetch(`${PROXY_BASE}/api/weather?nx=${nx}&ny=${ny}`, { signal });
+    const type = res.headers.get('content-type') ?? '';
+    if (res.ok && type.includes('json')) {
+      const json = await res.json();
+      const items = json?.response?.body?.items?.item;
+      if (Array.isArray(items)) return items;
+    }
+  } catch {
+    /* 프록시 없음/실패 → 직접 호출 폴백 */
   }
 
-  const { nx, ny } = latLonToGrid(lat, lon);
+  const key = import.meta.env.VITE_KMA_KEY;
+  if (!key) {
+    throw new Error('날씨 API 사용 불가: 프록시(/api/weather)도 VITE_KMA_KEY도 없습니다.');
+  }
   const { baseDate, baseTime } = getBaseDateTime();
   const params = new URLSearchParams({
     serviceKey: key,
     pageNo: '1',
     numOfRows: '1000', // 단기예보는 +3일치(시간×12카테고리)라 300으로는 하루치만 온다
-
     dataType: 'JSON',
     base_date: baseDate,
     base_time: baseTime,
     nx: String(nx),
     ny: String(ny),
   });
-
   const res = await fetch(`${BASE_URL}?${params}`, { signal });
   if (!res.ok) throw new Error(`기상청 응답 오류: ${res.status}`);
-
   const json = await res.json();
   const items = json?.response?.body?.items?.item;
   if (!Array.isArray(items)) {
     const msg = json?.response?.header?.resultMsg ?? '응답 형식 오류';
     throw new Error(`기상청 데이터 없음: ${msg}`);
   }
+  return items;
+}
 
+export async function fetchWeather(lat, lon, { signal } = {}) {
+  const { nx, ny } = latLonToGrid(lat, lon);
+  const items = await fetchForecastItems(nx, ny, signal);
   return { ...normalizeForecast(items, { nx, ny }), daily: normalizeDaily(items) };
 }
 
