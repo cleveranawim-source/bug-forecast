@@ -66,6 +66,66 @@ export function normalizeForecast(items, meta = {}) {
   };
 }
 
+// PCP(1시간 강수량) 문자열 → mm 숫자. "강수없음"/"1mm 미만"/"30.0~50.0mm"/"50.0mm 이상" 형태를 처리한다.
+function parsePcp(value) {
+  if (!value || value === '강수없음') return 0;
+  if (String(value).includes('미만')) return 0.5;
+  if (String(value).includes('이상')) return 60;
+  if (String(value).includes('~')) return 40;
+  const n = parseFloat(value);
+  return Number.isNaN(n) ? 0 : n;
+}
+
+// 하늘상태(SKY)+강수형태(PTY) → 사람이 읽는 날씨 라벨
+function weatherLabel(sky, pty) {
+  if (pty === 1 || pty === 4) return '비';
+  if (pty === 2) return '비/눈';
+  if (pty === 3) return '눈';
+  if (sky >= 4) return '흐림';
+  if (sky >= 3) return '구름 많음';
+  return '맑음';
+}
+
+// items를 날짜별로 묶어 일 대표값으로 요약(오늘~모레 최대 3일).
+// 기온=14시(러브버그 활동 시간대) 없으면 그날 최고, 습도·바람=평균, 강수확률=최대, 강수량=합.
+export function normalizeDaily(items) {
+  const days = new Map();
+  for (const it of items) {
+    if (!days.has(it.fcstDate)) days.set(it.fcstDate, {});
+    const day = days.get(it.fcstDate);
+    const push = (k, v) => {
+      (day[k] ??= []).push(v);
+    };
+    if (it.category === 'TMP') {
+      push('temps', Number(it.fcstValue));
+      if (it.fcstTime === '1400') day.temp14 = Number(it.fcstValue);
+    } else if (it.category === 'REH') push('rehs', Number(it.fcstValue));
+    else if (it.category === 'WSD') push('wsds', Number(it.fcstValue));
+    else if (it.category === 'POP') push('pops', Number(it.fcstValue));
+    else if (it.category === 'PCP') push('pcps', parsePcp(it.fcstValue));
+    else if (it.category === 'SKY') {
+      if (it.fcstTime === '1400' || day.sky == null) day.sky = Number(it.fcstValue);
+    } else if (it.category === 'PTY') {
+      const p = Number(it.fcstValue);
+      if (p > 0) day.pty = p;
+    }
+  }
+  const avg = (arr) => (arr && arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : null);
+  return [...days.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([date, d]) => ({
+      date,
+      temp: d.temp14 ?? (d.temps ? Math.max(...d.temps) : null),
+      humidity: avg(d.rehs) == null ? null : Math.round(avg(d.rehs)),
+      wind: avg(d.wsds) == null ? null : Math.round(avg(d.wsds) * 10) / 10,
+      rain: d.pops ? Math.max(...d.pops) : null,
+      precip: d.pcps ? Math.round(d.pcps.reduce((s, v) => s + v, 0) * 10) / 10 : 0,
+      label: weatherLabel(d.sky ?? 1, d.pty ?? 0),
+    }))
+    .filter((d) => d.temp != null && d.humidity != null)
+    .slice(0, 3);
+}
+
 export async function fetchWeather(lat, lon, { signal } = {}) {
   const key = import.meta.env.VITE_KMA_KEY;
   if (!key) {
@@ -77,7 +137,8 @@ export async function fetchWeather(lat, lon, { signal } = {}) {
   const params = new URLSearchParams({
     serviceKey: key,
     pageNo: '1',
-    numOfRows: '300',
+    numOfRows: '1000', // 단기예보는 +3일치(시간×12카테고리)라 300으로는 하루치만 온다
+
     dataType: 'JSON',
     base_date: baseDate,
     base_time: baseTime,
@@ -95,7 +156,7 @@ export async function fetchWeather(lat, lon, { signal } = {}) {
     throw new Error(`기상청 데이터 없음: ${msg}`);
   }
 
-  return normalizeForecast(items, { nx, ny });
+  return { ...normalizeForecast(items, { nx, ny }), daily: normalizeDaily(items) };
 }
 
 // 서울 25개 자치구 대표 좌표(구청 위치). REGIONS의 id와 키가 일치한다.
@@ -155,7 +216,7 @@ function writeCache(key, value) {
   try {
     for (let i = localStorage.length - 1; i >= 0; i -= 1) {
       const k = localStorage.key(i);
-      if (k && k.startsWith('kma-') && k !== key) localStorage.removeItem(k); // 옛 회차 정리
+      if (k && k.startsWith('kma') && k !== key) localStorage.removeItem(k); // 옛 회차·옛 버전 정리
     }
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
@@ -167,7 +228,8 @@ function writeCache(key, value) {
 // 같은 발표 회차면 캐시를 쓰고, 개별 구 실패는 건너뛴다(해당 구는 기존값 유지).
 export async function fetchAllDistricts() {
   const { baseDate, baseTime } = getBaseDateTime();
-  const cacheKey = `kma-${baseDate}-${baseTime}`;
+  // kma2 = daily(3일 예보) 포함 버전. 옛 kma- 캐시(daily 없음)와 구분한다.
+  const cacheKey = `kma2-${baseDate}-${baseTime}`;
   const cached = readCache(cacheKey);
   if (cached) return cached;
 
@@ -176,7 +238,7 @@ export async function fetchAllDistricts() {
     try {
       const { lat, lon } = DISTRICT_COORDS[id];
       const w = await fetchWeather(lat, lon);
-      return [id, { temp: w.temp, humidity: w.humidity, rain: w.rain, wind: w.wind }];
+      return [id, { temp: w.temp, humidity: w.humidity, rain: w.rain, wind: w.wind, daily: w.daily }];
     } catch {
       return null;
     }

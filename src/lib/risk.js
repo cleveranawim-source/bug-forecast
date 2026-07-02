@@ -89,6 +89,18 @@ function citizenFactor(reports) {
   return clamp01(n / 35);
 }
 
+// 시즌 계수 — 러브버그 성충 활동기(6월 중순~7월 초 대발생) 기준으로 지수를 감쇠.
+// 한여름·가을·겨울에 날씨만 맞다고 높은 지수가 나오면 신뢰를 잃으므로, 발생 생태 달력을 반영한다.
+export function seasonFactor(date = new Date()) {
+  const key = (date.getMonth() + 1) * 100 + date.getDate(); // 월일 → 예: 7월 2일 = 702
+  if (key >= 615 && key <= 710) return 1;    // 대발생 피크
+  if (key >= 601 && key < 615) return 0.8;   // 증가기
+  if (key >= 711 && key <= 725) return 0.6;  // 감소기
+  if (key >= 516 && key <= 531) return 0.4;  // 초기 출현
+  if (key >= 726 && key <= 810) return 0.25; // 잔존 개체
+  return 0.08;                               // 비시즌
+}
+
 function band(score) {
   if (score >= 75) return { label: '매우 높음', tone: 'danger' };
   if (score >= 55) return { label: '높음', tone: 'warning' };
@@ -109,6 +121,7 @@ export function computeRisk(region) {
     rain: rainTriggerFactor(region.rain, region.recentRainMm),
     terrain: TERRAIN_WEIGHT[region.id] ?? DEFAULT_TERRAIN,
     citizen: citizenFactor(region.reports),
+    season: seasonFactor(),
   };
 
   const environment =
@@ -118,7 +131,8 @@ export function computeRisk(region) {
     ENV_WEIGHTS.rain * factors.rain +
     ENV_WEIGHTS.terrain * factors.terrain;
 
-  const raw = 0.6 * environment + 0.4 * factors.citizen;
+  // 시즌 계수는 전체에 곱한다 — 비시즌엔 날씨가 완벽해도 실제 개체가 없기 때문.
+  const raw = (0.6 * environment + 0.4 * factors.citizen) * factors.season;
   const score = Math.round(clamp01(raw) * 100);
 
   return { score, ...band(score), factors };

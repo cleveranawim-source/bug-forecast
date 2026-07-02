@@ -380,12 +380,11 @@ const DISTRICT_DONGS = {
   gwanak: ['은천동', '성현동', '청룡동', '보라매동', '청림동', '행운동', '낙성대동', '중앙동', '인헌동', '남현동', '서원동', '신원동', '서림동', '난곡동', '신사동', '신림동', '삼성동', '난향동', '조원동', '대학동', '미성동'],
 };
 
+// 실예보(daily) 로드 전에만 쓰는 대체 오프셋 — 기상청 단기예보가 오면 실측 3일로 대체된다.
 const FORECAST_OFFSETS = [
   { day: '오늘', temp: 0, humidity: 0, rain: 0, reports: 0, weather: '습도 관찰' },
   { day: '내일', temp: -1, humidity: 2, rain: 5, reports: 1, weather: '흐림' },
-  { day: '3일 뒤', temp: 1, humidity: 6, rain: 12, reports: 2, weather: '비 뒤 갬' },
-  { day: '4일 뒤', temp: 2, humidity: -4, rain: -10, reports: -2, weather: '맑음' },
-  { day: '5일 뒤', temp: 0, humidity: -1, rain: -4, reports: -1, weather: '구름' },
+  { day: '모레', temp: 1, humidity: 6, rain: 12, reports: 2, weather: '비 뒤 갬' },
 ];
 
 // 야외활동 장소별 러브버그 위험 — 나들이·런닝·자전거 타는 사람 기준
@@ -767,8 +766,28 @@ function formatForecastDay(index) {
 }
 
 function makeForecast(region, reportCount, dongRisk) {
+  const dongAdjustment = dongRisk ? Math.round((dongRisk.score - 55) / 8) : 0;
+
+  // 기상청 단기예보에서 뽑은 일별 실예보(오늘~모레)가 있으면 그 날씨로 계산한다.
+  if (region.daily?.length) {
+    return region.daily.map((day, index) => {
+      const prev = index > 0 ? region.daily[index - 1] : null;
+      const simulated = {
+        ...region,
+        temp: day.temp,
+        humidity: day.humidity,
+        rain: day.rain ?? region.rain,
+        wind: day.wind ?? region.wind,
+        // 전날 예보 강수량을 '비 온 뒤 갬' 우화 신호로 사용(첫날은 강수확률로 근사)
+        recentRainMm: prev ? prev.precip : undefined,
+        reports: Math.max(0, reportCount + dongAdjustment),
+      };
+      return { day: day.date, temp: day.temp, weather: day.label, risk: getRisk(simulated) };
+    });
+  }
+
+  // 실예보가 아직 없으면(로드 전·실패) 시드+오프셋 참고치로 대체한다.
   return FORECAST_OFFSETS.map((day) => {
-    const dongAdjustment = dongRisk ? Math.round((dongRisk.score - 55) / 8) : 0;
     const simulated = {
       ...region,
       temp: region.temp + day.temp,
@@ -1582,7 +1601,7 @@ function App() {
                   <p className="eyebrow">현재 위치 예보</p>
                   <h3>{forecastRegion.name} {activeForecastDong} 출몰위험도 예보</h3>
                   <p className="forecast-note">
-                    기준: 선택한 구·동의 기온, 습도, 강수 가능성, 바람, 누적 제보 수를 조합해 위험도를 계산해요.
+                    기상청 단기예보(오늘~모레)의 기온·습도·강수·바람에 우리 동네 제보 수를 조합해 위험도를 계산해요.
                   </p>
                 </div>
               </div>
@@ -1787,7 +1806,8 @@ function App() {
                 </ul>
                 <p className="index-note">
                   💡 지금은 제보 초기라 날씨·지형 비중이 커요. <b>제보가 모일수록</b> 우리 동네 예보가
-                  더 정확해집니다. 같은 구라도 제보가 많은 동이 더 높게 표시돼요.
+                  더 정확해집니다. 같은 구라도 제보가 많은 동이 더 높게 표시돼요. 그리고 러브버그
+                  활동기(6월 중순~7월 초)에서 멀어질수록 지수는 자연히 낮아져요.
                 </p>
               </div>
             </div>
