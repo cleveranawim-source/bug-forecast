@@ -132,7 +132,7 @@ const PROXY_BASE =
     ? ''
     : 'https://bug-forecast.vercel.app';
 
-// 1차: 서버 프록시(키가 서버에만 있음) → 실패 시 2차: 직접 호출(VITE_KMA_KEY 필요, 로컬 dev용).
+// 1차: 서버 프록시(키가 서버에만 있음) → 실패 시 2차: 직접 호출(로컬 dev 전용).
 // vite dev/preview는 /api/*를 index.html로 돌려주므로(SPA fallback) JSON 여부까지 확인한다.
 async function fetchForecastItems(nx, ny, signal) {
   try {
@@ -144,33 +144,38 @@ async function fetchForecastItems(nx, ny, signal) {
       if (Array.isArray(items)) return items;
     }
   } catch {
-    /* 프록시 없음/실패 → 직접 호출 폴백 */
+    /* 프록시 없음/실패 → 개발 모드에 한해 직접 호출 폴백 */
   }
 
-  const key = import.meta.env.VITE_KMA_KEY;
-  if (!key) {
-    throw new Error('날씨 API 사용 불가: 프록시(/api/weather)도 VITE_KMA_KEY도 없습니다.');
+  // 직접 호출은 로컬 개발(vite dev)에서만. import.meta.env.DEV가 false인 프로덕션·앱 빌드에서는
+  // 이 블록 전체가 트리셰이킹으로 제거되어 VITE_KMA_KEY(=serviceKey)가 번들에 남지 않는다.
+  if (import.meta.env.DEV) {
+    const key = import.meta.env.VITE_KMA_KEY;
+    if (key) {
+      const { baseDate, baseTime } = getBaseDateTime();
+      const params = new URLSearchParams({
+        serviceKey: key,
+        pageNo: '1',
+        numOfRows: '1000', // 단기예보는 +3일치(시간×12카테고리)라 300으로는 하루치만 온다
+        dataType: 'JSON',
+        base_date: baseDate,
+        base_time: baseTime,
+        nx: String(nx),
+        ny: String(ny),
+      });
+      const res = await fetch(`${BASE_URL}?${params}`, { signal });
+      if (!res.ok) throw new Error(`기상청 응답 오류: ${res.status}`);
+      const json = await res.json();
+      const items = json?.response?.body?.items?.item;
+      if (!Array.isArray(items)) {
+        const msg = json?.response?.header?.resultMsg ?? '응답 형식 오류';
+        throw new Error(`기상청 데이터 없음: ${msg}`);
+      }
+      return items;
+    }
   }
-  const { baseDate, baseTime } = getBaseDateTime();
-  const params = new URLSearchParams({
-    serviceKey: key,
-    pageNo: '1',
-    numOfRows: '1000', // 단기예보는 +3일치(시간×12카테고리)라 300으로는 하루치만 온다
-    dataType: 'JSON',
-    base_date: baseDate,
-    base_time: baseTime,
-    nx: String(nx),
-    ny: String(ny),
-  });
-  const res = await fetch(`${BASE_URL}?${params}`, { signal });
-  if (!res.ok) throw new Error(`기상청 응답 오류: ${res.status}`);
-  const json = await res.json();
-  const items = json?.response?.body?.items?.item;
-  if (!Array.isArray(items)) {
-    const msg = json?.response?.header?.resultMsg ?? '응답 형식 오류';
-    throw new Error(`기상청 데이터 없음: ${msg}`);
-  }
-  return items;
+
+  throw new Error('날씨 API를 불러오지 못했어요. 프록시(/api/weather)를 확인해 주세요.');
 }
 
 export async function fetchWeather(lat, lon, { signal } = {}) {
