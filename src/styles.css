@@ -1587,6 +1587,40 @@ h3 {
   gap: 10px;
 }
 
+/* 배지 + 즐겨찾기 별을 세로로 묶어 오른쪽 정렬 */
+.spot-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.spot-fav {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: #cbb26a;
+  cursor: pointer;
+}
+
+.spot-fav.on {
+  color: #efb400;
+}
+
+/* 즐겨찾기 모아보기 섹션 — 아래 목록과 점선으로 구분 */
+.fav-section {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed #d3ded6;
+}
+
+.fav-section .eyebrow {
+  color: #b8860b;
+}
+
 .spot-title strong {
   display: block;
   color: #1d2c27;

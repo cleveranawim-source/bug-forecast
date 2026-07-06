@@ -957,6 +957,13 @@ function App() {
   const [forecastRegionId, setForecastRegionId] = useState('eunpyeong');
   const [citizen, setCitizen] = useState(null);
   const [reports, setReports] = useState([]);
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('lovebug-favorites') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [locationAuth, setLocationAuth] = useState({
     status: 'idle',
     message: '현재위치를 인증하면 시민관측을 등록할 수 있어요.',
@@ -997,6 +1004,35 @@ function App() {
   const totalReports = selected.reports + reports.filter((item) => item.regionId === selected.id).length;
   const updatedSelected = { ...selected, reports: totalReports };
   const updatedRisk = getRisk(updatedSelected);
+
+  // 즐겨찾기 — 각 구의 오늘 지수를 미리 계산(즐겨찾기 카드는 원래 구 기준으로 표시).
+  const guScoreById = useMemo(() => {
+    const map = {};
+    regions.forEach((region) => {
+      const rc = region.reports + reports.filter((r) => r.regionId === region.id).length;
+      map[region.id] = getRisk({ ...region, reports: rc }).score;
+    });
+    return map;
+  }, [regions, reports]);
+  const regionNameById = useMemo(
+    () => Object.fromEntries(REGIONS.map((r) => [r.id, r.name])),
+    []
+  );
+  useEffect(() => {
+    try {
+      localStorage.setItem('lovebug-favorites', JSON.stringify(favorites));
+    } catch {
+      /* 저장 실패는 무시 */
+    }
+  }, [favorites]);
+  const isFav = (gu, name) => favorites.some((f) => f.gu === gu && f.name === name);
+  const toggleFav = (gu, name, act, env) => {
+    setFavorites((cur) =>
+      isFav(gu, name)
+        ? cur.filter((f) => !(f.gu === gu && f.name === name))
+        : [...cur, { gu, name, act, env }]
+    );
+  };
   const selectedDongs = getDongRisk(selected, totalReports, countByDong(reports, selected.id));
   // 예보 기준 구: 드롭다운 선택값(forecastRegionId), 없으면 현재 위치(selected)를 기본으로.
   const forecastRegion = regions.find((region) => region.id === forecastRegionId) ?? selected;
@@ -1823,7 +1859,38 @@ function App() {
                 <p className="spots-loading">⏳ 기상청 예보를 불러오는 중… 잠시만요</p>
               ) : (
                 <>
-                  <p className="spots-intro">오늘 날씨로 계산한 위험도와 추천 시간이에요. <b>회피보다 대안</b> — 위험한 곳 대신 같은 동네 안전한 곳을 골라보세요.</p>
+                  {favorites.length > 0 && (
+                    <div className="fav-section">
+                      <p className="eyebrow">⭐ 내 즐겨찾기 · {favorites.length}곳</p>
+                      <div className="spots-list">
+                        {favorites.map((f) => {
+                          const risk = getPlaceRisk(guScoreById[f.gu] ?? 0, f.env);
+                          return (
+                            <div className={`spot-card ${risk.tone}`} key={`${f.gu}|${f.name}`}>
+                              <div className="spot-head">
+                                <div className="spot-title">
+                                  <strong>{f.name}</strong>
+                                  <span className="spot-meta">{regionNameById[f.gu] ?? f.gu} · {PLACE_ENV[f.env]?.label}</span>
+                                </div>
+                                <div className="spot-right">
+                                  <b className={`spot-badge ${risk.tone}`}>{risk.label}<i>{risk.score}</i></b>
+                                  <button
+                                    type="button"
+                                    className="spot-fav on"
+                                    onClick={() => toggleFav(f.gu, f.name, f.act, f.env)}
+                                    aria-label="즐겨찾기 해제"
+                                  >
+                                    ★
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  <p className="spots-intro">오늘 날씨로 계산한 위험도와 추천 시간이에요. <b>회피보다 대안</b> — 위험한 곳 대신 같은 동네 안전한 곳을 골라보세요. 자주 가는 곳은 ☆를 눌러 즐겨찾기하세요.</p>
                   <div className="spots-list">
                     {(DISTRICT_PLACES[selectedId] ?? []).map((place) => {
                       const placeRisk = getPlaceRisk(updatedRisk.score, place.env);
@@ -1834,7 +1901,17 @@ function App() {
                               <strong>{place.name}</strong>
                               <span className="spot-meta">{place.act} · {PLACE_ENV[place.env]?.label}</span>
                             </div>
-                            <b className={`spot-badge ${placeRisk.tone}`}>{placeRisk.label}<i>{placeRisk.score}</i></b>
+                            <div className="spot-right">
+                              <b className={`spot-badge ${placeRisk.tone}`}>{placeRisk.label}<i>{placeRisk.score}</i></b>
+                              <button
+                                type="button"
+                                className={`spot-fav ${isFav(selectedId, place.name) ? 'on' : ''}`}
+                                onClick={() => toggleFav(selectedId, place.name, place.act, place.env)}
+                                aria-label={isFav(selectedId, place.name) ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+                              >
+                                {isFav(selectedId, place.name) ? '★' : '☆'}
+                              </button>
+                            </div>
                           </div>
                           <p className="spot-time">🕒 {placeTimeAdvice(placeRisk.tone)}</p>
                         </div>
