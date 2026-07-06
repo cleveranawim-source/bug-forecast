@@ -1334,7 +1334,9 @@ function App() {
 
   return (
     <main className="app-shell">
-      <div className="app-wordmark" aria-label="우리동네 벌레예보">🐞</div>
+      <div className="app-wordmark">
+        <img src="/logo-mark.png" alt="우리동네 벌레예보" width="40" height="40" />
+      </div>
 
       {changeAlerts && changeAlerts.length > 0 && !alertsDismissed && (
         <div className="change-banner" role="status">

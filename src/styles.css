@@ -43,8 +43,15 @@ button {
 .app-wordmark {
   margin-bottom: 10px;
   padding-left: 2px;
-  font-size: 1.5rem;
-  line-height: 1;
+  line-height: 0;
+}
+
+.app-wordmark img {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: block;
+  box-shadow: 0 1px 3px rgba(20, 40, 30, 0.14);
 }
 
 /* 인앱 변화 알림 배너 — 앱 진입 시 즐겨찾기·현위치 지수 변동 안내 */
