@@ -47,6 +47,61 @@ button {
   line-height: 1;
 }
 
+/* 인앱 변화 알림 배너 — 앱 진입 시 즐겨찾기·현위치 지수 변동 안내 */
+.change-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid #f0dcc4;
+  border-radius: 12px;
+  background: #fff7ec;
+}
+
+.change-banner-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.change-banner-body strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #8a5a1c;
+  font-size: 0.92rem;
+}
+
+.change-banner-body ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.change-banner-body li {
+  color: #5b4a35;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.change-banner-body li span {
+  color: #8a5a1c;
+}
+
+.change-banner-close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(138, 90, 28, 0.1);
+  color: #8a5a1c;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 .section-heading,
 .hero,
 .metric-grid,

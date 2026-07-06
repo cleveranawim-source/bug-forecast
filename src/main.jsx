@@ -964,6 +964,16 @@ function App() {
       return [];
     }
   });
+  // [인앱 알림] 지난 방문 때의 지수(즐겨찾기·현위치)를 저장해 이번 방문과 비교한다.
+  const [lastSeen, setLastSeen] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('lovebug-lastseen') || '{}');
+    } catch {
+      return {};
+    }
+  });
+  const [changeAlerts, setChangeAlerts] = useState(null);
+  const [alertsDismissed, setAlertsDismissed] = useState(false);
   const [locationAuth, setLocationAuth] = useState({
     status: 'idle',
     message: '현재위치를 인증하면 시민관측을 등록할 수 있어요.',
@@ -1033,6 +1043,37 @@ function App() {
         : [...cur, { gu, name, act, env }]
     );
   };
+
+  // [인앱 알림] 실날씨가 로드되면 한 번, 즐겨찾기·현재위치 지수를 지난 방문값과 비교해
+  // 8점 이상 변한 곳을 배너로 알린다. 비교 후 현재값을 저장(다음 방문 기준선).
+  useEffect(() => {
+    if (!weatherReady || changeAlerts !== null) return;
+    const scores = {};
+    favorites.forEach((f) => {
+      scores[`fav:${f.gu}:${f.name}`] = getPlaceRisk(guScoreById[f.gu] ?? 0, f.env).score;
+    });
+    scores[`gu:${selectedId}`] = updatedRisk.score;
+
+    const list = [];
+    for (const [key, score] of Object.entries(scores)) {
+      const prev = lastSeen[key];
+      if (prev != null && Math.abs(score - prev) >= 8) {
+        const label = key.startsWith('fav:')
+          ? `⭐ ${key.split(':')[2]}`
+          : `📍 ${regionNameById[selectedId] ?? '우리동네'} 현재 위치`;
+        list.push({ key, label, prev, score, up: score > prev });
+      }
+    }
+    setChangeAlerts(list);
+    const next = { ...lastSeen, ...scores };
+    setLastSeen(next);
+    try {
+      localStorage.setItem('lovebug-lastseen', JSON.stringify(next));
+    } catch {
+      /* 저장 실패 무시 */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weatherReady, changeAlerts]);
   const selectedDongs = getDongRisk(selected, totalReports, countByDong(reports, selected.id));
   // 예보 기준 구: 드롭다운 선택값(forecastRegionId), 없으면 현재 위치(selected)를 기본으로.
   const forecastRegion = regions.find((region) => region.id === forecastRegionId) ?? selected;
@@ -1294,6 +1335,26 @@ function App() {
   return (
     <main className="app-shell">
       <div className="app-wordmark" aria-label="우리동네 벌레예보">🐞</div>
+
+      {changeAlerts && changeAlerts.length > 0 && !alertsDismissed && (
+        <div className="change-banner" role="status">
+          <div className="change-banner-body">
+            <strong>📢 지난 방문보다 달라졌어요</strong>
+            <ul>
+              {changeAlerts.map((a) => (
+                <li key={a.key}>
+                  {a.up ? '🔺' : '🔻'} {a.label} <span>{a.prev} → <b>{a.score}</b></span>{' '}
+                  {a.up ? '상승, 주의하세요' : '완화됐어요'}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <button className="change-banner-close" onClick={() => setAlertsDismissed(true)} aria-label="알림 닫기">
+            ✕
+          </button>
+        </div>
+      )}
+
       <nav className="app-tabs" aria-label="앱 화면 탭">
         {TAB_GROUPS.map((group) => {
           const active = group.id === activeTab || group.segs.some((seg) => seg.id === activeTab);
