@@ -553,6 +553,7 @@ const DISTRICT_PLACES = {
   songpa: [
     { name: '잠실 한강공원', act: '🚴 라이딩·러닝', env: 'riverside' },
     { name: '탄천 자전거길', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '송파둘레길', act: '🏃 러닝·산책', env: 'riverside' },
     { name: '성내천', act: '🚶 산책', env: 'riverside' },
     { name: '장지천', act: '🚶 산책', env: 'riverside' },
     { name: '석촌호수', act: '🚶 산책·나들이', env: 'urban' },
