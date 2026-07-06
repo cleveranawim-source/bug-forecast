@@ -26,6 +26,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>현재 위치를 확인해 우리동네 벌레예보와 시민관측 제보 지역을 인증합니다.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>현재 위치를 확인해 우리동네 벌레예보와 시민관측 제보 지역을 인증합니다.</string>
 	<key>UILaunchStoryboardName</key>
