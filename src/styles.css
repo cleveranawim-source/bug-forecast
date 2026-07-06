@@ -1896,3 +1896,28 @@ h3 {
   }
 
 }
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+  padding: 16px 0 8px;
+  font-size: 0.82rem;
+  color: #8a857c;
+}
+
+.app-footer a {
+  color: #8a857c;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.app-footer a:hover {
+  color: #1c584a;
+}
+
+.app-footer-dot {
+  opacity: 0.5;
+}

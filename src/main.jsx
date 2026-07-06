@@ -2073,6 +2073,14 @@ function App() {
           )}
         </section>
       )}
+
+      <footer className="app-footer">
+        <a href="/privacy.html" target="_blank" rel="noopener noreferrer">
+          개인정보 처리방침
+        </a>
+        <span className="app-footer-dot">·</span>
+        <span>© 2026 Yeol Studio</span>
+      </footer>
     </main>
   );
 }

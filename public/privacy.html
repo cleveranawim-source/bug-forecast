@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>개인정보 처리방침 · 우리동네 벌레예보</title>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0;
+      background: #f6f4ef;
+      color: #2c2a26;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      line-height: 1.7;
+      -webkit-text-size-adjust: 100%;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+    h1 { font-size: 1.55rem; margin: 0 0 4px; }
+    .updated { color: #8a857c; font-size: 0.9rem; margin: 0 0 28px; }
+    h2 { font-size: 1.12rem; margin: 32px 0 8px; padding-top: 8px; border-top: 1px solid #e6e2d9; }
+    p, li { font-size: 0.98rem; }
+    ul { padding-left: 20px; }
+    li { margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid #ded9cf; padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #efece4; font-weight: 600; }
+    .lead { background: #fff; border: 1px solid #e6e2d9; border-radius: 12px; padding: 16px 18px; margin: 0 0 8px; }
+    a { color: #1f7a52; }
+    code { background: #ecece7; padding: 1px 5px; border-radius: 4px; font-size: 0.88em; }
+    footer { margin-top: 40px; color: #9a958c; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>개인정보 처리방침</h1>
+    <p class="updated">앱: 우리동네 벌레예보 · 시행일 2026년 7월 6일</p>
+
+    <p class="lead">
+      <strong>우리동네 벌레예보</strong>(이하 “앱”)는 이용자의 개인정보를 소중히 여기며,
+      「개인정보 보호법」 등 관련 법령을 준수합니다. 이 방침은 앱이 어떤 정보를 왜 수집하고,
+      어떻게 이용·보관하며, 이용자가 어떤 권리를 갖는지 알기 쉽게 설명합니다.
+      앱은 회원가입을 강제하지 않으며, 대부분의 예보 기능은 로그인 없이 이용할 수 있습니다.
+    </p>
+
+    <h2>1. 수집하는 개인정보 항목과 목적</h2>
+    <table>
+      <thead>
+        <tr><th>항목</th><th>수집 시점</th><th>이용 목적</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>위치정보(GPS 좌표)</td>
+          <td>‘현재 위치 적용’ 또는 제보 지역 인증을 누를 때(사용 중에만)</td>
+          <td>현재 위치의 동(洞) 확인, 날씨 조회, 시민관측 제보의 지역 인증</td>
+        </tr>
+        <tr>
+          <td>구글 계정 정보(이름·이메일·프로필)</td>
+          <td>구글 로그인을 선택할 때에 한함</td>
+          <td>제보자 표시, 본인 제보 관리</td>
+        </tr>
+        <tr>
+          <td>시민 제보 내용(자치구·동·장소·발생량·메모·인증 좌표·제보자 이름)</td>
+          <td>이용자가 직접 제보를 등록할 때</td>
+          <td>지역별 벌레 출몰 현황 공유 및 예보 정확도 향상</td>
+        </tr>
+        <tr>
+          <td>기기 내부 저장값(즐겨찾기 장소, 마지막 확인 지수)</td>
+          <td>즐겨찾기·앱 이용 시</td>
+          <td>즐겨찾기 유지, ‘지난 방문보다 달라졌어요’ 변화 안내</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      즐겨찾기와 마지막 확인 지수는 이용자의 <strong>기기 내부(localStorage)에만</strong> 저장되며
+      서버로 전송되지 않습니다. 앱을 삭제하면 함께 삭제됩니다.
+    </p>
+
+    <h2>2. 위치정보의 이용</h2>
+    <p>
+      위치정보는 앱을 사용하는 동안(포그라운드) 이용자가 관련 버튼을 누른 경우에만 접근하며,
+      백그라운드에서 위치를 지속적으로 추적하지 않습니다. 날씨 조회 시 기상청 서버에는
+      정확한 좌표가 아니라 넓은 <strong>격자 구역 번호</strong>(약 5km 단위)만 전달됩니다.
+      제보 인증 시에는 제보의 신뢰도를 위해 좌표가 제보 기록과 함께 저장됩니다.
+    </p>
+
+    <h2>3. 개인정보의 보유 및 이용 기간</h2>
+    <ul>
+      <li>시민 제보 기록: 예보 서비스 제공 목적이 달성되거나 이용자가 삭제를 요청할 때까지 보관합니다.</li>
+      <li>구글 계정 연동 정보: 이용자가 로그아웃하거나 계정 연동 해지를 요청하면 지체 없이 파기합니다.</li>
+      <li>기기 내부 저장값: 이용자가 앱을 삭제하면 즉시 삭제됩니다.</li>
+    </ul>
+
+    <h2>4. 개인정보의 제3자 제공 및 처리 위탁</h2>
+    <p>앱은 개인정보를 판매하거나 광고 목적으로 제3자에게 제공하지 않습니다. 서비스 제공을 위해 다음 사업자에 처리를 위탁합니다.</p>
+    <table>
+      <thead><tr><th>수탁자</th><th>위탁 업무</th></tr></thead>
+      <tbody>
+        <tr><td>Google LLC (Firebase)</td><td>로그인 인증, 시민 제보 데이터 저장(클라우드 데이터베이스)</td></tr>
+        <tr><td>기상청(대한민국) / Vercel Inc.</td><td>날씨 예보 조회(격자 구역 번호만 전달)</td></tr>
+      </tbody>
+    </table>
+
+    <h2>5. 이용자의 권리와 행사 방법</h2>
+    <p>
+      이용자는 언제든지 본인의 개인정보에 대한 열람·정정·삭제·처리정지를 요청할 수 있습니다.
+      위치 권한은 기기의 설정 앱에서 언제든 끌 수 있고, 즐겨찾기 등 기기 내부 저장값은 앱 삭제로 제거됩니다.
+      제보 기록의 삭제나 계정 연동 해지는 아래 연락처로 요청해 주시면 처리해 드립니다.
+    </p>
+
+    <h2>6. 아동의 개인정보</h2>
+    <p>
+      앱은 특정 연령을 대상으로 하지 않는 지역 정보 서비스입니다.
+      만 14세 미만 아동의 회원가입(구글 로그인)은 법정대리인의 동의가 있는 경우에 한합니다.
+    </p>
+
+    <h2>7. 개인정보의 안전성 확보</h2>
+    <p>
+      개인정보는 전송 구간 암호화(HTTPS)로 보호되며, 클라우드 데이터베이스의 접근 권한을 최소화합니다.
+      기상청 인증키 등 민감한 서버 자격정보는 앱에 포함하지 않고 서버에서만 관리합니다.
+    </p>
+
+    <h2>8. 개인정보 보호책임자 및 문의</h2>
+    <ul>
+      <li>운영: Yeol Studio</li>
+      <li>문의 이메일: <a href="mailto:cleveranawim@gmail.com">cleveranawim@gmail.com</a></li>
+    </ul>
+
+    <h2>9. 방침의 변경</h2>
+    <p>
+      법령이나 서비스 변경에 따라 이 방침이 수정될 수 있으며, 변경 시 앱 또는 이 페이지를 통해 공지합니다.
+    </p>
+
+    <footer>© 2026 Yeol Studio · 우리동네 벌레예보</footer>
+  </div>
+</body>
+</html>
