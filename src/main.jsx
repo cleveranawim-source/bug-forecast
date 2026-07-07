@@ -26,7 +26,7 @@ import {
   weightedCountByDong,
 } from './lib/reports.js';
 import { fetchAllDistricts } from './lib/weather.js';
-import { signInWithGoogle, signOutUser } from './lib/auth.js';
+import { signInAnonymous, signOutUser } from './lib/auth.js';
 
 const CITIZEN_SESSION_KEY = 'neighborhood-bug-forecast-citizen';
 
@@ -1271,14 +1271,13 @@ function App() {
   async function submitLogin(event) {
     event.preventDefault();
     try {
-      const user = await signInWithGoogle();
+      // 익명 인증 — 팝업 없이 고유 uid만 발급(iOS WKWebView에서도 동작).
+      const user = await signInAnonymous();
       const region = regions.find((item) => item.id === loginForm.regionId) ?? selected;
       const nextCitizen = {
         uid: user.uid,
-        nickname: loginForm.nickname.trim() || user.displayName || '동네관찰러',
-        provider: 'Google',
-        email: user.email ?? null,
-        photoURL: user.photoURL ?? null,
+        nickname: loginForm.nickname.trim() || '동네관찰러',
+        provider: 'anonymous',
         regionId: loginForm.regionId,
         regionName: region.name,
         dong: loginForm.dong,
@@ -1287,11 +1286,8 @@ function App() {
       window.sessionStorage.setItem(CITIZEN_SESSION_KEY, JSON.stringify(nextCitizen));
       setCitizen(nextCitizen);
     } catch (error) {
-      // 사용자가 팝업을 닫은 경우는 조용히 넘어간다.
-      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-        console.error('Google 로그인 실패:', error);
-        alert('Google 로그인에 실패했어요. 잠시 후 다시 시도해 주세요.');
-      }
+      console.error('관찰러 등록 실패:', error);
+      alert('관찰러 등록에 실패했어요. 네트워크 확인 후 다시 시도해 주세요.');
     }
   }
 
@@ -1690,20 +1686,20 @@ function App() {
               <div className="section-heading compact">
                 <div>
                   <p className="eyebrow">시민 관측</p>
-                  <h3>{citizen ? '현재위치 인증 후 제보하기' : 'Google 로그인으로 시작하기'}</h3>
+                  <h3>{citizen ? '현재위치 인증 후 제보하기' : '동네 관찰러로 시작하기'}</h3>
                 </div>
               </div>
 
               {!citizen ? (
                 <form onSubmit={submitLogin} className="login-form">
                   <p className="trust-copy">
-                    신뢰할 수 있는 관측 정보로 쓰기 위해 Google 계정 인증과 현재위치 인증을 거친 뒤 기록해요. 공개 화면에는 닉네임만 표시됩니다.
+                    신뢰할 수 있는 관측 정보로 쓰기 위해 현재위치 인증(GPS)을 거친 뒤 기록해요. 공개 화면에는 닉네임만 표시됩니다.
                   </p>
                   <div className="google-auth-preview">
-                    <span>G</span>
+                    <span>📍</span>
                     <div>
-                      <strong>Google 계정 인증</strong>
-                      <small>Google 계정으로 안전하게 로그인해요. 공개 화면엔 닉네임만 보여요.</small>
+                      <strong>위치 인증 기반 제보</strong>
+                      <small>계정 가입 없이 바로 시작해요. 제보는 현재위치가 인증된 동네에서만 등록돼요.</small>
                     </div>
                   </div>
                   <label>
@@ -1748,15 +1744,15 @@ function App() {
                     </select>
                   </label>
                   <button className="primary-action full" type="submit">
-                    <span className="google-mark">G</span>
-                    Google로 로그인
+                    <Plus size={18} />
+                    관찰러 등록하고 시작하기
                   </button>
                 </form>
               ) : (
                 <>
                   <div className="citizen-card">
                     <div>
-                      <p className="eyebrow">Google 인증 제보자</p>
+                      <p className="eyebrow">동네 관찰러</p>
                       <strong>{citizen.nickname || citizen.name || '동네관찰러'}</strong>
                       <span>{citizen.regionName} {citizen.dong} · 닉네임으로 공개</span>
                     </div>
