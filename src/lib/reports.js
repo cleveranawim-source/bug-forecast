@@ -63,3 +63,33 @@ export function countByDong(reports, regionId) {
   }
   return counts;
 }
+
+// 제보 최근성 가중치 — 대발생은 며칠 단위로 변하므로 오래된 제보는 감쇠시킨다.
+// 48시간 내 1.0 / 7일 내 0.5 / 그 이후 0.2 (createdAt 없으면 방금 쓴 낙관적 표시로 간주해 1.0)
+export function reportWeight(report) {
+  const t = report.createdAt?.toDate ? report.createdAt.toDate().getTime() : Date.now();
+  const ageHours = (Date.now() - t) / 36e5;
+  if (ageHours <= 48) return 1;
+  if (ageHours <= 168) return 0.5;
+  return 0.2;
+}
+
+// 구별 최근성 가중 제보 수 → { [regionId]: weightedCount } (지수 계산용)
+export function weightedCountByRegion(reports) {
+  const counts = {};
+  for (const r of reports) {
+    if (!r.regionId) continue;
+    counts[r.regionId] = (counts[r.regionId] ?? 0) + reportWeight(r);
+  }
+  return counts;
+}
+
+// 특정 구의 동별 최근성 가중 제보 수 → { [dong]: weightedCount } (동 지수 계산용)
+export function weightedCountByDong(reports, regionId) {
+  const counts = {};
+  for (const r of reports) {
+    if (r.regionId !== regionId || !r.dong) continue;
+    counts[r.dong] = (counts[r.dong] ?? 0) + reportWeight(r);
+  }
+  return counts;
+}

@@ -17,12 +17,21 @@ import './styles.css';
 import seoulGeo from './seoul_municipalities_geo_simple.json';
 import seoulSubGeo from './seoul_submunicipalities_geo_simple.json';
 import aiMap from './seoul_ai_map.json';
-import { getRisk } from './lib/risk.js';
-import { addReport, subscribeReports, countByDong } from './lib/reports.js';
+import { getRisk, blendReports } from './lib/risk.js';
+import {
+  addReport,
+  subscribeReports,
+  countByRegion,
+  weightedCountByRegion,
+  weightedCountByDong,
+} from './lib/reports.js';
 import { fetchAllDistricts } from './lib/weather.js';
 import { signInWithGoogle, signOutUser } from './lib/auth.js';
 
 const CITIZEN_SESSION_KEY = 'neighborhood-bug-forecast-citizen';
+
+// 제보 쿨다운(같은 기기 기준) — 연속 제보로 구 지수를 조작하는 것을 막는다.
+const REPORT_COOLDOWN_MS = 5 * 60 * 1000;
 
 const REGIONS = [
   {
@@ -957,6 +966,7 @@ function App() {
   const [forecastRegionId, setForecastRegionId] = useState('eunpyeong');
   const [citizen, setCitizen] = useState(null);
   const [reports, setReports] = useState([]);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const [favorites, setFavorites] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('lovebug-favorites') || '[]');
@@ -996,6 +1006,8 @@ function App() {
   // 실날씨가 로드됐거나(정상) 일정 시간이 지나면(폰에서 지연·실패 시) 시드값으로라도 표시한다.
   // 로딩(회색)이 무한정 유지돼 지도가 '모두 회색'으로 남던 문제 방지. 시드는 현실화돼 있어 안전.
   const weatherReady = Object.keys(liveWeather).length > 0 || weatherTimedOut;
+  // 타임아웃으로만 열린 상태(실날씨 0건) = 시드 추정치를 보여주는 중 — 화면에 정직하게 안내한다.
+  const usingFallbackWeather = weatherTimedOut && Object.keys(liveWeather).length === 0;
 
   // 기상청 실날씨를 머지한 자치구 목록. liveWeather가 채워지면 해당 구의 날씨를 덮어쓴다.
   const regions = useMemo(
@@ -1011,7 +1023,12 @@ function App() {
   }, [query]);
 
   const filteredIds = new Set(filteredRegions.map((region) => region.id));
-  const totalReports = selected.reports + reports.filter((item) => item.regionId === selected.id).length;
+  // 실제 제보 집계 — 지수 계산엔 최근성 가중치(weighted), 화면 표시엔 원시 건수(raw)를 쓴다.
+  // 시드(REGIONS.reports)는 추정 기준선이라 blendReports로 실제 제보가 쌓일수록 감쇠된다.
+  const liveReportsByRegion = useMemo(() => weightedCountByRegion(reports), [reports]);
+  const liveCountsByRegion = useMemo(() => countByRegion(reports), [reports]);
+  const selectedLiveCount = liveCountsByRegion[selected.id] ?? 0;
+  const totalReports = blendReports(selected.reports, liveReportsByRegion[selected.id] ?? 0);
   const updatedSelected = { ...selected, reports: totalReports };
   const updatedRisk = getRisk(updatedSelected);
 
@@ -1019,11 +1036,11 @@ function App() {
   const guScoreById = useMemo(() => {
     const map = {};
     regions.forEach((region) => {
-      const rc = region.reports + reports.filter((r) => r.regionId === region.id).length;
+      const rc = blendReports(region.reports, liveReportsByRegion[region.id] ?? 0);
       map[region.id] = getRisk({ ...region, reports: rc }).score;
     });
     return map;
-  }, [regions, reports]);
+  }, [regions, liveReportsByRegion]);
   const regionNameById = useMemo(
     () => Object.fromEntries(REGIONS.map((r) => [r.id, r.name])),
     []
@@ -1074,20 +1091,25 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weatherReady, changeAlerts]);
-  const selectedDongs = getDongRisk(selected, totalReports, countByDong(reports, selected.id));
+  const selectedDongs = getDongRisk(selected, totalReports, weightedCountByDong(reports, selected.id));
   // 예보 기준 구: 드롭다운 선택값(forecastRegionId), 없으면 현재 위치(selected)를 기본으로.
   const forecastRegion = regions.find((region) => region.id === forecastRegionId) ?? selected;
-  const forecastTotalReports =
-    forecastRegion.reports + reports.filter((item) => item.regionId === forecastRegion.id).length;
-  const forecastDongs = getDongRisk(forecastRegion, forecastTotalReports, countByDong(reports, forecastRegion.id));
+  const forecastTotalReports = blendReports(
+    forecastRegion.reports,
+    liveReportsByRegion[forecastRegion.id] ?? 0
+  );
+  const forecastDongs = getDongRisk(forecastRegion, forecastTotalReports, weightedCountByDong(reports, forecastRegion.id));
   const sortedForecastRegions = useMemo(
     () => [...REGIONS].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
     []
   );
   const loginRegion = regions.find((region) => region.id === loginForm.regionId) ?? selected;
   const loginDongs = useMemo(
-    () => getDongRisk(loginRegion, loginRegion.reports).sort((a, b) => a.name.localeCompare(b.name, 'ko')),
-    [loginRegion]
+    () =>
+      getDongRisk(loginRegion, blendReports(loginRegion.reports, liveReportsByRegion[loginRegion.id] ?? 0)).sort(
+        (a, b) => a.name.localeCompare(b.name, 'ko')
+      ),
+    [loginRegion, liveReportsByRegion]
   );
   const sortedForecastDongs = useMemo(
     () => [...forecastDongs].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
@@ -1102,7 +1124,7 @@ function App() {
     (summary, region) => {
       const regionRisk = getRisk({
         ...region,
-        reports: region.reports + reports.filter((item) => item.regionId === region.id).length,
+        reports: blendReports(region.reports, liveReportsByRegion[region.id] ?? 0),
       });
       summary[regionRisk.tone] += 1;
       return summary;
@@ -1120,13 +1142,13 @@ function App() {
       .map((d) => {
         const region = regionByName[d.name];
         if (!region) return null;
-        const reportCount =
-          region.reports + reports.filter((item) => item.regionId === region.id).length;
+        const reportCount = blendReports(region.reports, liveReportsByRegion[region.id] ?? 0);
+        const liveCount = liveCountsByRegion[region.id] ?? 0;
         const risk = getRisk({ ...region, reports: reportCount });
-        return { region, risk, reportCount, d: d.d, labelX: d.labelX, labelY: d.labelY };
+        return { region, risk, liveCount, d: d.d, labelX: d.labelX, labelY: d.labelY };
       })
       .filter(Boolean);
-  }, [regionByName, reports]);
+  }, [regionByName, liveReportsByRegion, liveCountsByRegion]);
 
   // region.id → 자치구 코드(동 코드 앞 5자리와 매칭하기 위함)
   const regionCodeById = useMemo(() => {
@@ -1204,7 +1226,16 @@ function App() {
 
   async function submitReport(event) {
     event.preventDefault();
-    if (!citizen || locationAuth.status !== 'verified') return;
+    if (!citizen || locationAuth.status !== 'verified' || reportSubmitting) return;
+    // 스팸 가드: 같은 기기에서 5분에 1건. 지수의 40%가 제보라 연속 등록으로 조작되는 것을 막는다.
+    const lastAt = Number(localStorage.getItem('lovebug-last-report') || 0);
+    const elapsed = Date.now() - lastAt;
+    if (elapsed < REPORT_COOLDOWN_MS) {
+      const remainMin = Math.ceil((REPORT_COOLDOWN_MS - elapsed) / 60000);
+      alert(`제보는 5분에 한 번 등록할 수 있어요. 약 ${remainMin}분 후 다시 시도해 주세요.`);
+      return;
+    }
+    setReportSubmitting(true);
     try {
       await addReport({
         uid: citizen.uid,
@@ -1224,9 +1255,16 @@ function App() {
         dong: reportForm.dong || selectedDongs[0]?.name || selected.name,
       });
       setReportForm({ dong: '', place: '학교 주변', amount: '많음', memo: '' });
+      try {
+        localStorage.setItem('lovebug-last-report', String(Date.now()));
+      } catch {
+        /* 저장 실패 무시 */
+      }
     } catch (error) {
       console.error('제보 저장 실패:', error);
       alert('제보 저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setReportSubmitting(false);
     }
   }
 
@@ -1428,8 +1466,19 @@ function App() {
           </div>
           <span className="gauge-label">위험 지수</span>
           <b className={`gauge-status ${updatedRisk.tone}`}>{getForecastRiskLabel(updatedRisk)}</b>
+          <span className="gauge-source">
+            {selectedLiveCount > 0
+              ? `이웃 제보 ${selectedLiveCount}건 반영`
+              : '날씨·지형 기반 추정치'}
+          </span>
         </div>
       </section>
+
+      {usingFallbackWeather && (
+        <p className="stale-notice" role="status">
+          ⚠️ 실시간 예보 연결이 지연되고 있어요 — 임시 추정치를 표시 중입니다.
+        </p>
+      )}
 
       <section className="metric-grid" aria-label="현재 조건">
         <Metric icon={<ThermometerSun />} label="기온" value={`${selected.temp}°C`} />
@@ -1455,7 +1504,7 @@ function App() {
             </div>
           </div>
           <div className="nearby-stat">
-            <b>{totalReports}</b>
+            <b>{selectedLiveCount}</b>
             <span>현재 제보</span>
           </div>
           <div className="nearby-stat">
@@ -1534,7 +1583,7 @@ function App() {
                 aria-label="서울시 자치구 벌레예보"
               >
                 {aiMap.river && <path className="ai-river" d={aiMap.river} />}
-                {aiFeatures.map(({ region, risk, reportCount, d, labelX, labelY }) => {
+                {aiFeatures.map(({ region, risk, liveCount, d, labelX, labelY }) => {
                   const isFilteredOut = query && !filteredIds.has(region.id);
                   return (
                     <g
@@ -1555,7 +1604,7 @@ function App() {
                             setSelectedId(region.id);
                           }
                         }}
-                        aria-label={weatherReady ? `${region.name} ${getForecastRiskLabel(risk)} 제보 ${reportCount}건` : `${region.name} 예보 준비 중`}
+                        aria-label={weatherReady ? `${region.name} ${getForecastRiskLabel(risk)} 제보 ${liveCount}건` : `${region.name} 예보 준비 중`}
                       />
                       <text className="district-label" x={labelX} y={labelY}>
                         {region.name.replace(/구$/, '')}
@@ -1580,7 +1629,7 @@ function App() {
             <div>
               <p className="eyebrow">선택 지역</p>
               <strong>{selected.name}</strong>
-              <span>{selected.zone} · 제보 {totalReports}건</span>
+              <span>{selected.zone} · 제보 {selectedLiveCount}건</span>
             </div>
             <b className={`selected-risk ${updatedRisk.tone}`}>{getForecastRiskLabel(updatedRisk)}</b>
           </div>
@@ -1780,15 +1829,20 @@ function App() {
                         value={reportForm.memo}
                         onChange={(event) => setReportForm({ ...reportForm, memo: event.target.value })}
                         placeholder="예: 운동장 조명 근처"
+                        maxLength={120}
                       />
                     </label>
                     <button
                       className="primary-action full"
                       type="submit"
-                      disabled={locationAuth.status !== 'verified'}
+                      disabled={locationAuth.status !== 'verified' || reportSubmitting}
                     >
                       <Plus size={18} />
-                      {locationAuth.status === 'verified' ? `${selected.name} 인증 제보 등록` : '현재위치 인증 후 등록 가능'}
+                      {reportSubmitting
+                        ? '등록 중…'
+                        : locationAuth.status === 'verified'
+                          ? `${selected.name} 인증 제보 등록`
+                          : '현재위치 인증 후 등록 가능'}
                     </button>
                   </form>
                 </>

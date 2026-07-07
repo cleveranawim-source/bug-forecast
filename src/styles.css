@@ -1928,3 +1928,21 @@ h3 {
 .app-footer-dot {
   opacity: 0.5;
 }
+
+/* 지수 출처 표기 — 실제 제보 반영 여부를 게이지 아래 투명하게 안내 */
+.gauge-source {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: #7b8a82;
+}
+
+/* 실시간 예보 연결 실패 시 추정치 안내 */
+.stale-notice {
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border: 1px solid #f0dcc4;
+  border-radius: 10px;
+  background: #fff7ec;
+  color: #8a5a1c;
+  font-size: 0.85rem;
+}

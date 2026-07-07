@@ -5,12 +5,31 @@ service cloud.firestore {
 
     // 시민 제보(reports)
     //  - 읽기: 예보를 모두에게 보여주기 위해 공개
-    //  - 생성: 로그인한 본인 명의(uid 일치)만 허용
+    //  - 생성: 로그인한 본인 명의(uid 일치) + 필드 화이트리스트/크기·값 검증
+    //    (제보가 지수의 40%를 차지하므로 임의 필드 주입·대용량 문자열을 규칙에서 차단)
     //  - 수정·삭제: 금지(등록된 제보 조작 방지)
     match /reports/{reportId} {
       allow read: if true;
       allow create: if request.auth != null
-                    && request.resource.data.uid == request.auth.uid;
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.keys().hasOnly([
+                         'uid', 'regionId', 'regionName', 'reporterName', 'reporterDong',
+                         'locationVerified', 'locationLabel', 'lat', 'lng',
+                         'place', 'amount', 'memo', 'dong', 'verified', 'createdAt'
+                       ])
+                    && request.resource.data.regionId is string
+                    && request.resource.data.regionId.size() <= 20
+                    && request.resource.data.regionName is string
+                    && request.resource.data.regionName.size() <= 20
+                    && request.resource.data.reporterName is string
+                    && request.resource.data.reporterName.size() <= 30
+                    && request.resource.data.place is string
+                    && request.resource.data.place.size() <= 30
+                    && request.resource.data.amount in ['조금', '많음', '매우 많음']
+                    && request.resource.data.memo is string
+                    && request.resource.data.memo.size() <= 300
+                    && request.resource.data.dong is string
+                    && request.resource.data.dong.size() <= 30;
       allow update, delete: if false;
     }
 

@@ -138,5 +138,15 @@ export function computeRisk(region) {
   return { score, ...band(score), factors };
 }
 
+// 시드(추정 기준선)와 실제 제보의 블렌딩.
+// REGIONS의 seed reports는 실측이 아니라 지형·경험 기반 추정 기준선이다.
+// 실제 제보가 쌓일수록 시드 가중치가 줄어 10건에 도달하면 완전히 실측으로 대체된다
+// — 초기(제보 0건)엔 기존과 동일하게 동작하고, 데이터가 모이면 모델이 현실에 수렴.
+export function blendReports(seedReports, liveCount) {
+  const live = Math.max(0, liveCount ?? 0);
+  const seedWeight = Math.max(0, 1 - live / 10);
+  return (seedReports ?? 0) * seedWeight + live;
+}
+
 // 기존 호출부 호환을 위한 별칭.
 export const getRisk = computeRisk;
