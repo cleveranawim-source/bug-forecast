@@ -38,11 +38,10 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<!-- iPhone은 세로 고정 — 회전 시 레이아웃이 갑자기 재배치되는 것 방지(iPad는 멀티태스킹 요건상 전방향 유지) -->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
