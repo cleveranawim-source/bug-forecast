@@ -126,6 +126,31 @@ export function normalizeDaily(items) {
     .slice(0, 3);
 }
 
+// items를 시간별로 정리해 앞으로 최대 24시간의 조건을 반환.
+// 홈 히어로의 '몇 시 이후엔 잦아드는지' 시간 힌트 계산에 쓴다(시간별 위험지수 산출 입력).
+export function normalizeHourly(items) {
+  const byTime = new Map();
+  for (const it of items) {
+    const stamp = `${it.fcstDate}${it.fcstTime}`;
+    if (!byTime.has(stamp)) byTime.set(stamp, {});
+    const field = CATEGORY_MAP[it.category];
+    if (field) byTime.get(stamp)[field] = Number(it.fcstValue);
+  }
+  return [...byTime.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .slice(0, 24)
+    .map(([stamp, v]) => ({
+      stamp,
+      date: stamp.slice(0, 8),
+      hour: Number(stamp.slice(8, 10)),
+      temp: v.temp ?? null,
+      humidity: v.humidity ?? null,
+      wind: v.wind ?? null,
+      rain: v.rain ?? null,
+    }))
+    .filter((h) => h.temp != null && h.humidity != null);
+}
+
 // 프록시(/api/weather) 주소 — 웹은 같은 도메인 상대경로, 네이티브(capacitor://)는 배포 도메인 절대경로.
 const PROXY_BASE =
   typeof window !== 'undefined' && window.location.protocol.startsWith('http')
@@ -181,7 +206,11 @@ async function fetchForecastItems(nx, ny, signal) {
 export async function fetchWeather(lat, lon, { signal } = {}) {
   const { nx, ny } = latLonToGrid(lat, lon);
   const items = await fetchForecastItems(nx, ny, signal);
-  return { ...normalizeForecast(items, { nx, ny }), daily: normalizeDaily(items) };
+  return {
+    ...normalizeForecast(items, { nx, ny }),
+    daily: normalizeDaily(items),
+    hourly: normalizeHourly(items),
+  };
 }
 
 // 서울 25개 자치구 대표 좌표(구청 위치). REGIONS의 id와 키가 일치한다.
@@ -253,8 +282,8 @@ function writeCache(key, value) {
 // 같은 발표 회차면 캐시를 쓰고, 개별 구 실패는 건너뛴다(해당 구는 기존값 유지).
 export async function fetchAllDistricts() {
   const { baseDate, baseTime } = getBaseDateTime();
-  // kma2 = daily(3일 예보) 포함 버전. 옛 kma- 캐시(daily 없음)와 구분한다.
-  const cacheKey = `kma2-${baseDate}-${baseTime}`;
+  // kma3 = hourly(시간별) 포함 버전. 옛 kma2-(hourly 없음) 캐시와 구분한다.
+  const cacheKey = `kma3-${baseDate}-${baseTime}`;
   const cached = readCache(cacheKey);
   if (cached) return cached;
 
@@ -263,7 +292,7 @@ export async function fetchAllDistricts() {
     try {
       const { lat, lon } = DISTRICT_COORDS[id];
       const w = await fetchWeather(lat, lon);
-      return [id, { temp: w.temp, humidity: w.humidity, rain: w.rain, wind: w.wind, daily: w.daily }];
+      return [id, { temp: w.temp, humidity: w.humidity, rain: w.rain, wind: w.wind, daily: w.daily, hourly: w.hourly }];
     } catch {
       return null;
     }

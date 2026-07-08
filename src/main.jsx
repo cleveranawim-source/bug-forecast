@@ -74,6 +74,60 @@ function riskNarrative(risk) {
   }
 }
 
+// 날씨 라벨 → 이모지 (홈 3일 스트립)
+const WEATHER_EMOJI = { 비: '🌧️', '비/눈': '🌨️', 눈: '❄️', 흐림: '☁️', '구름 많음': '⛅', 맑음: '☀️' };
+
+// 3일 스트립의 날짜 라벨: 'YYYYMMDD' → 오늘/내일(수)/모레(목). 폴백 라벨('오늘' 등)은 그대로.
+function stripDayLabel(day, index) {
+  const names = ['오늘', '내일', '모레'];
+  if (!/^\d{8}$/.test(String(day))) return names[index] ?? String(day);
+  if (index === 0) return '오늘';
+  const d = new Date(Number(day.slice(0, 4)), Number(day.slice(4, 6)) - 1, Number(day.slice(6, 8)));
+  const wd = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
+  return `${names[index] ?? `${Number(day.slice(4, 6))}/${Number(day.slice(6, 8))}`}(${wd})`;
+}
+
+// 시간별 예보로 '언제 나가면 좋은지' 힌트를 만든다.
+// 시간별 조건으로 위험지수를 재계산해 지금보다 눈에 띄게 낮아지는 시각을 찾는다.
+// 의미 있는 변화가 없으면 null — 억지 조언을 만들지 않는다(정직 원칙).
+function hourlyHint(region, baseRisk) {
+  const hours = region.hourly;
+  if (!hours || hours.length < 3) return null;
+  if (baseRisk.tone === 'calm') return '☀️ 지금도 나가기 좋은 조건이에요';
+  const scored = hours.map((h) => ({
+    hour: h.hour,
+    date: h.date,
+    score: getRisk({ ...region, temp: h.temp, humidity: h.humidity, wind: h.wind, rain: h.rain }).score,
+  }));
+  const now = scored[0];
+  const drop = scored.find((s) => now.score - s.score >= 12);
+  if (drop) {
+    const when = drop.date !== now.date ? `내일 ${drop.hour}시` : `${drop.hour}시`;
+    return `🌙 ${when} 이후엔 잦아들 것으로 보여요 — 외출은 그때 추천`;
+  }
+  const min = scored.reduce((m, s) => (s.score < m.score ? s : m), scored[0]);
+  if (now.score - min.score >= 6) {
+    const when = min.date !== now.date ? `내일 ${min.hour}시` : `${min.hour}시`;
+    return `🕐 앞으로 24시간 중엔 ${when}쯤이 가장 낮아요`;
+  }
+  return null;
+}
+
+// '왜 오늘 이 지수인가' 근거 칩(최대 3개) — 위험모델 factors에서 실제 기여 요인만 뽑는다.
+function whyChips(risk, region) {
+  const f = risk.factors;
+  const chips = [];
+  if (f.rain >= 0.55) chips.push('🌧️ 비 온 뒤 — 우화 최적 조건');
+  if (f.humidity >= 0.7) chips.push(`💧 습도 ${region.humidity}% — 활동 최적`);
+  else if (f.humidity <= 0.25) chips.push(`🏜️ 습도 ${region.humidity}% — 건조`);
+  if (f.wind >= 0.9) chips.push(`🍃 바람 ${region.wind}m/s — 잔잔함`);
+  else if (f.wind <= 0.3) chips.push(`💨 바람 ${region.wind}m/s — 비행 어려움`);
+  if (f.temp >= 0.9) chips.push(`🌡️ ${region.temp}℃ — 최적 기온`);
+  if (f.season >= 1) chips.push('🐞 6월 중순~7월 초 활동 피크');
+  else if (f.season <= 0.3) chips.push('📉 활동기가 지나는 중');
+  return chips.slice(0, 3);
+}
+
 const REGIONS = [
   {
     id: 'eunpyeong',
@@ -745,31 +799,49 @@ function placeTimeAdvice(tone) {
   return '오늘은 다녀오기 좋아요. 그래도 저녁 조명 주변은 살짝 주의하세요.';
 }
 
-// 상위 탭 3개 + 각 그룹 안의 세그먼트(서브탭). activeTab은 세그먼트 id(기존 값) 그대로 유지.
+// 홈 카드용 한 줄 요약 조언(자세한 문장은 placeTimeAdvice — 장소 탭에서 사용)
+function shortPlaceAdvice(tone) {
+  if (tone === 'danger') return '오늘은 피하는 게 좋아요';
+  if (tone === 'warning') return '이른 아침(6~8시) 추천';
+  if (tone === 'notice') return '아침이 가장 무난해요';
+  return '다녀오기 좋아요';
+}
+
+// 하단 탭 4개. 홈은 원스크롤이라 세그먼트 없음(forecast·spots는 홈 안 링크로 진입,
+// 하단 '홈'을 다시 누르면 segs[0]=main으로 복귀). 가이드만 세그먼트 유지(showSegs).
 const TAB_GROUPS = [
   {
     id: 'home',
-    label: '📍 우리동네',
+    label: '홈',
+    icon: '🏠',
     segs: [
-      { id: 'main', label: '요약' },
-      { id: 'map', label: '지도' },
+      { id: 'main', label: '홈' },
       { id: 'forecast', label: '예보' },
       { id: 'spots', label: '장소' },
     ],
   },
   {
+    id: 'mapTab',
+    label: '지도',
+    icon: '🗺️',
+    segs: [{ id: 'map', label: '지도' }],
+  },
+  {
+    id: 'report',
+    label: '제보',
+    icon: '✍️',
+    segs: [{ id: 'report', label: '제보' }],
+  },
+  {
     id: 'guideGroup',
-    label: '🐞 가이드',
+    label: '가이드',
+    icon: '📖',
+    showSegs: true,
     segs: [
       { id: 'places', label: '출몰장소' },
       { id: 'bugs', label: '벌레도감' },
       { id: 'guide', label: '행동요령' },
     ],
-  },
-  {
-    id: 'report',
-    label: '✍️ 제보',
-    segs: [{ id: 'report', label: '제보' }],
   },
 ];
 
@@ -1113,6 +1185,30 @@ function App() {
     : forecastDongs[0]?.name;
   const activeForecastDongRisk = forecastDongs.find((dong) => dong.name === activeForecastDong)?.risk;
   const forecast = makeForecast(forecastRegion, forecastTotalReports, activeForecastDongRisk);
+
+  // 홈(원스크롤) 파생값 — 현재 선택 구 기준
+  const homeForecast = makeForecast(updatedSelected, totalReports);
+  const homeHint = hourlyHint(updatedSelected, updatedRisk);
+  const homeChips = whyChips(updatedRisk, selected);
+  const homeDongs = [...selectedDongs].sort((a, b) => b.risk.score - a.risk.score).slice(0, 4);
+  const homePlaces = favorites.length
+    ? favorites.slice(0, 3).map((f) => ({
+        key: `${f.gu}:${f.name}`,
+        name: f.name,
+        fav: true,
+        sub: `${regionNameById[f.gu] ?? ''} · ${PLACE_ENV[f.env]?.label ?? ''}`,
+        r: getPlaceRisk(guScoreById[f.gu] ?? 0, f.env),
+      }))
+    : (DISTRICT_PLACES[selectedId] ?? [])
+        .map((p) => ({
+          key: p.name,
+          name: p.name,
+          fav: false,
+          sub: `${p.act} · ${PLACE_ENV[p.env]?.label ?? ''}`,
+          r: getPlaceRisk(updatedRisk.score, p.env),
+        }))
+        .sort((a, b) => a.r.score - b.r.score)
+        .slice(0, 3);
   const riskSummary = regions.reduce(
     (summary, region) => {
       const regionRisk = getRisk({
@@ -1362,9 +1458,27 @@ function App() {
 
   return (
     <main className="app-shell">
-      <div className="app-wordmark">
-        <img src="/logo-mark.png" alt="우리동네 벌레예보" width="40" height="40" />
-      </div>
+      <header className="app-header">
+        <img src="/logo-mark.png" alt="우리동네 벌레예보" width="38" height="38" />
+        <div className="app-header-loc">
+          <strong>{selected.name}</strong>
+          <small>
+            {locationAuth.status === 'verified'
+              ? '현재 위치 인증됨'
+              : locationAuth.status === 'checking'
+                ? '위치 확인 중…'
+                : '아래 버튼으로 내 동네 인증'}
+          </small>
+        </div>
+        <button
+          className="loc-button"
+          onClick={verifyCurrentLocation}
+          disabled={locationAuth.status === 'checking'}
+        >
+          <MapPin size={15} />
+          내 위치
+        </button>
+      </header>
 
       {changeAlerts && changeAlerts.length > 0 && !alertsDismissed && (
         <div className="change-banner" role="status">
@@ -1385,7 +1499,7 @@ function App() {
         </div>
       )}
 
-      <nav className="app-tabs" aria-label="앱 화면 탭">
+      <nav className="app-tabs" aria-label="주요 화면 탭">
         {TAB_GROUPS.map((group) => {
           const active = group.id === activeTab || group.segs.some((seg) => seg.id === activeTab);
           return (
@@ -1394,6 +1508,7 @@ function App() {
               key={group.id}
               onClick={() => setActiveTab(group.segs[0]?.id ?? group.id)}
             >
+              <span className="tab-icon" aria-hidden="true">{group.icon}</span>
               {group.label}
             </button>
           );
@@ -1404,7 +1519,7 @@ function App() {
         const group = TAB_GROUPS.find(
           (g) => g.id === activeTab || g.segs.some((seg) => seg.id === activeTab)
         );
-        if (!group || group.segs.length <= 1) return null;
+        if (!group || !group.showSegs) return null;
         return (
           <nav className="app-segments" aria-label={`${group.label} 세부 화면`}>
             {group.segs.map((seg) => (
@@ -1422,100 +1537,122 @@ function App() {
 
       {activeTab === 'main' && (
         <>
-      <section className={`hero risk-${updatedRisk.tone}`}>
-        <div className="hero-copy">
-          <div className="location-pill">
-            <MapPin size={17} />
-            {selected.name} · {selected.zone}
-          </div>
-          <h2>오늘 {getForecastRiskLabel(updatedRisk)}</h2>
-          <p>{riskNarrative(updatedRisk)}</p>
-          <div className="hero-actions">
-            <button
-              className="secondary-action"
-              onClick={verifyCurrentLocation}
-              disabled={locationAuth.status === 'checking'}
-            >
-              <MapPin size={18} />
-              현재 위치 적용
-            </button>
-            <button className="primary-action" onClick={openNearby}>
-              <Navigation size={18} />
-              내 주변 보기
-            </button>
-          </div>
-          <span className={`location-status ${locationAuth.status}`}>{locationAuth.message}</span>
-        </div>
-        <div className="risk-gauge" aria-label={`위험도 ${updatedRisk.score}점`}>
-          <span className="gauge-eyebrow">현재 위치 기준</span>
-          <div className="gauge-ring" style={{ '--score': `${updatedRisk.score}%` }}>
-            <div className="gauge-core">
-              <Bug size={35} />
-              <strong>{updatedRisk.score}</strong>
-            </div>
-          </div>
-          <span className="gauge-label">위험 지수</span>
-          <b className={`gauge-status ${updatedRisk.tone}`}>{getForecastRiskLabel(updatedRisk)}</b>
-          <span className="gauge-source">
-            {selectedLiveCount > 0
-              ? `이웃 제보 ${selectedLiveCount}건 반영`
-              : '날씨·지형 기반 추정치'}
-          </span>
-        </div>
-      </section>
-
       {usingFallbackWeather && (
         <p className="stale-notice" role="status">
           ⚠️ 실시간 예보 연결이 지연되고 있어요 — 임시 추정치를 표시 중입니다.
         </p>
       )}
 
-      <section className="metric-grid" aria-label="현재 조건">
-        <Metric icon={<ThermometerSun />} label="기온" value={`${selected.temp}°C`} />
-        <Metric icon={<Droplets />} label="습도" value={`${selected.humidity}%`} />
-        <Metric icon={<CloudRain />} label="강수 가능" value={`${selected.rain}%`} />
-        <Metric icon={<Wind />} label="바람" value={`${selected.wind}m/s`} />
-      </section>
-
-      <section className={`nearby-panel ${showNearby ? 'open' : ''}`} ref={nearbyRef} aria-label="내 주변 현황">
-        <div className="section-heading compact">
+      {/* ① 3초 답: 지수 + 한 줄 + 시간 힌트 */}
+      <section className="hcard home-hero" aria-label={`오늘 위험도 ${updatedRisk.score}점`}>
+        <div className="home-hero-row">
           <div>
-            <p className="eyebrow">선택 지역 기준</p>
-            <h3>내 주변 보기</h3>
+            <div className="home-score">
+              {updatedRisk.score}
+              <small> /100</small>
+            </div>
+            <b className={`home-badge ${updatedRisk.tone}`}>{getForecastRiskLabel(updatedRisk)}</b>
           </div>
-          <Navigation size={20} />
-        </div>
-        <div className="nearby-grid">
-          <div className="nearby-main">
-            <span className={`risk-dot ${updatedRisk.tone}`} />
-            <div>
-              <strong>{selected.name} 주변 {getForecastRiskLabel(updatedRisk)}</strong>
-              <p>위치 권한 없이 선택한 구를 기준으로 동별 위험지수와 제보 수를 보여줘요.</p>
+          <div className="gauge-ring home-ring" style={{ '--score': `${updatedRisk.score}%` }}>
+            <div className="gauge-core">
+              <Bug size={26} />
             </div>
           </div>
-          <div className="nearby-stat">
-            <b>{selectedLiveCount}</b>
-            <span>현재 제보</span>
-          </div>
-          <div className="nearby-stat">
-            <b>{HOTSPOTS[0].place}</b>
-            <span>가장 많은 장소</span>
-          </div>
         </div>
-        <div className="nearby-dong-board" aria-label={`${selected.name} 동별 수치`}>
-          {selectedDongs.map((dong) => (
-            <button
-              className="nearby-dong-row"
-              key={dong.name}
-              onClick={() => setReportForm({ ...reportForm, dong: dong.name })}
-            >
-              <span className={`legend-dot ${dong.risk.tone}`} />
-              <strong>{dong.name}</strong>
-              <b>{dong.risk.score}</b>
-              <small>{getForecastRiskLabel(dong.risk)} · 제보 {dong.reports}건</small>
-            </button>
+        <p className="home-narr">{riskNarrative(updatedRisk)}</p>
+        {homeHint && <div className="time-hint">{homeHint}</div>}
+        <span className="hero-src">
+          {selectedLiveCount > 0 ? `이웃 제보 ${selectedLiveCount}건 반영 · ` : ''}
+          {weatherReady && !usingFallbackWeather ? '기상청 실시간 예보 기준' : '날씨·지형 기반 추정치'}
+        </span>
+      </section>
+
+      {/* ② 앞으로 3일 */}
+      <section className="hcard" aria-label="3일 예보">
+        <div className="hsec-head">
+          <h3>앞으로 3일</h3>
+          <button className="link-btn" onClick={() => setActiveTab('forecast')}>시간대별 →</button>
+        </div>
+        <div className="day-strip">
+          {homeForecast.map((d, i) => (
+            <div className="day-cell" key={String(d.day)}>
+              <b>{stripDayLabel(d.day, i)}</b>
+              <span className="day-w">{WEATHER_EMOJI[d.weather] ?? '🌤️'}</span>
+              <span className="day-s">
+                <span className={`legend-dot ${d.risk.tone}`} />
+                {d.risk.score}
+              </span>
+            </div>
           ))}
         </div>
+      </section>
+
+      {/* ③ 근거 칩 */}
+      {homeChips.length > 0 && (
+        <section className="hcard" aria-label="지수 근거">
+          <div className="hsec-head">
+            <h3>왜 이 지수일까?</h3>
+          </div>
+          <div className="why-chips">
+            {homeChips.map((c) => (
+              <span className="chip" key={c}>{c}</span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ④ 내 주변 동네 */}
+      <section className="hcard" aria-label="동네별 위험도">
+        <div className="hsec-head">
+          <h3>{selected.name} 동네별</h3>
+          <button className="link-btn" onClick={() => setActiveTab('map')}>지도에서 보기 →</button>
+        </div>
+        <div className="home-dongs">
+          {homeDongs.map((dong) => (
+            <div className="home-dong-row" key={dong.name}>
+              <span>{dong.name}</span>
+              <b>
+                <span className={`legend-dot ${dong.risk.tone}`} />
+                {dong.risk.score}
+              </b>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ⑤ 추천 장소 (즐겨찾기 우선) */}
+      <section className="hcard" aria-label="추천 장소">
+        <div className="hsec-head">
+          <h3>{favorites.length ? '⭐ 내 즐겨찾기' : '오늘 어디로 나갈까?'}</h3>
+          <button className="link-btn" onClick={() => setActiveTab('spots')}>전체 →</button>
+        </div>
+        <div className="home-places">
+          {homePlaces.length === 0 && (
+            <p className="home-places-empty">이 지역의 장소 정보가 아직 없어요 — 전체에서 다른 구를 볼 수 있어요.</p>
+          )}
+          {homePlaces.map((p) => (
+            <div className="home-place-row" key={p.key}>
+              <div className="hp-name">
+                {p.fav && <span className="hp-star">★</span>}
+                {p.name}
+                <small>{p.sub} — {shortPlaceAdvice(p.r.tone)}</small>
+              </div>
+              <div className={`hp-score ${p.r.tone}`}>
+                {p.r.score}
+                <small>{p.r.label}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ⑥ 제보 루프 */}
+      <section className="hcard report-cta" aria-label="시민 제보 안내">
+        <p>
+          지금 밖에 계세요?
+          <small>30초 제보로 우리 동네 예보가 더 정확해져요</small>
+        </p>
+        <button onClick={() => setActiveTab('report')}>🐞 제보하기</button>
       </section>
         </>
       )}
