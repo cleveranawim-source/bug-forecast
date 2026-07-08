@@ -1936,6 +1936,17 @@ h3 {
   color: #7b8a82;
 }
 
+/* 제보 0건 빈 상태 — 샘플(가짜) 제보 대신 정직한 안내 */
+.report-empty {
+  padding: 18px 14px;
+  border: 1px dashed #cfdad2;
+  border-radius: 10px;
+  color: #60746a;
+  font-size: 0.9rem;
+  text-align: center;
+  background: #fbfdfb;
+}
+
 /* 실시간 예보 연결 실패 시 추정치 안내 */
 .stale-notice {
   margin: 10px 0 0;

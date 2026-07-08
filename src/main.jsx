@@ -33,6 +33,47 @@ const CITIZEN_SESSION_KEY = 'neighborhood-bug-forecast-citizen';
 // 제보 쿨다운(같은 기기 기준) — 연속 제보로 구 지수를 조작하는 것을 막는다.
 const REPORT_COOLDOWN_MS = 5 * 60 * 1000;
 
+// 제보 좌표는 소수 3자리(약 110m)로 반올림해 저장 — reports는 공개 읽기라
+// 정밀 좌표(제보자가 서 있던 지점)를 그대로 남기지 않는다. 동네 인증엔 110m면 충분.
+const roundCoord = (v) => (typeof v === 'number' ? Math.round(v * 1000) / 1000 : null);
+
+// 위험모델 factors로 오늘의 한 줄 설명을 만든다 — REGIONS의 하드코딩 문구(창작 서사)를
+// 대체해, 화면의 설명이 항상 실제 계산 근거(습도·비·바람·시즌)와 일치하게 한다.
+function riskNarrative(risk) {
+  const f = risk.factors;
+  if (f.season <= 0.1) return '러브버그 활동 시기가 아니에요. 지수는 낮게 유지돼요.';
+
+  const boosters = [];
+  if (f.rain >= 0.55) boosters.push('비 온 뒤 우화 조건');
+  if (f.humidity >= 0.7) boosters.push('높은 습도');
+  if (f.temp >= 0.9) boosters.push('활동하기 좋은 기온');
+  if (f.wind >= 0.9 && boosters.length < 2) boosters.push('잔잔한 바람');
+
+  const suppressors = [];
+  if (f.wind <= 0.3) suppressors.push('강한 바람');
+  if (f.temp <= 0.35) suppressors.push('활동이 어려운 기온');
+  if (f.rain <= 0.25) suppressors.push('건조한 날씨');
+  if (f.season <= 0.3) suppressors.push('활동기가 지나가는 시기');
+
+  const why = boosters.slice(0, 2).join('·');
+  const calmWhy = suppressors[0];
+
+  switch (risk.tone) {
+    case 'danger':
+      return `${why || '활동 조건이 두루 좋은 날'} 영향으로 조명·밝은 벽 주변에 몰릴 수 있어요.`;
+    case 'warning':
+      return `${why || '무난한 활동 조건'} 영향으로 활동이 활발한 편이에요. 밝은 조명 주변을 주의하세요.`;
+    case 'notice':
+      return calmWhy
+        ? `${calmWhy} 영향으로 아주 많지는 않겠어요. 조명 주변만 가볍게 주의하세요.`
+        : '활동 조건이 보통이에요. 밝은 조명 주변만 가볍게 주의하세요.';
+    default:
+      return calmWhy
+        ? `${calmWhy} 영향으로 활동이 잦아드는 날이에요. 쾌적하게 다녀오세요.`
+        : '활동 조건이 낮아요. 쾌적하게 다녀오세요.';
+  }
+}
+
 const REGIONS = [
   {
     id: 'eunpyeong',
@@ -43,9 +84,7 @@ const REGIONS = [
     rain: 51,
     wind: 1.2,
     reports: 25,
-    trend: '+11',
     map: { col: 2, row: 3 },
-    note: '비 온 뒤 아파트 단지 조명 주변 출몰이 늘었어요.',
   },
   {
     id: 'dobong',
@@ -56,9 +95,7 @@ const REGIONS = [
     rain: 34,
     wind: 2,
     reports: 10,
-    trend: '+3',
     map: { col: 5, row: 1 },
-    note: '산지와 주거지 경계에서 산발 제보가 들어오고 있어요.',
   },
   {
     id: 'nowon',
@@ -69,9 +106,7 @@ const REGIONS = [
     rain: 39,
     wind: 1.8,
     reports: 17,
-    trend: '+6',
     map: { col: 6, row: 1 },
-    note: '하천 주변과 단지 조명 주변 관찰이 조금 늘었어요.',
   },
   {
     id: 'gangbuk',
@@ -82,9 +117,7 @@ const REGIONS = [
     rain: 41,
     wind: 1.7,
     reports: 14,
-    trend: '+4',
     map: { col: 4, row: 2 },
-    note: '주택가 골목 조명과 공원 입구에서 제보가 있어요.',
   },
   {
     id: 'seongbuk',
@@ -95,9 +128,7 @@ const REGIONS = [
     rain: 33,
     wind: 2.1,
     reports: 12,
-    trend: '+2',
     map: { col: 5, row: 2 },
-    note: '대학가와 공원 주변으로 보통 수준의 관찰이 있어요.',
   },
   {
     id: 'jongno',
@@ -108,9 +139,7 @@ const REGIONS = [
     rain: 30,
     wind: 2.4,
     reports: 9,
-    trend: '+2',
     map: { col: 4, row: 3 },
-    note: '공원 입구와 골목 조명 근처에서 산발 제보가 있어요.',
   },
   {
     id: 'dongdaemun',
@@ -121,9 +150,7 @@ const REGIONS = [
     rain: 38,
     wind: 1.9,
     reports: 16,
-    trend: '+5',
     map: { col: 5, row: 3 },
-    note: '청계천 주변과 상가 조명 주변 출몰 가능성이 있어요.',
   },
   {
     id: 'jungnang',
@@ -134,9 +161,7 @@ const REGIONS = [
     rain: 44,
     wind: 1.5,
     reports: 20,
-    trend: '+7',
     map: { col: 6, row: 3 },
-    note: '중랑천 산책로 중심으로 저녁 시간대 주의가 필요해요.',
   },
   {
     id: 'seodaemun',
@@ -147,9 +172,7 @@ const REGIONS = [
     rain: 43,
     wind: 1.6,
     reports: 19,
-    trend: '+6',
     map: { col: 3, row: 4 },
-    note: '학교와 주거지 사이 녹지 주변에서 제보가 많아요.',
   },
   {
     id: 'jung',
@@ -160,9 +183,7 @@ const REGIONS = [
     rain: 27,
     wind: 2.5,
     reports: 8,
-    trend: '+1',
     map: { col: 4, row: 4 },
-    note: '도심권은 낮지만 조명 밀집 구역은 부분 주의가 필요해요.',
   },
   {
     id: 'seongdong',
@@ -173,9 +194,7 @@ const REGIONS = [
     rain: 41,
     wind: 1.7,
     reports: 22,
-    trend: '+8',
     map: { col: 5, row: 4 },
-    note: '한강과 중랑천 인접 구역에서 위험도가 올라가고 있어요.',
   },
   {
     id: 'gwangjin',
@@ -186,9 +205,7 @@ const REGIONS = [
     rain: 46,
     wind: 1.5,
     reports: 24,
-    trend: '+10',
     map: { col: 6, row: 4 },
-    note: '한강변 공원과 주거지 조명 주변 제보가 늘었어요.',
   },
   {
     id: 'mapo',
@@ -199,9 +216,7 @@ const REGIONS = [
     rain: 42,
     wind: 1.8,
     reports: 18,
-    trend: '+7',
     map: { col: 2, row: 5 },
-    note: '하천 산책로와 밝은 상가 주변 제보가 많아요.',
   },
   {
     id: 'yongsan',
@@ -212,9 +227,7 @@ const REGIONS = [
     rain: 32,
     wind: 2.2,
     reports: 11,
-    trend: '+3',
     map: { col: 4, row: 5 },
-    note: '한강 접근부와 공원 주변에서 보통 수준으로 관찰돼요.',
   },
   {
     id: 'gangdong',
@@ -225,9 +238,7 @@ const REGIONS = [
     rain: 50,
     wind: 1.3,
     reports: 28,
-    trend: '+12',
     map: { col: 8, row: 5 },
-    note: '고덕천과 한강변 중심으로 높은 위험도가 예상돼요.',
   },
   {
     id: 'gangseo',
@@ -238,9 +249,7 @@ const REGIONS = [
     rain: 55,
     wind: 1.4,
     reports: 30,
-    trend: '+13',
     map: { col: 1, row: 6 },
-    note: '습도가 높고 하천 주변 제보가 많아 강한 주의가 필요해요.',
   },
   {
     id: 'yangcheon',
@@ -251,9 +260,7 @@ const REGIONS = [
     rain: 45,
     wind: 1.7,
     reports: 21,
-    trend: '+7',
     map: { col: 2, row: 6 },
-    note: '안양천 주변과 아파트 단지 조명 주변 위험도가 높아요.',
   },
   {
     id: 'yeongdeungpo',
@@ -264,9 +271,7 @@ const REGIONS = [
     rain: 40,
     wind: 1.9,
     reports: 18,
-    trend: '+6',
     map: { col: 3, row: 6 },
-    note: '한강변과 상업지 조명 주변에서 제보가 이어져요.',
   },
   {
     id: 'dongjak',
@@ -277,9 +282,7 @@ const REGIONS = [
     rain: 37,
     wind: 2,
     reports: 15,
-    trend: '+4',
     map: { col: 4, row: 6 },
-    note: '학교 주변과 산책로 중심으로 보통 수준의 주의가 필요해요.',
   },
   {
     id: 'seocho',
@@ -290,9 +293,7 @@ const REGIONS = [
     rain: 34,
     wind: 2.1,
     reports: 14,
-    trend: '+3',
     map: { col: 5, row: 6 },
-    note: '도심 열기와 공원 주변 조건이 겹치는 구간을 살펴야 해요.',
   },
   {
     id: 'gangnam',
@@ -303,9 +304,7 @@ const REGIONS = [
     rain: 36,
     wind: 2,
     reports: 17,
-    trend: '+5',
     map: { col: 6, row: 6 },
-    note: '상가 조명과 탄천 주변으로 저녁 제보가 늘 수 있어요.',
   },
   {
     id: 'songpa',
@@ -316,9 +315,7 @@ const REGIONS = [
     rain: 49,
     wind: 1.4,
     reports: 29,
-    trend: '+12',
     map: { col: 7, row: 6 },
-    note: '탄천과 한강변 영향으로 매우 높은 위험도가 예상돼요.',
   },
   {
     id: 'guro',
@@ -329,9 +326,7 @@ const REGIONS = [
     rain: 42,
     wind: 1.8,
     reports: 19,
-    trend: '+6',
     map: { col: 2, row: 7 },
-    note: '안양천 인접 구역과 주거지 조명 주변을 확인해 주세요.',
   },
   {
     id: 'geumcheon',
@@ -342,9 +337,7 @@ const REGIONS = [
     rain: 35,
     wind: 2.2,
     reports: 12,
-    trend: '+3',
     map: { col: 3, row: 7 },
-    note: '전반적으로 보통이지만 하천 산책로는 부분 주의가 필요해요.',
   },
   {
     id: 'gwanak',
@@ -355,9 +348,7 @@ const REGIONS = [
     rain: 40,
     wind: 1.9,
     reports: 16,
-    trend: '+5',
     map: { col: 4, row: 7 },
-    note: '공원과 학교 주변에서 산발 제보가 이어지고 있어요.',
   },
 ];
 
@@ -948,9 +939,11 @@ function getDongRisk(region, reportCount, dongCounts = {}) {
   });
 }
 
+// 관찰러 프로필은 localStorage에 보관 — 익명 uid가 기기에 유지되므로 프로필도 함께
+// 유지해, 앱을 껐다 켤 때마다 재등록하는 마찰을 없앤다(이전엔 sessionStorage라 매번 초기화).
 function readCitizenSession() {
   try {
-    const saved = window.sessionStorage.getItem(CITIZEN_SESSION_KEY);
+    const saved = window.localStorage.getItem(CITIZEN_SESSION_KEY);
     return saved ? JSON.parse(saved) : null;
   } catch {
     return null;
@@ -1242,13 +1235,14 @@ function App() {
         regionId: selected.id,
         regionName: selected.name,
         reporterName: citizen.nickname || citizen.name || '동네관찰러',
-        reporterDong: `${citizen.regionName} ${citizen.dong}`,
+        // 공개 DB에 거주 동까지 남기지 않는다 — 구 단위면 충분(닉네임+거주동 조합 노출 방지).
+        reporterDong: citizen.regionName,
         locationVerified: true,
         locationLabel: locationAuth.coords
           ? `위치 인증 ${locationAuth.coords.latitude.toFixed(3)}, ${locationAuth.coords.longitude.toFixed(3)}`
           : '위치 인증 완료',
-        lat: locationAuth.coords?.latitude ?? null,
-        lng: locationAuth.coords?.longitude ?? null,
+        lat: roundCoord(locationAuth.coords?.latitude),
+        lng: roundCoord(locationAuth.coords?.longitude),
         place: reportForm.place,
         amount: reportForm.amount,
         memo: reportForm.memo,
@@ -1283,7 +1277,7 @@ function App() {
         dong: loginForm.dong,
         verifiedAt: new Date().toISOString(),
       };
-      window.sessionStorage.setItem(CITIZEN_SESSION_KEY, JSON.stringify(nextCitizen));
+      window.localStorage.setItem(CITIZEN_SESSION_KEY, JSON.stringify(nextCitizen));
       setCitizen(nextCitizen);
     } catch (error) {
       console.error('관찰러 등록 실패:', error);
@@ -1293,7 +1287,7 @@ function App() {
 
   function logoutCitizen() {
     signOutUser().catch((error) => console.error('로그아웃 실패:', error));
-    window.sessionStorage.removeItem(CITIZEN_SESSION_KEY);
+    window.localStorage.removeItem(CITIZEN_SESSION_KEY);
     setCitizen(null);
     setLocationAuth({
       status: 'idle',
@@ -1435,7 +1429,7 @@ function App() {
             {selected.name} · {selected.zone}
           </div>
           <h2>오늘 {getForecastRiskLabel(updatedRisk)}</h2>
-          <p>{selected.note}</p>
+          <p>{riskNarrative(updatedRisk)}</p>
           <div className="hero-actions">
             <button
               className="secondary-action"
@@ -1845,10 +1839,12 @@ function App() {
               )}
 
               <div className="recent-reports">
-                {(reports.length ? reports : [
-                  { id: 'sample-1', regionName: selected.name, place: '하천 산책로', amount: '많음', time: '오후 7:20', memo: '가로등 주변', reporterName: '동네관찰러', verified: true, locationVerified: true },
-                  { id: 'sample-2', regionName: selected.name, place: '아파트 단지', amount: '조금', time: '오후 6:45', memo: '현관 근처', reporterName: '초록알림이', verified: true, locationVerified: true },
-                ]).slice(0, 3).map((item) => (
+                {reports.length === 0 && (
+                  <div className="report-empty">
+                    아직 등록된 제보가 없어요 — 첫 번째 동네 관찰러가 되어 주세요 🐞
+                  </div>
+                )}
+                {reports.slice(0, 3).map((item) => (
                   <div className="report-item" key={item.id}>
                     <Bug size={18} />
                     <span>
