@@ -3,6 +3,7 @@
 // 인증키는 환경변수 VITE_KMA_KEY (.env). 발급: 공공데이터포털 "기상청_단기예보 조회서비스".
 
 import { latLonToGrid } from './grid.js';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 
 const BASE_URL =
   'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
@@ -159,15 +160,30 @@ const PROXY_BASE =
 
 // 1차: 서버 프록시(키가 서버에만 있음) → 실패 시 2차: 직접 호출(로컬 dev 전용).
 // vite dev/preview는 /api/*를 index.html로 돌려주므로(SPA fallback) JSON 여부까지 확인한다.
+// 프록시 호출 — 네이티브(Capacitor)에서는 CapacitorHttp로 WKWebView의 교차출처(CORS)
+// 벽을 우회해 네이티브 네트워크로 직접 요청한다(설치 앱에서 실날씨가 안 오던 원인 해결).
+// 웹에서는 CapacitorHttp가 일반 fetch로 폴스루하므로 그냥 fetch를 쓴다(동일출처, 문제 없음).
+async function fetchProxy(nx, ny) {
+  const url = `${PROXY_BASE}/api/weather?nx=${nx}&ny=${ny}`;
+  if (Capacitor.isNativePlatform()) {
+    const res = await CapacitorHttp.get({ url, headers: { Accept: 'application/json' } });
+    if (res.status >= 200 && res.status < 300) {
+      // CapacitorHttp는 JSON이면 data를 객체로 파싱해 준다(문자열이면 직접 파싱).
+      return typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+    }
+    throw new Error(`프록시 응답 오류: ${res.status}`);
+  }
+  const res = await fetch(url);
+  const type = res.headers.get('content-type') ?? '';
+  if (res.ok && type.includes('json')) return res.json();
+  throw new Error(`프록시 응답 오류: ${res.status}`);
+}
+
 async function fetchForecastItems(nx, ny, signal) {
   try {
-    const res = await fetch(`${PROXY_BASE}/api/weather?nx=${nx}&ny=${ny}`, { signal });
-    const type = res.headers.get('content-type') ?? '';
-    if (res.ok && type.includes('json')) {
-      const json = await res.json();
-      const items = json?.response?.body?.items?.item;
-      if (Array.isArray(items)) return items;
-    }
+    const json = await fetchProxy(nx, ny);
+    const items = json?.response?.body?.items?.item;
+    if (Array.isArray(items)) return items;
   } catch {
     /* 프록시 없음/실패 → 개발 모드에 한해 직접 호출 폴백 */
   }

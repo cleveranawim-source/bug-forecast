@@ -1296,8 +1296,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // 실날씨가 7초 안에 안 오면(폰 지연·실패) 시드값으로라도 표시 — 지도가 계속 회색으로 남지 않게.
-    const timeout = setTimeout(() => setWeatherTimedOut(true), 7000);
+    // 실날씨가 안 오면(폰 지연·실패) 시드값으로라도 표시 — 지도가 계속 회색으로 남지 않게.
+    // 25개 구 일괄 조회가 느린 회선에서 20초 가까이 걸릴 수 있어, 임시 안내가 성급히 뜨지 않도록 12초로 둔다.
+    const timeout = setTimeout(() => setWeatherTimedOut(true), 12000);
     return () => clearTimeout(timeout);
   }, []);
 
