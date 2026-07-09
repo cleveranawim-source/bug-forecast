@@ -50,6 +50,16 @@ button {
     calc(env(safe-area-inset-bottom, 0px) + 108px);
 }
 
+/* 네이티브 앱 전용 — 일부 iOS에서 env(safe-area-inset-*)가 0으로 와 상태바(다이내믹
+   아일랜드)와 겹치므로 최소 바닥값을 강제한다. 웹(상태바 없음)은 위 기본값을 그대로 쓴다. */
+.cap-native .app-shell {
+  padding-top: max(calc(env(safe-area-inset-top, 0px) + 14px), 62px);
+}
+
+.cap-native .app-tabs {
+  padding-bottom: max(calc(env(safe-area-inset-bottom, 0px) + 10px), 22px);
+}
+
 /* 상단 헤더 — 로고 + 현재 지역 + 위치 인증 버튼 */
 .app-header {
   display: flex;

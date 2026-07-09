@@ -26,6 +26,7 @@ import {
   weightedCountByDong,
 } from './lib/reports.js';
 import { fetchAllDistricts } from './lib/weather.js';
+import { Capacitor } from '@capacitor/core';
 import { signInAnonymous, signOutUser } from './lib/auth.js';
 
 const CITIZEN_SESSION_KEY = 'neighborhood-bug-forecast-citizen';
@@ -1300,6 +1301,14 @@ function App() {
     // 25개 구 일괄 조회가 느린 회선에서 20초 가까이 걸릴 수 있어, 임시 안내가 성급히 뜨지 않도록 12초로 둔다.
     const timeout = setTimeout(() => setWeatherTimedOut(true), 12000);
     return () => clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
+    // 네이티브(Capacitor) 앱에서만 안전영역 바닥값 CSS를 켠다 — 일부 iOS 구성에서
+    // env(safe-area-inset-top)가 0으로 와 상태바(다이내믹 아일랜드)와 헤더가 겹치는 것 방지.
+    if (Capacitor.isNativePlatform()) {
+      document.documentElement.classList.add('cap-native');
+    }
   }, []);
 
   function scrollToRef(ref) {
