@@ -2304,3 +2304,26 @@ h3 {
   font-size: 0.86rem;
   font-weight: 850;
 }
+
+/* 헤더 로고 = 홈 버튼 */
+.logo-btn {
+  border: 0;
+  padding: 0;
+  background: none;
+  line-height: 0;
+}
+
+/* 카드 하단 풀폭 이동 버튼 — 홈 장소 카드·지도 선택지역에서 장소 탭으로 */
+.card-more {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid #d8e6f2;
+  border-radius: 12px;
+  background: #f4f9fd;
+  color: #1877C7;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-align: center;
+}

@@ -1459,7 +1459,16 @@ function App() {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <img src="/logo-mark.png" alt="우리동네 벌레예보" width="38" height="38" />
+        <button
+          className="logo-btn"
+          onClick={() => {
+            setActiveTab('main');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          aria-label="홈으로 이동"
+        >
+          <img src="/logo-mark.png" alt="우리동네 벌레예보" width="38" height="38" />
+        </button>
         <div className="app-header-loc">
           <strong>{selected.name}</strong>
           <small>
@@ -1467,7 +1476,7 @@ function App() {
               ? '현재 위치 인증됨'
               : locationAuth.status === 'checking'
                 ? '위치 확인 중…'
-                : '아래 버튼으로 내 동네 인증'}
+                : "옆의 '내 위치'를 눌러 동네 인증"}
           </small>
         </div>
         <button
@@ -1644,6 +1653,9 @@ function App() {
             </div>
           ))}
         </div>
+        <button className="card-more" onClick={() => setActiveTab('spots')}>
+          🗂️ 구별 장소 전체 보기 — 다른 동네도 확인해요 →
+        </button>
       </section>
 
       {/* ⑥ 제보 루프 */}
@@ -1760,6 +1772,10 @@ function App() {
             </div>
             <b className={`selected-risk ${updatedRisk.tone}`}>{getForecastRiskLabel(updatedRisk)}</b>
           </div>
+          {/* 지도에서 고른 구 → 바로 그 동네 추천 장소로 (selectedId 공유) */}
+          <button className="card-more" onClick={() => setActiveTab('spots')}>
+            📍 {selected.name} 추천 장소 보기 →
+          </button>
 
           {selectedDongMap && (
             <div className="dong-map-block">
