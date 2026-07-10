@@ -962,10 +962,15 @@ function formatForecastDay(index) {
 function makeForecast(region, reportCount, dongRisk) {
   const dongAdjustment = dongRisk ? Math.round((dongRisk.score - 55) / 8) : 0;
 
+  // 예보일별 제보 기여 태이퍼 — 오늘 목격담이 미래 예보까지 같은 강도로 밀어올리지 않게.
+  // 오늘 100% / 내일 50% / 모레 25%. 미래일수록 날씨(환경) 위주로 판단하게 한다.
+  const REPORT_DAY_TAPER = [1, 0.5, 0.25];
+
   // 기상청 단기예보에서 뽑은 일별 실예보(오늘~모레)가 있으면 그 날씨로 계산한다.
   if (region.daily?.length) {
     return region.daily.map((day, index) => {
       const prev = index > 0 ? region.daily[index - 1] : null;
+      const taper = REPORT_DAY_TAPER[index] ?? 0.25;
       const simulated = {
         ...region,
         temp: day.temp,
@@ -974,20 +979,21 @@ function makeForecast(region, reportCount, dongRisk) {
         wind: day.wind ?? region.wind,
         // 전날 예보 강수량을 '비 온 뒤 갬' 우화 신호로 사용(첫날은 강수확률로 근사)
         recentRainMm: prev ? prev.precip : undefined,
-        reports: Math.max(0, reportCount + dongAdjustment),
+        reports: Math.max(0, reportCount * taper + dongAdjustment),
       };
       return { day: day.date, temp: day.temp, weather: day.label, risk: getRisk(simulated) };
     });
   }
 
   // 실예보가 아직 없으면(로드 전·실패) 시드+오프셋 참고치로 대체한다.
-  return FORECAST_OFFSETS.map((day) => {
+  return FORECAST_OFFSETS.map((day, index) => {
+    const taper = REPORT_DAY_TAPER[index] ?? 0.25;
     const simulated = {
       ...region,
       temp: region.temp + day.temp,
       humidity: Math.max(35, Math.min(95, region.humidity + day.humidity)),
       rain: Math.max(0, Math.min(100, region.rain + day.rain)),
-      reports: Math.max(0, reportCount + day.reports + dongAdjustment),
+      reports: Math.max(0, reportCount * taper + day.reports + dongAdjustment),
     };
     return {
       ...day,

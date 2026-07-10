@@ -64,14 +64,18 @@ export function countByDong(reports, regionId) {
   return counts;
 }
 
-// 제보 최근성 가중치 — 대발생은 며칠 단위로 변하므로 오래된 제보는 감쇠시킨다.
-// 48시간 내 1.0 / 7일 내 0.5 / 그 이후 0.2 (createdAt 없으면 방금 쓴 낙관적 표시로 간주해 1.0)
+// 제보 최근성 가중치 — 러브버그 성충 수명(약 3~5일)에 맞춰 감쇠시킨다.
+// 오래된 목격담이 '같은 날 예보'를 붙잡지 않도록 5일이면 사실상 0으로 만든다.
+//   ~오늘·어제(24h)=1.0 / 2일(48h)=0.7 / 3일(72h)=0.4 / 5일(120h)=0.15 / 그 이후=0
+// (createdAt 없으면 방금 쓴 낙관적 표시로 간주해 1.0)
 export function reportWeight(report) {
   const t = report.createdAt?.toDate ? report.createdAt.toDate().getTime() : Date.now();
   const ageHours = (Date.now() - t) / 36e5;
-  if (ageHours <= 48) return 1;
-  if (ageHours <= 168) return 0.5;
-  return 0.2;
+  if (ageHours <= 24) return 1;
+  if (ageHours <= 48) return 0.7;
+  if (ageHours <= 72) return 0.4;
+  if (ageHours <= 120) return 0.15;
+  return 0;
 }
 
 // 구별 최근성 가중 제보 수 → { [regionId]: weightedCount } (지수 계산용)
