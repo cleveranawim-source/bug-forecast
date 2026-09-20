@@ -15,8 +15,11 @@ service cloud.firestore {
                     && request.resource.data.keys().hasOnly([
                          'uid', 'regionId', 'regionName', 'reporterName', 'reporterDong',
                          'locationVerified', 'locationLabel', 'lat', 'lng',
-                         'place', 'amount', 'memo', 'dong', 'verified', 'createdAt'
+                         'species', 'place', 'amount', 'memo', 'dong', 'verified', 'createdAt'
                        ])
+                    // species는 앱이 아는 4종만 — 임의 값으로 집계를 오염시키지 못하게.
+                    && (!request.resource.data.keys().hasAny(['species'])
+                        || request.resource.data.species in ['lovebug', 'mosquito', 'tick', 'wasp'])
                     && request.resource.data.regionId is string
                     && request.resource.data.regionId.size() <= 20
                     && request.resource.data.regionName is string

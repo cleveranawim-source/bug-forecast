@@ -2440,3 +2440,28 @@ h3 {
   font-weight: 620;
   line-height: 1.55;
 }
+
+/* 말벌집 제보 경고 + 제보 목록 종 표시 */
+.wasp-warn {
+  margin: -4px 0 4px;
+  padding: 10px 12px;
+  border: 1px solid #f0d5b8;
+  border-radius: 10px;
+  background: #fff6ea;
+  color: #8a5a1c;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.report-emoji {
+  flex: none;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.report-item.wasp {
+  border-left: 3px solid #d98a2b;
+  padding-left: 9px;
+  background: #fffaf2;
+}

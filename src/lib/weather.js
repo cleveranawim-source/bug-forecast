@@ -231,6 +231,12 @@ export async function fetchWeather(lat, lon, { signal } = {}) {
 
 // 서울 25개 자치구 대표 좌표(구청 위치). REGIONS의 id와 키가 일치한다.
 export const DISTRICT_COORDS = {
+  goyang: { lat: 37.6584, lon: 126.832 },
+  bucheon: { lat: 37.5035, lon: 126.766 },
+  gyeyang: { lat: 37.5374, lon: 126.7378 },
+  gwangmyeong: { lat: 37.4787, lon: 126.8664 },
+  gimpo: { lat: 37.6152, lon: 126.7156 },
+  incheonseo: { lat: 37.5454, lon: 126.6759 },
   jongno: { lat: 37.5735, lon: 126.979 },
   jung: { lat: 37.5639, lon: 126.9975 },
   yongsan: { lat: 37.5384, lon: 126.9654 },

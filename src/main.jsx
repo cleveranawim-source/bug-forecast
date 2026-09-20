@@ -468,9 +468,77 @@ const REGIONS = [
     reports: 16,
     map: { col: 4, row: 7 },
   },
+  // ── 수도권 확장(2026-09) — 러브버그 진앙지로 지목된 경기 서부·인천.
+  // 서울 AI지도·행정동 GeoJSON은 서울 전용이라 이 지역은 지도 대신 목록·예보로 제공한다.
+  {
+    id: 'goyang',
+    name: '고양시',
+    zone: '경기 서북',
+    temp: 25,
+    humidity: 74,
+    rain: 48,
+    wind: 1.4,
+    reports: 22,
+  },
+  {
+    id: 'bucheon',
+    name: '부천시',
+    zone: '경기 서부',
+    temp: 26,
+    humidity: 72,
+    rain: 45,
+    wind: 1.6,
+    reports: 20,
+  },
+  {
+    id: 'gyeyang',
+    name: '인천 계양구',
+    zone: '인천 동북',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.8,
+    reports: 18,
+  },
+  {
+    id: 'gwangmyeong',
+    name: '광명시',
+    zone: '경기 서남',
+    temp: 26,
+    humidity: 71,
+    rain: 44,
+    wind: 1.6,
+    reports: 14,
+  },
+  {
+    id: 'gimpo',
+    name: '김포시',
+    zone: '경기 서부',
+    temp: 25,
+    humidity: 75,
+    rain: 47,
+    wind: 2.0,
+    reports: 12,
+  },
+  {
+    id: 'incheonseo',
+    name: '인천 서구',
+    zone: '인천 서부',
+    temp: 25,
+    humidity: 74,
+    rain: 45,
+    wind: 2.2,
+    reports: 10,
+  },
 ];
 
 const DISTRICT_DONGS = {
+  goyang: ['행신동', '화정동', '원흥동', '능곡동', '주교동', '창릉동', '일산동', '정발산동', '마두동', '백석동', '장항동', '주엽동', '대화동', '탄현동', '송포동'],
+  bucheon: ['원미동', '심곡동', '중동', '상동', '역곡동', '소사동', '괴안동', '범박동', '오정동', '신흥동', '성곡동', '대산동'],
+  gyeyang: ['계산동', '작전동', '서운동', '효성동', '계양동', '병방동', '임학동'],
+  gwangmyeong: ['광명동', '철산동', '하안동', '소하동', '학온동', '일직동'],
+  gimpo: ['김포본동', '장기동', '구래동', '마산동', '운양동', '사우동', '풍무동', '고촌읍', '통진읍', '양촌읍'],
+  incheonseo: ['청라동', '검단동', '가정동', '석남동', '검암동', '연희동', '당하동', '원당동', '불로동'],
   eunpyeong: ['녹번동', '불광1동', '불광2동', '갈현1동', '갈현2동', '구산동', '대조동', '응암1동', '응암2동', '응암3동', '역촌동', '신사1동', '신사2동', '증산동', '수색동', '진관동'],
   dobong: ['쌍문1동', '쌍문2동', '쌍문3동', '쌍문4동', '방학1동', '방학2동', '방학3동', '창1동', '창2동', '창3동', '창4동', '창5동', '도봉1동', '도봉2동'],
   nowon: ['월계1동', '월계2동', '월계3동', '공릉1동', '공릉2동', '하계1동', '하계2동', '중계본동', '중계1동', '중계2,3동', '중계4동', '상계1동', '상계2동', '상계3,4동', '상계5동', '상계6,7동', '상계8동', '상계9동', '상계10동'],
@@ -592,6 +660,51 @@ const BUGS = [
 // 교차검증. env는 벌레 발생 환경(riverside 물가·습지 / mountain 산자락·숲 / urban 도심공원),
 // act는 코스DB 종목 적합도(◎○△✕) 반영 — 산·둘레길은 라이딩 제외.
 const DISTRICT_PLACES = {
+  goyang: [
+    { name: '일산호수공원', act: '🚶 산책·러닝', env: 'riverside' },
+    { name: '고양 행주산성·한강', act: '🚴 라이딩', env: 'riverside' },
+    { name: '북한산 둘레길(효자·사기막)', act: '🚶 산책', env: 'mountain' },
+    { name: '고봉산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '창릉천 산책로', act: '🏃 러닝·산책', env: 'riverside' },
+    { name: '정발산 근린공원', act: '👶 나들이', env: 'urban' },
+    { name: '화정 중앙공원', act: '👶 나들이', env: 'urban' },
+  ],
+  bucheon: [
+    { name: '원미산 진달래동산', act: '🚶 산책', env: 'mountain' },
+    { name: '성주산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '부천중앙공원', act: '👶 나들이', env: 'urban' },
+    { name: '굴포천 산책로', act: '🏃 러닝·산책', env: 'riverside' },
+    { name: '상동호수공원', act: '🚶 산책', env: 'riverside' },
+    { name: '도당산 벚꽃길', act: '🚶 산책', env: 'mountain' },
+  ],
+  gyeyang: [
+    { name: '계양산 둘레길', act: '🚶 산책·등산', env: 'mountain' },
+    { name: '굴포천 생태하천', act: '🏃 러닝·산책', env: 'riverside' },
+    { name: '경인아라뱃길 자전거길', act: '🚴 라이딩', env: 'riverside' },
+    { name: '계양체육공원', act: '👶 나들이', env: 'urban' },
+    { name: '천마산 산책로', act: '🚶 산책', env: 'mountain' },
+  ],
+  gwangmyeong: [
+    { name: '안양천 자전거길', act: '🚴 라이딩·러닝', env: 'riverside' },
+    { name: '도덕산공원', act: '🚶 산책', env: 'mountain' },
+    { name: '구름산 둘레길', act: '🚶 산책·등산', env: 'mountain' },
+    { name: '광명동굴 주변', act: '👶 나들이', env: 'urban' },
+    { name: '목감천 산책로', act: '🏃 러닝·산책', env: 'riverside' },
+  ],
+  gimpo: [
+    { name: '김포한강신도시 수변공원', act: '🚶 산책', env: 'riverside' },
+    { name: '아라마루 아라뱃길', act: '🚴 라이딩', env: 'riverside' },
+    { name: '문수산성 둘레길', act: '🚶 산책·등산', env: 'mountain' },
+    { name: '라베니체 수변', act: '👶 나들이', env: 'riverside' },
+    { name: '장릉산 산책로', act: '🚶 산책', env: 'mountain' },
+  ],
+  incheonseo: [
+    { name: '청라호수공원', act: '🚶 산책·러닝', env: 'riverside' },
+    { name: '경인아라뱃길(정서진)', act: '🚴 라이딩', env: 'riverside' },
+    { name: '검단산 근린공원', act: '🚶 산책', env: 'mountain' },
+    { name: '청라 커널웨이', act: '🚶 산책', env: 'riverside' },
+    { name: '서구 중앙공원', act: '👶 나들이', env: 'urban' },
+  ],
   gangseo: [
     { name: '강서 한강공원·가양', act: '🚴 라이딩·러닝', env: 'riverside' },
     { name: '마곡나루 수변', act: '🚶 산책', env: 'riverside' },
@@ -1138,6 +1251,7 @@ function App() {
     dong: '녹번동',
   });
   const [reportForm, setReportForm] = useState({
+    species: 'lovebug',
     dong: '',
     place: '학교 주변',
     amount: '많음',
@@ -1413,6 +1527,11 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // 보고 있는 종을 제보 폼 기본값으로 — 모기 화면에서 제보하면 모기 제보가 되도록.
+    setReportForm((f) => ({ ...f, species: activeSpeciesId }));
+  }, [activeSpeciesId]);
+
+  useEffect(() => {
     // 네이티브(Capacitor) 앱에서만 안전영역 바닥값 CSS를 켠다 — 일부 iOS 구성에서
     // env(safe-area-inset-top)가 0으로 와 상태바(다이내믹 아일랜드)와 헤더가 겹치는 것 방지.
     if (Capacitor.isNativePlatform()) {
@@ -1458,12 +1577,13 @@ function App() {
           : '위치 인증 완료',
         lat: roundCoord(locationAuth.coords?.latitude),
         lng: roundCoord(locationAuth.coords?.longitude),
+        species: reportForm.species,
         place: reportForm.place,
         amount: reportForm.amount,
         memo: reportForm.memo,
         dong: reportForm.dong || selectedDongs[0]?.name || selected.name,
       });
-      setReportForm({ dong: '', place: '학교 주변', amount: '많음', memo: '' });
+      setReportForm({ species: activeSpeciesId, dong: '', place: '학교 주변', amount: '많음', memo: '' });
       try {
         localStorage.setItem('lovebug-last-report', String(Date.now()));
       } catch {
@@ -2110,6 +2230,25 @@ function App() {
                       </select>
                     </label>
                     <label>
+                      무슨 벌레인가요?
+                      <select
+                        value={reportForm.species}
+                        onChange={(event) => setReportForm({ ...reportForm, species: event.target.value })}
+                      >
+                        {SPECIES_ORDER.map((id) => (
+                          <option value={id} key={id}>
+                            {SPECIES[id].emoji} {SPECIES[id].name}
+                            {id === 'wasp' ? '집' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {reportForm.species === 'wasp' && (
+                      <p className="wasp-warn">
+                        ⚠️ 벌집은 절대 직접 건드리지 마세요. 위험하면 먼저 <b>119</b>에 신고하고, 안전한 곳에서 제보해 주세요.
+                      </p>
+                    )}
+                    <label>
                       발견 위치
                       <select
                         value={reportForm.place}
@@ -2164,18 +2303,24 @@ function App() {
                     아직 등록된 제보가 없어요 — 첫 번째 동네 관찰러가 되어 주세요 🐞
                   </div>
                 )}
-                {reports.slice(0, 3).map((item) => (
-                  <div className="report-item" key={item.id}>
-                    <Bug size={18} />
-                    <span>
-                      <strong>{item.regionName}{item.dong ? ` ${item.dong}` : ''} · {item.place}</strong>
-                      <small>
-                        {item.verified ? '✅ 인증 제보' : '제보'}{item.locationVerified ? ' · 📍 위치 인증' : ''} · {item.reporterName ? `${item.reporterName} · ` : ''}
-                        {item.amount} · {item.time}{item.memo ? ` · ${item.memo}` : ''}
-                      </small>
-                    </span>
-                  </div>
-                ))}
+                {reports.slice(0, 5).map((item) => {
+                  const sp = SPECIES[item.species ?? 'lovebug'] ?? SPECIES.lovebug;
+                  const isWasp = (item.species ?? 'lovebug') === 'wasp';
+                  return (
+                    <div className={`report-item ${isWasp ? 'wasp' : ''}`} key={item.id}>
+                      <span className="report-emoji" aria-hidden="true">{sp.emoji}</span>
+                      <span>
+                        <strong>
+                          {sp.name}{isWasp ? '집' : ''} · {item.regionName}{item.dong ? ` ${item.dong}` : ''} · {item.place}
+                        </strong>
+                        <small>
+                          {item.verified ? '✅ 인증 제보' : '제보'}{item.locationVerified ? ' · 📍 위치 인증' : ''} · {item.reporterName ? `${item.reporterName} · ` : ''}
+                          {item.amount} · {item.time}{item.memo ? ` · ${item.memo}` : ''}
+                        </small>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

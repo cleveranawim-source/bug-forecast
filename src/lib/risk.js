@@ -45,6 +45,13 @@ const TERRAIN_WEIGHT = {
   yangcheon: 0.45,  // 갈산
   songpa: 0.45,     // 남한산 자락
   yeongdeungpo: 0.35, // 평지
+  // 수도권 확장
+  goyang: 0.95,       // 북한산·고봉산
+  gyeyang: 0.85,      // 계양산
+  gwangmyeong: 0.75,  // 도덕산·구름산
+  bucheon: 0.7,       // 원미산·성주산
+  gimpo: 0.6,         // 문수산(대체로 평지)
+  incheonseo: 0.5,    // 매립·평지
 };
 
 const DEFAULT_TERRAIN = 0.6;
@@ -185,6 +192,8 @@ const TERRAIN_MOSQUITO = {
   yongsan: 0.8, jungnang: 0.8, dongdaemun: 0.75, seocho: 0.75, gangnam: 0.7,
   eunpyeong: 0.7, seongbuk: 0.65, nowon: 0.65, dobong: 0.6, gangbuk: 0.6,
   seodaemun: 0.6, jongno: 0.55, jung: 0.55, gwanak: 0.6, geumcheon: 0.7,
+  // 수도권 확장 — 한강·굴포천·아라뱃길·논 등 정체수가 많은 지역일수록 높음
+  gimpo: 0.95, goyang: 0.9, incheonseo: 0.9, bucheon: 0.85, gyeyang: 0.85, gwangmyeong: 0.8,
 };
 
 export const SPECIES = {
