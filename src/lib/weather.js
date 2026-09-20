@@ -325,19 +325,29 @@ export async function fetchSeoulMosquito() {
 
 // 25개 구의 현재 날씨를 한 번에 조회 → { [regionId]: { temp, humidity, rain, wind } }
 // 같은 발표 회차면 캐시를 쓰고, 개별 구 실패는 건너뛴다(해당 구는 기존값 유지).
-export async function fetchAllDistricts() {
+// options:
+//   priorityId — 이 지역을 맨 먼저 조회(보고 있는 화면이 가장 빨리 실날씨로 채워진다)
+//   onPartial(id, data) — 한 지역이 도착할 때마다 호출. 31개를 다 기다리지 않고
+//     화면을 점진적으로 채워, '연결 지연' 안내가 뜰 틈을 없앤다.
+export async function fetchAllDistricts({ priorityId, onPartial } = {}) {
   const { baseDate, baseTime } = getBaseDateTime();
   // kma3 = hourly(시간별) 포함 버전. 옛 kma2-(hourly 없음) 캐시와 구분한다.
   const cacheKey = `kma3-${baseDate}-${baseTime}`;
   const cached = readCache(cacheKey);
   if (cached) return cached;
 
-  const ids = Object.keys(DISTRICT_COORDS);
+  let ids = Object.keys(DISTRICT_COORDS);
+  if (priorityId && ids.includes(priorityId)) {
+    ids = [priorityId, ...ids.filter((id) => id !== priorityId)];
+  }
+
   const pairs = await mapLimit(ids, 4, async (id) => {
     try {
       const { lat, lon } = DISTRICT_COORDS[id];
       const w = await fetchWeather(lat, lon);
-      return [id, { temp: w.temp, humidity: w.humidity, rain: w.rain, wind: w.wind, daily: w.daily, hourly: w.hourly }];
+      const entry = { temp: w.temp, humidity: w.humidity, rain: w.rain, wind: w.wind, daily: w.daily, hourly: w.hourly };
+      onPartial?.(id, entry);
+      return [id, entry];
     } catch {
       return null;
     }

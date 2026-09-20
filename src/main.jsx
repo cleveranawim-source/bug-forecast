@@ -1560,9 +1560,15 @@ function App() {
 
   useEffect(() => {
     // 25개 구 기상청 실날씨를 일괄 조회해 머지. 실패해도 기존(하드코딩) 값으로 동작.
-    fetchAllDistricts()
-      .then((data) => setLiveWeather(data))
+    // 현재 보고 있는 구를 먼저, 그리고 도착하는 대로 하나씩 반영한다.
+    // (31개를 다 받을 때까지 기다리면 느린 회선에서 '연결 지연' 안내가 길게 떴다)
+    fetchAllDistricts({
+      priorityId: selectedId,
+      onPartial: (id, entry) => setLiveWeather((prev) => ({ ...prev, [id]: entry })),
+    })
+      .then((data) => setLiveWeather((prev) => ({ ...prev, ...data })))
       .catch((error) => console.warn('기상청 일괄 조회 실패:', error.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
