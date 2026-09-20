@@ -2526,23 +2526,17 @@ h3 {
 .metro-map {
   min-width: 0;
   min-height: 0;
+  /* 수도권은 세로로 긴 모양 — .seoul-map의 가로형(94/62) 비율을 덮어쓴다 */
+  aspect-ratio: 569 / 600;
+  padding: 4px;
 }
 
 .metro-shape {
-  stroke: #ffffff;
-  stroke-width: 1;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 0.8;
   cursor: pointer;
-  transition: opacity 0.15s ease;
 }
 
-/* 예보 지역 — 위험도 색(서울 지도와 같은 팔레트) */
-.metro-shape.calm { fill: #6db98a; }
-.metro-shape.notice { fill: #e8cf6a; }
-.metro-shape.warning { fill: #e29a52; }
-.metro-shape.danger { fill: #d4674a; }
-.metro-shape.loading { fill: #d6dde4; }
-
-/* 예보하지 않는 인접 지역 — 빈틈만 메우는 맥락 */
 .metro-shape.context {
   fill: #e4e9ef;
   stroke: #f2f5f8;
@@ -2550,22 +2544,30 @@ h3 {
   pointer-events: none;
 }
 
-.metro-map .district-group.selected .metro-shape {
+/* 선택 지역 — 진한 테두리로 도드라지게 */
+.metro-shape.on {
   stroke: #17222b;
-  stroke-width: 2.4;
+  stroke-width: 2.2;
 }
 
-.metro-shape:hover { opacity: 0.82; }
+.metro-shape:hover { opacity: 0.85; }
 
 .metro-label {
-  fill: #17222b;
-  font-size: 15px;
-  font-weight: 850;
+  fill: #2a3a47;
+  font-size: 11px;
+  font-weight: 800;
   text-anchor: middle;
   paint-order: stroke;
-  stroke: #ffffff;
-  stroke-width: 3.5;
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: 2.6;
   pointer-events: none;
+}
+
+.metro-label.on {
+  fill: #10202c;
+  font-size: 14px;
+  font-weight: 900;
+  stroke-width: 3.4;
 }
 
 .metro-note {

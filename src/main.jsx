@@ -139,6 +139,46 @@ function currentSeasonEvent(date = new Date()) {
   return SEASON_EVENTS.find((e) => key >= e.from && key <= e.to) ?? null;
 }
 
+// SVG path의 대략적 면적(라벨을 띄울 만큼 큰 폴리곤인지 판단용).
+// 정확한 측량이 아니라 상대 비교가 목적이라 바운딩박스로 충분하다.
+function pathArea(d) {
+  const nums = d.match(/-?\d+(\.\d+)?/g);
+  if (!nums || nums.length < 4) return 0;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i + 1 < nums.length; i += 2) {
+    const x = Number(nums[i]);
+    const y = Number(nums[i + 1]);
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  return (maxX - minX) * (maxY - minY);
+}
+
+// 지수 → 지도 색. 밴드(초록/노랑/주황/빨강)를 앵커로 두고 그 사이를 연속 보간한다.
+// 같은 날 지역 간 지수차가 10점 안팎이라 밴드 색만 쓰면 전 지역이 한 색으로 뭉개진다.
+const MAP_SCALE = [
+  [0, [109, 185, 138]],   // calm   #6db98a
+  [35, [232, 207, 106]],  // notice #e8cf6a
+  [55, [226, 154, 82]],   // warning #e29a52
+  [75, [212, 103, 74]],   // danger #d4674a
+  [100, [168, 62, 48]],   // 짙은 적색
+];
+function scoreColor(score) {
+  const s = Math.max(0, Math.min(100, score ?? 0));
+  for (let i = 0; i < MAP_SCALE.length - 1; i += 1) {
+    const [a, ca] = MAP_SCALE[i];
+    const [b, cb] = MAP_SCALE[i + 1];
+    if (s <= b) {
+      const t = b === a ? 0 : (s - a) / (b - a);
+      const c = ca.map((v, k) => Math.round(v + (cb[k] - v) * t));
+      return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+    }
+  }
+  return 'rgb(168, 62, 48)';
+}
+
 // 날씨 라벨 → 이모지 (홈 3일 스트립)
 const WEATHER_EMOJI = { 비: '🌧️', '비/눈': '🌨️', 눈: '❄️', 흐림: '☁️', '구름 많음': '⛅', 맑음: '☀️' };
 
@@ -1827,7 +1867,7 @@ function App() {
   // 맥락 지역(우리가 예보하지 않는 인접 시군구)은 회색으로 빈틈만 메운다.
   const metroFeatures = useMemo(() => {
     const MAP_SIZE = 600;
-    const proj = makeDongView(metroGeo.features, MAP_SIZE, 16);
+    const proj = makeDongView(metroGeo.features, MAP_SIZE, 10);
     return metroGeo.features.map((feature) => {
       const rid = feature.properties.regionId;
       const region = rid ? regions.find((r) => r.id === rid) : null;
@@ -1841,18 +1881,38 @@ function App() {
           })
         : null;
       const [cx, cy] = dongCenter(feature.geometry, proj);
+      const path = dongGeometryToPath(feature.geometry, proj);
       return {
         key: feature.properties.code,
         name: feature.properties.name,
         regionId: rid,
         region,
         risk,
-        d: dongGeometryToPath(feature.geometry, proj),
+        d: path,
         cx,
         cy,
+        // 라벨은 폴리곤이 충분히 클 때만 — 65곳 전부 쓰면 글자가 뒤엉킨다.
+        area: pathArea(path),
       };
     });
   }, [regions, liveReportsByRegion, activeSpeciesId]);
+
+  // 지도에 이름을 띄울 '조각'(feature key). 한 지역이 일반구로 여러 조각이면
+  // 가장 큰 조각 하나에만 붙여 '용인 용인 용인'처럼 중복되는 것을 막고,
+  // 면적 상위만 남겨 작은 구에서 글자가 뒤엉키지 않게 한다.
+  const metroLabelKeys = useMemo(() => {
+    const largestPerRegion = new Map();
+    metroFeatures.forEach((f) => {
+      if (!f.regionId) return;
+      const prev = largestPerRegion.get(f.regionId);
+      if (!prev || f.area > prev.area) largestPerRegion.set(f.regionId, f);
+    });
+    const ranked = [...largestPerRegion.values()].sort((a, b) => b.area - a.area);
+    return {
+      all: new Map(ranked.map((f) => [f.regionId, f.key])),
+      shown: new Set(ranked.slice(0, 20).map((f) => f.key)),
+    };
+  }, [metroFeatures]);
 
   // region.id → 자치구 코드(동 코드 앞 5자리와 매칭하기 위함)
   const regionCodeById = useMemo(() => {
@@ -2446,44 +2506,56 @@ function App() {
 
             {mapView === 'metro' && (
               <div className="seoul-map metro-map" role="group" aria-label="수도권 벌레예보 지도">
-                <svg viewBox="0 0 600 600" className="seoul-map-svg" role="img">
+                {/* 수도권은 세로로 긴 모양(등가 종횡비 0.95) — 정사각 viewBox면 눌려 보인다 */}
+                <svg viewBox="0 0 569 600" className="seoul-map-svg" role="img">
                   {metroFeatures.map((f) => {
                     const on = f.regionId === selectedId;
                     if (!f.regionId) {
-                      // 예보하지 않는 인접 지역 — 빈틈만 메우는 맥락(클릭 불가)
                       return <path key={f.key} className="metro-shape context" d={f.d} />;
                     }
                     return (
-                      <g className={`district-group ${on ? 'selected' : ''}`} key={f.key}>
-                        <path
-                          className={`metro-shape ${weatherReady ? f.risk.tone : 'loading'}`}
-                          d={f.d}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => setSelectedId(f.regionId)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              setSelectedId(f.regionId);
-                            }
-                          }}
-                          aria-label={
-                            weatherReady
-                              ? `${f.region.name} ${getForecastRiskLabel(f.risk)}`
-                              : `${f.region.name} 예보 준비 중`
+                      <path
+                        key={f.key}
+                        className={`metro-shape ${on ? 'on' : ''}`}
+                        d={f.d}
+                        fill={weatherReady ? scoreColor(f.risk.score) : '#d6dde4'}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedId(f.regionId)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedId(f.regionId);
                           }
-                        />
-                        {on && (
-                          <text className="metro-label" x={f.cx} y={f.cy}>
-                            {f.region.name}
-                          </text>
-                        )}
-                      </g>
+                        }}
+                        aria-label={
+                          weatherReady
+                            ? `${f.region.name} ${getForecastRiskLabel(f.risk)} ${f.risk.score}점`
+                            : `${f.region.name} 예보 준비 중`
+                        }
+                      />
                     );
                   })}
+                  {/* 라벨은 지역당 가장 큰 조각 하나에만, 그것도 면적 상위 + 선택 지역만 */}
+                  {metroFeatures
+                    .filter((f) => {
+                      if (!f.regionId) return false;
+                      if (metroLabelKeys.all.get(f.regionId) !== f.key) return false;
+                      return f.regionId === selectedId || metroLabelKeys.shown.has(f.key);
+                    })
+                    .map((f) => (
+                      <text
+                        className={`metro-label ${f.regionId === selectedId ? 'on' : ''}`}
+                        key={`l-${f.key}`}
+                        x={f.cx}
+                        y={f.cy}
+                      >
+                        {f.region.name.replace(/^인천 /, '').replace(/(시|군)$/, '')}
+                      </text>
+                    ))}
                 </svg>
                 <p className="metro-note">
-                  탭하면 그 지역 예보로 바뀌어요. 회색은 아직 예보하지 않는 지역이에요.
+                  색이 진할수록 지수가 높아요. 지역을 탭하면 그곳 예보로 바뀝니다.
                 </p>
               </div>
             )}
