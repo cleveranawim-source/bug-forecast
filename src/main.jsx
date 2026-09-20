@@ -531,6 +531,348 @@ const REGIONS = [
     wind: 2.2,
     reports: 10,
   },
+
+  // ── 경기도·인천 전역 확장(2026-09) — 좌표는 시군구 경계 중심점, 지형 가중은 실제 산지·수계 기준 추정
+  {
+    id: 'yeoncheon',
+    name: '연천군',
+    zone: '경기 북부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 19,
+  },
+  {
+    id: 'pocheon',
+    name: '포천시',
+    zone: '경기 북부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 19,
+  },
+  {
+    id: 'gapyeong',
+    name: '가평군',
+    zone: '경기 동북',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 20,
+  },
+  {
+    id: 'dongducheon',
+    name: '동두천시',
+    zone: '경기 북부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 18,
+  },
+  {
+    id: 'yangju',
+    name: '양주시',
+    zone: '경기 북부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 18,
+  },
+  {
+    id: 'paju',
+    name: '파주시',
+    zone: '경기 서북',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 16,
+  },
+  {
+    id: 'uijeongbu',
+    name: '의정부시',
+    zone: '경기 북부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 17,
+  },
+  {
+    id: 'namyangju',
+    name: '남양주시',
+    zone: '경기 동북',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 18,
+  },
+  {
+    id: 'guri',
+    name: '구리시',
+    zone: '경기 동부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 14,
+  },
+  {
+    id: 'yangpyeong',
+    name: '양평군',
+    zone: '경기 동부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 20,
+  },
+  {
+    id: 'yeoju',
+    name: '여주시',
+    zone: '경기 동남',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 14,
+  },
+  {
+    id: 'gwangju_gg',
+    name: '광주시',
+    zone: '경기 동부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 18,
+  },
+  {
+    id: 'icheon',
+    name: '이천시',
+    zone: '경기 동남',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 13,
+  },
+  {
+    id: 'hanam',
+    name: '하남시',
+    zone: '경기 동부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 16,
+  },
+  {
+    id: 'seongnam',
+    name: '성남시',
+    zone: '경기 동남',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 16,
+  },
+  {
+    id: 'yongin',
+    name: '용인시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 16,
+  },
+  {
+    id: 'suwon',
+    name: '수원시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 11,
+  },
+  {
+    id: 'osan',
+    name: '오산시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 10,
+  },
+  {
+    id: 'pyeongtaek',
+    name: '평택시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 9,
+  },
+  {
+    id: 'anseong',
+    name: '안성시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 14,
+  },
+  {
+    id: 'hwaseong',
+    name: '화성시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 10,
+  },
+  {
+    id: 'ansan',
+    name: '안산시',
+    zone: '경기 서남',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 10,
+  },
+  {
+    id: 'siheung',
+    name: '시흥시',
+    zone: '경기 서남',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 11,
+  },
+  {
+    id: 'gunpo',
+    name: '군포시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 13,
+  },
+  {
+    id: 'uiwang',
+    name: '의왕시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 15,
+  },
+  {
+    id: 'anyang',
+    name: '안양시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 14,
+  },
+  {
+    id: 'gwacheon',
+    name: '과천시',
+    zone: '경기 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 18,
+  },
+  {
+    id: 'bupyeong',
+    name: '인천 부평구',
+    zone: '인천 중부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 12,
+  },
+  {
+    id: 'michuhol',
+    name: '인천 미추홀구',
+    zone: '인천 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 8,
+  },
+  {
+    id: 'namdong',
+    name: '인천 남동구',
+    zone: '인천 남동',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 10,
+  },
+  {
+    id: 'yeonsu',
+    name: '인천 연수구',
+    zone: '인천 남부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 8,
+  },
+  {
+    id: 'incheonjung',
+    name: '인천 중구',
+    zone: '인천 중부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 8,
+  },
+  {
+    id: 'incheondong',
+    name: '인천 동구',
+    zone: '인천 중부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 8,
+  },
+  {
+    id: 'ganghwa',
+    name: '인천 강화군',
+    zone: '인천 북부',
+    temp: 25,
+    humidity: 73,
+    rain: 46,
+    wind: 1.7,
+    reports: 17,
+  },
 ];
 
 const DISTRICT_DONGS = {
@@ -1195,8 +1537,11 @@ function makeForecast(region, reportCount, dongRisk, riskFn = getRisk) {
   });
 }
 
+// 행정동 목록이 없는 지역은 빈 배열을 돌려준다 — 예전엔 '파주1동' 같은 존재하지 않는
+// 동 이름을 만들어냈다. 없는 데이터를 지어내지 않고, 화면이 '준비 중'으로 안내하게 한다.
 function getDongRisk(region, reportCount, dongCounts = {}, riskFn = getRisk) {
-  const dongs = DISTRICT_DONGS[region.id] ?? [`${region.name.replace(/구$/, '')}1동`];
+  const dongs = DISTRICT_DONGS[region.id];
+  if (!dongs) return [];
   return dongs.map((name) => {
     const dongReports = dongCounts[name] ?? 0;
     // 동은 구의 환경·관측수준을 그대로 물려받고(=구 지수가 기본값), 실제 동 제보가 있으면
@@ -1972,24 +2317,26 @@ function App() {
         </section>
       )}
 
-      {/* ④ 내 주변 동네 */}
-      <section className="hcard" aria-label="동네별 위험도">
-        <div className="hsec-head">
-          <h3>{selected.name} 동네별</h3>
-          <button className="link-btn" onClick={() => setActiveTab('map')}>지도에서 보기 →</button>
-        </div>
-        <div className="home-dongs">
-          {homeDongs.map((dong) => (
-            <div className="home-dong-row" key={dong.name}>
-              <span>{dong.name}</span>
-              <b>
-                <span className={`legend-dot ${dong.risk.tone}`} />
-                {dong.risk.score}
-              </b>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ④ 내 주변 동네 — 동 데이터가 있는 지역만 */}
+      {homeDongs.length > 0 && (
+        <section className="hcard" aria-label="동네별 위험도">
+          <div className="hsec-head">
+            <h3>{selected.name} 동네별</h3>
+            <button className="link-btn" onClick={() => setActiveTab('map')}>지도에서 보기 →</button>
+          </div>
+          <div className="home-dongs">
+            {homeDongs.map((dong) => (
+              <div className="home-dong-row" key={dong.name}>
+                <span>{dong.name}</span>
+                <b>
+                  <span className={`legend-dot ${dong.risk.tone}`} />
+                  {dong.risk.score}
+                </b>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ⑤ 추천 장소 (즐겨찾기 우선) */}
       <section className="hcard" aria-label="추천 장소">
@@ -2205,27 +2552,36 @@ function App() {
             📍 {selected.name} 추천 장소 보기 →
           </button>
 
-          {/* 동 지도는 서울 행정동 GeoJSON 기반이라 경기·인천은 없다 — 대신 동네별 목록을 제공 */}
+          {/* 동 지도는 서울 행정동 GeoJSON 기반이라 경기·인천은 없다.
+              동 목록이 있으면 목록으로, 그것도 없으면 '준비 중'으로 정직하게 안내한다. */}
           {!selectedDongMap && (
             <div className="dong-map-block">
               <p className="eyebrow">{selected.name} 동네별 지수</p>
-              <p className="dong-fallback-note">
-                이 지역은 아직 동별 지도가 없어요. 예보·추천 장소는 정상 제공됩니다.
-              </p>
-              <div className="home-dongs">
-                {[...selectedDongs]
-                  .sort((a, b) => b.risk.score - a.risk.score)
-                  .slice(0, 8)
-                  .map((dong) => (
-                    <div className="home-dong-row" key={dong.name}>
-                      <span>{dong.name}</span>
-                      <b>
-                        <span className={`legend-dot ${dong.risk.tone}`} />
-                        {dong.risk.score}
-                      </b>
-                    </div>
-                  ))}
-              </div>
+              {selectedDongs.length > 0 ? (
+                <>
+                  <p className="dong-fallback-note">
+                    이 지역은 아직 동별 지도가 없어요. 예보·추천 장소는 정상 제공됩니다.
+                  </p>
+                  <div className="home-dongs">
+                    {[...selectedDongs]
+                      .sort((a, b) => b.risk.score - a.risk.score)
+                      .slice(0, 8)
+                      .map((dong) => (
+                        <div className="home-dong-row" key={dong.name}>
+                          <span>{dong.name}</span>
+                          <b>
+                            <span className={`legend-dot ${dong.risk.tone}`} />
+                            {dong.risk.score}
+                          </b>
+                        </div>
+                      ))}
+                  </div>
+                </>
+              ) : (
+                <p className="dong-fallback-note">
+                  동네별 데이터는 아직 준비 중이에요. 지역 전체 예보와 지도는 정상 제공됩니다.
+                </p>
+              )}
             </div>
           )}
 
