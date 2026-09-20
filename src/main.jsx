@@ -17,6 +17,7 @@ import './styles.css';
 import seoulGeo from './seoul_municipalities_geo_simple.json';
 import seoulSubGeo from './seoul_submunicipalities_geo_simple.json';
 import aiMap from './seoul_ai_map.json';
+import metroGeo from './metro_municipalities_geo.json';
 import {
   getRisk,
   blendReports,
@@ -1234,6 +1235,8 @@ function App() {
   const [speciesId, setSpeciesId] = useState(null);
   // 서울시 모기예보제 공식 수치(키 미설정이면 null — 화면은 자체 추정치만 사용)
   const [seoulMosquito, setSeoulMosquito] = useState(null);
+  // 지도 보기 — 'seoul'(AI 일러스트, 25구) / 'metro'(수도권 GeoJSON, 경기·인천 포함)
+  const [mapView, setMapView] = useState('seoul');
   const [favorites, setFavorites] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('lovebug-favorites') || '[]');
@@ -1474,6 +1477,37 @@ function App() {
       })
       .filter(Boolean);
   }, [regionByName, liveReportsByRegion, liveCountsByRegion, activeSpeciesId]);
+
+  // 수도권 GeoJSON 지도(서울 일러스트에 없는 경기·인천 포함). 커버 지역은 위험도 색,
+  // 맥락 지역(우리가 예보하지 않는 인접 시군구)은 회색으로 빈틈만 메운다.
+  const metroFeatures = useMemo(() => {
+    const MAP_SIZE = 600;
+    const proj = makeDongView(metroGeo.features, MAP_SIZE, 16);
+    return metroGeo.features.map((feature) => {
+      const rid = feature.properties.regionId;
+      const region = rid ? regions.find((r) => r.id === rid) : null;
+      const risk = region
+        ? computeSpeciesRisk(activeSpeciesId, {
+            ...region,
+            reports: blendReports(
+              activeSpeciesId === 'lovebug' ? region.reports : 0,
+              liveReportsByRegion[region.id] ?? 0
+            ),
+          })
+        : null;
+      const [cx, cy] = dongCenter(feature.geometry, proj);
+      return {
+        key: feature.properties.code,
+        name: feature.properties.name,
+        regionId: rid,
+        region,
+        risk,
+        d: dongGeometryToPath(feature.geometry, proj),
+        cx,
+        cy,
+      };
+    });
+  }, [regions, liveReportsByRegion, activeSpeciesId]);
 
   // region.id → 자치구 코드(동 코드 앞 5자리와 매칭하기 위함)
   const regionCodeById = useMemo(() => {
@@ -2023,19 +2057,84 @@ function App() {
             </select>
           </label>
 
+          {/* 지도 보기 전환 — 서울(AI 일러스트) / 수도권(경기·인천 포함) */}
+          <div className="map-view-switch" role="tablist" aria-label="지도 범위">
+            <button
+              role="tab"
+              aria-selected={mapView === 'seoul'}
+              className={mapView === 'seoul' ? 'on' : ''}
+              onClick={() => setMapView('seoul')}
+            >
+              서울
+            </button>
+            <button
+              role="tab"
+              aria-selected={mapView === 'metro'}
+              className={mapView === 'metro' ? 'on' : ''}
+              onClick={() => setMapView('metro')}
+            >
+              수도권
+            </button>
+          </div>
+
           <div className="seoul-map-wrap">
-            <div className="map-summary" aria-label="서울시 위험도 요약">
+            <div className="map-summary" aria-label="위험도 요약">
               {weatherReady ? (
                 <>
-                  <span><b>{riskSummary.danger}개 구</b> 🔴 출몰 많음</span>
-                  <span><b>{riskSummary.warning}개 구</b> 🟠 출몰 주의</span>
-                  <span><b>{riskSummary.notice}개 구</b> 🟡 출몰 보통</span>
-                  <span><b>{riskSummary.calm}개 구</b> 🟢 출몰 적음</span>
+                  <span><b>{riskSummary.danger}곳</b> 🔴 {species.labels.danger}</span>
+                  <span><b>{riskSummary.warning}곳</b> 🟠 {species.labels.warning}</span>
+                  <span><b>{riskSummary.notice}곳</b> 🟡 {species.labels.notice}</span>
+                  <span><b>{riskSummary.calm}곳</b> 🟢 {species.labels.calm}</span>
                 </>
               ) : (
                 <span className="map-loading">⏳ 기상청 예보를 불러오는 중… 잠시 후 실시간 지수가 표시돼요</span>
               )}
             </div>
+
+            {mapView === 'metro' && (
+              <div className="seoul-map metro-map" role="group" aria-label="수도권 벌레예보 지도">
+                <svg viewBox="0 0 600 600" className="seoul-map-svg" role="img">
+                  {metroFeatures.map((f) => {
+                    const on = f.regionId === selectedId;
+                    if (!f.regionId) {
+                      // 예보하지 않는 인접 지역 — 빈틈만 메우는 맥락(클릭 불가)
+                      return <path key={f.key} className="metro-shape context" d={f.d} />;
+                    }
+                    return (
+                      <g className={`district-group ${on ? 'selected' : ''}`} key={f.key}>
+                        <path
+                          className={`metro-shape ${weatherReady ? f.risk.tone : 'loading'}`}
+                          d={f.d}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setSelectedId(f.regionId)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setSelectedId(f.regionId);
+                            }
+                          }}
+                          aria-label={
+                            weatherReady
+                              ? `${f.region.name} ${getForecastRiskLabel(f.risk)}`
+                              : `${f.region.name} 예보 준비 중`
+                          }
+                        />
+                        {on && (
+                          <text className="metro-label" x={f.cx} y={f.cy}>
+                            {f.region.name}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </svg>
+                <p className="metro-note">
+                  탭하면 그 지역 예보로 바뀌어요. 회색은 아직 예보하지 않는 지역이에요.
+                </p>
+              </div>
+            )}
+            {mapView === 'seoul' && (
             <div className="seoul-map seoul-map-ai" role="group" aria-label="서울시 구별 벌레예보 지도">
               <svg
                 className="seoul-map-svg"
@@ -2078,11 +2177,12 @@ function App() {
                 })}
               </svg>
             </div>
+            )}
             <div className="map-legend" aria-label="위험도 범례">
-              <span><i className="legend-dot calm" />출몰 적음</span>
-              <span><i className="legend-dot notice" />출몰 보통</span>
-              <span><i className="legend-dot warning" />출몰 주의</span>
-              <span><i className="legend-dot danger" />출몰 많음</span>
+              <span><i className="legend-dot calm" />{species.labels.calm}</span>
+              <span><i className="legend-dot notice" />{species.labels.notice}</span>
+              <span><i className="legend-dot warning" />{species.labels.warning}</span>
+              <span><i className="legend-dot danger" />{species.labels.danger}</span>
             </div>
           </div>
 
@@ -2098,6 +2198,30 @@ function App() {
           <button className="card-more" onClick={() => setActiveTab('spots')}>
             📍 {selected.name} 추천 장소 보기 →
           </button>
+
+          {/* 동 지도는 서울 행정동 GeoJSON 기반이라 경기·인천은 없다 — 대신 동네별 목록을 제공 */}
+          {!selectedDongMap && (
+            <div className="dong-map-block">
+              <p className="eyebrow">{selected.name} 동네별 지수</p>
+              <p className="dong-fallback-note">
+                이 지역은 아직 동별 지도가 없어요. 예보·추천 장소는 정상 제공됩니다.
+              </p>
+              <div className="home-dongs">
+                {[...selectedDongs]
+                  .sort((a, b) => b.risk.score - a.risk.score)
+                  .slice(0, 8)
+                  .map((dong) => (
+                    <div className="home-dong-row" key={dong.name}>
+                      <span>{dong.name}</span>
+                      <b>
+                        <span className={`legend-dot ${dong.risk.tone}`} />
+                        {dong.risk.score}
+                      </b>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {selectedDongMap && (
             <div className="dong-map-block">
