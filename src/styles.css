@@ -2465,3 +2465,33 @@ h3 {
   padding-left: 9px;
   background: #fffaf2;
 }
+
+/* 서울시 모기예보제 공식 수치 */
+.official-index {
+  margin-top: 11px;
+  padding: 10px 12px;
+  border: 1px solid #cfe0ef;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.official-index b {
+  display: block;
+  margin-bottom: 5px;
+  color: #155f9e;
+  font-size: 0.79rem;
+  font-weight: 850;
+}
+
+.official-index span {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+
+.official-index i {
+  font-style: normal;
+  color: #3d5468;
+  font-size: 0.78rem;
+  font-weight: 700;
+}

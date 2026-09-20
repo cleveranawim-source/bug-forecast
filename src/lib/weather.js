@@ -300,6 +300,29 @@ function writeCache(key, value) {
   }
 }
 
+
+// 서울시 모기예보제(공식) 조회 — /api/mosquito 프록시 경유.
+// 키 미설정(501)·실패 시 null을 반환하고, 화면은 자체 추정치만 쓴다(기능 저하 없음).
+export async function fetchSeoulMosquito() {
+  const url = `${PROXY_BASE}/api/mosquito`;
+  try {
+    if (Capacitor.isNativePlatform()) {
+      const res = await CapacitorHttp.get({ url, headers: { Accept: 'application/json' } });
+      if (res.status !== 200) return null;
+      const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+      return data?.enabled ? data : null;
+    }
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const type = res.headers.get('content-type') ?? '';
+    if (!type.includes('json')) return null;
+    const data = await res.json();
+    return data?.enabled ? data : null;
+  } catch {
+    return null;
+  }
+}
+
 // 25개 구의 현재 날씨를 한 번에 조회 → { [regionId]: { temp, humidity, rain, wind } }
 // 같은 발표 회차면 캐시를 쓰고, 개별 구 실패는 건너뛴다(해당 구는 기존값 유지).
 export async function fetchAllDistricts() {

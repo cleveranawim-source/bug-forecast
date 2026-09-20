@@ -34,7 +34,7 @@ import {
   weightedCountByRegion,
   weightedCountByDong,
 } from './lib/reports.js';
-import { fetchAllDistricts } from './lib/weather.js';
+import { fetchAllDistricts, fetchSeoulMosquito } from './lib/weather.js';
 import { Capacitor } from '@capacitor/core';
 import { signInAnonymous, signOutUser } from './lib/auth.js';
 
@@ -635,13 +635,23 @@ const BUGS = [
   },
   {
     icon: '🦟', name: '모기', good: false, tag: '해충',
-    desc: '피를 빨고 일본뇌염 같은 병을 옮길 수 있어요. 고인 물에 알을 낳아 빠르게 늘어나요.',
+    desc: '피를 빨고 일본뇌염 같은 병을 옮길 수 있어요. 고인 물에 알을 낳아 빠르게 늘어나요. 가을 모기는 11월 초까지 활동하고, 일본뇌염 환자는 9~10월에 가장 많아요.',
     tip: '집 주변 고인 물(화분 받침·빈 그릇)을 비워요. 해질녘부터 밤까지는 긴 옷이나 기피제로 막아요.',
   },
   {
     icon: '🕷️', name: '진드기', good: false, tag: '주의',
-    desc: '풀숲에 숨어 피를 빨고, 중증열성혈소판감소증(SFTS) 같은 감염병을 옮길 수 있어 특히 조심해야 해요.',
-    tip: '풀밭에선 긴 옷·양말을 신고 돗자리를 깔아요. 물렸다면 비비지 말고 핀셋으로 천천히 빼낸 뒤 병원에 가요.',
+    desc: '풀숲에 숨어 피를 빨고, 중증열성혈소판감소증(SFTS)·쯔쯔가무시증 같은 감염병을 옮겨요. SFTS는 백신·치료제가 없어 더 조심해야 하고, 쯔쯔가무시는 10~11월에 가장 많아요.',
+    tip: '풀밭에선 긴 옷·양말을 신고 돗자리를 깔아요. 물렸다면 비비지 말고 핀셋으로 천천히 빼낸 뒤 병원에 가요. 벌초·성묘 뒤 2주 안에 열이 나면 야외활동을 했다고 꼭 알려요.',
+  },
+  {
+    icon: '🐝', name: '말벌', good: false, tag: '위험',
+    desc: '벌 쏘임 사고의 30%가 9월에 몰려요. 꿀벌과 달리 여러 번 쏠 수 있고, 벌집을 건드리면 떼로 공격해요. 벌초·성묘·산행 때 특히 조심해야 해요.',
+    tip: '검은 옷·향수·단 음료를 피해요. 벌집을 보면 절대 건드리지 말고 119에 신고해요. 쏘이면 카드로 침을 긁어내고 차갑게 식히되, 어지럽거나 숨이 차면 바로 119를 불러요.',
+  },
+  {
+    icon: '🌰', name: '갈색여치', good: false, tag: '주의',
+    desc: '따뜻한 겨울 뒤 일부 지역에서 갑자기 늘어나는 토종 곤충이에요. 과수·콩 같은 농작물을 갉아먹고, 손으로 잡으면 물 수도 있어요.',
+    tip: '맨손으로 잡지 말고 도구를 써요. 농작물 피해가 크면 지자체 농업기술센터에 알려요.',
   },
   {
     icon: '🪰', name: '등에', good: false, tag: '주의',
@@ -1222,6 +1232,8 @@ function App() {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   // 보고 있는 벌레 종. null = 오늘 위험이 가장 높은 종 자동 선택.
   const [speciesId, setSpeciesId] = useState(null);
+  // 서울시 모기예보제 공식 수치(키 미설정이면 null — 화면은 자체 추정치만 사용)
+  const [seoulMosquito, setSeoulMosquito] = useState(null);
   const [favorites, setFavorites] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('lovebug-favorites') || '[]');
@@ -1524,6 +1536,12 @@ function App() {
     // 25개 구 일괄 조회가 느린 회선에서 20초 가까이 걸릴 수 있어, 임시 안내가 성급히 뜨지 않도록 12초로 둔다.
     const timeout = setTimeout(() => setWeatherTimedOut(true), 12000);
     return () => clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
+    // 모기 시즌에만 서울시 공식 모기예보를 받아온다(비시즌엔 불필요한 호출을 하지 않음).
+    if (speciesSeason('mosquito') < 0.3) return;
+    fetchSeoulMosquito().then(setSeoulMosquito).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -1836,6 +1854,23 @@ function App() {
             📢 <b>{a.label}</b> · {a.source}
           </div>
         ))}
+        {activeSpeciesId === 'mosquito' && seoulMosquito && (
+          <div className="official-index">
+            <b>서울시 모기예보</b>
+            <span>
+              {['riverside', 'urban', 'mountain'].map((k) => {
+                const v = seoulMosquito[k];
+                if (!v) return null;
+                const name = k === 'riverside' ? '수변부' : k === 'urban' ? '주거지' : '공원';
+                return (
+                  <i key={k}>
+                    {name} {v.step}단계 {v.label}
+                  </i>
+                );
+              })}
+            </span>
+          </div>
+        )}
         <p className="home-narr">{riskNarrative(updatedRisk, activeSpeciesId)}</p>
         {homeHint && <div className="time-hint">{homeHint}</div>}
         <span className="hero-src">
