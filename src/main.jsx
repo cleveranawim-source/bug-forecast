@@ -17,7 +17,16 @@ import './styles.css';
 import seoulGeo from './seoul_municipalities_geo_simple.json';
 import seoulSubGeo from './seoul_submunicipalities_geo_simple.json';
 import aiMap from './seoul_ai_map.json';
-import { getRisk, blendReports } from './lib/risk.js';
+import {
+  getRisk,
+  blendReports,
+  SPECIES,
+  SPECIES_ORDER,
+  computeSpeciesRisk,
+  speciesSeason,
+  speciesPlaceRisk,
+  speciesAlerts,
+} from './lib/risk.js';
 import {
   addReport,
   subscribeReports,
@@ -38,11 +47,40 @@ const REPORT_COOLDOWN_MS = 5 * 60 * 1000;
 // 정밀 좌표(제보자가 서 있던 지점)를 그대로 남기지 않는다. 동네 인증엔 110m면 충분.
 const roundCoord = (v) => (typeof v === 'number' ? Math.round(v * 1000) / 1000 : null);
 
+// 종별 서사 꼬리말 — 왜 조심해야 하는지가 종마다 다르다.
+const NARRATIVE_TAIL = {
+  lovebug: {
+    danger: '조명·밝은 벽 주변에 몰릴 수 있어요.',
+    warning: '활동이 활발한 편이에요. 밝은 조명 주변을 주의하세요.',
+    notice: '조명 주변만 가볍게 주의하세요.',
+    off: '러브버그 활동 시기가 아니에요. 지수는 낮게 유지돼요.',
+  },
+  mosquito: {
+    danger: '해질녘~밤 야외활동은 긴 옷과 기피제를 꼭 챙기세요.',
+    warning: '저녁 물가·공원에서 물릴 수 있어요. 기피제를 권해요.',
+    notice: '해질녘 물가만 조금 주의하면 무난해요.',
+    off: '모기 활동 시기가 아니에요.',
+  },
+  tick: {
+    danger: '풀밭에 앉지 말고, 귀가 후 바로 샤워하세요.',
+    warning: '산행·벌초 때 긴 옷과 기피제를 챙기세요.',
+    notice: '풀밭에 오래 앉지만 않으면 무난해요.',
+    off: '진드기 활동 시기가 아니에요.',
+  },
+  wasp: {
+    danger: '벌집을 발견하면 건드리지 말고 119에 신고하세요.',
+    warning: '검은 옷·향수를 피하고 주변을 살피세요.',
+    notice: '산길에서 벌집만 조심하면 무난해요.',
+    off: '말벌 활동 시기가 아니에요.',
+  },
+};
+
 // 위험모델 factors로 오늘의 한 줄 설명을 만든다 — REGIONS의 하드코딩 문구(창작 서사)를
 // 대체해, 화면의 설명이 항상 실제 계산 근거(습도·비·바람·시즌)와 일치하게 한다.
-function riskNarrative(risk) {
+function riskNarrative(risk, speciesId = 'lovebug') {
   const f = risk.factors;
-  if (f.season <= 0.1) return '러브버그 활동 시기가 아니에요. 지수는 낮게 유지돼요.';
+  const tail = NARRATIVE_TAIL[speciesId] ?? NARRATIVE_TAIL.lovebug;
+  if (f.season <= 0.1) return tail.off;
 
   const boosters = [];
   if (f.rain >= 0.55) boosters.push('비 온 뒤 우화 조건');
@@ -61,18 +99,43 @@ function riskNarrative(risk) {
 
   switch (risk.tone) {
     case 'danger':
-      return `${why || '활동 조건이 두루 좋은 날'} 영향으로 조명·밝은 벽 주변에 몰릴 수 있어요.`;
+      return `${why || '활동 조건이 두루 좋은 날'} 영향으로 ${tail.danger}`;
     case 'warning':
-      return `${why || '무난한 활동 조건'} 영향으로 활동이 활발한 편이에요. 밝은 조명 주변을 주의하세요.`;
+      return `${why || '무난한 활동 조건'} 영향으로 ${tail.warning}`;
     case 'notice':
       return calmWhy
-        ? `${calmWhy} 영향으로 아주 많지는 않겠어요. 조명 주변만 가볍게 주의하세요.`
-        : '활동 조건이 보통이에요. 밝은 조명 주변만 가볍게 주의하세요.';
+        ? `${calmWhy} 영향으로 아주 많지는 않겠어요. ${tail.notice}`
+        : `활동 조건이 보통이에요. ${tail.notice}`;
     default:
       return calmWhy
         ? `${calmWhy} 영향으로 활동이 잦아드는 날이에요. 쾌적하게 다녀오세요.`
         : '활동 조건이 낮아요. 쾌적하게 다녀오세요.';
   }
+}
+
+// 계절 이벤트 — 그 시기에만 뜨는 안내(벌초·성묘철 등). 날짜(MMDD) 범위로 노출.
+const SEASON_EVENTS = [
+  {
+    id: 'chuseok',
+    from: 901,
+    to: 1015,
+    title: '🌾 벌초·성묘·가을 산행철이에요',
+    desc:
+      '풀밭·산소 주변은 진드기와 말벌이 가장 많은 시기예요. 긴 옷·기피제를 챙기고, 벌집을 보면 직접 건드리지 말고 119에 신고하세요. 귀가 후엔 바로 샤워하고, 2주 안에 열이 나면 병원에 야외활동 사실을 꼭 알리세요.',
+  },
+  {
+    id: 'lovebug-peak',
+    from: 610,
+    to: 715,
+    title: '🐞 러브버그 대발생 시기예요',
+    desc:
+      '6월 중순~7월 초가 절정이고 7월 중순이면 대부분 사라져요. 사람을 물지 않는 익충이니, 옷에 붙으면 털어내고 물로 씻어내면 돼요.',
+  },
+];
+
+function currentSeasonEvent(date = new Date()) {
+  const key = (date.getMonth() + 1) * 100 + date.getDate();
+  return SEASON_EVENTS.find((e) => key >= e.from && key <= e.to) ?? null;
 }
 
 // 날씨 라벨 → 이모지 (홈 3일 스트립)
@@ -91,14 +154,14 @@ function stripDayLabel(day, index) {
 // 시간별 예보로 '언제 나가면 좋은지' 힌트를 만든다.
 // 시간별 조건으로 위험지수를 재계산해 지금보다 눈에 띄게 낮아지는 시각을 찾는다.
 // 의미 있는 변화가 없으면 null — 억지 조언을 만들지 않는다(정직 원칙).
-function hourlyHint(region, baseRisk) {
+function hourlyHint(region, baseRisk, riskFn = getRisk) {
   const hours = region.hourly;
   if (!hours || hours.length < 3) return null;
   if (baseRisk.tone === 'calm') return '☀️ 지금도 나가기 좋은 조건이에요';
   const scored = hours.map((h) => ({
     hour: h.hour,
     date: h.date,
-    score: getRisk({ ...region, temp: h.temp, humidity: h.humidity, wind: h.wind, rain: h.rain }).score,
+    score: riskFn({ ...region, temp: h.temp, humidity: h.humidity, wind: h.wind, rain: h.rain }).score,
   }));
   const now = scored[0];
   const drop = scored.find((s) => now.score - s.score >= 12);
@@ -942,11 +1005,16 @@ function findFeatureByCoordinate(geo, longitude, latitude) {
   return geo.features.find((feature) => geometryContainsPoint(feature.geometry, [longitude, latitude]));
 }
 
+const TONE_EMOJI = { danger: '🔴', warning: '🟠', notice: '🟡', calm: '🟢' };
+const LOVEBUG_LABELS = { danger: '출몰 많음', warning: '출몰 주의', notice: '출몰 보통', calm: '출몰 적음' };
+
+// 종별 라벨을 담은 risk(computeSpeciesRisk 결과)면 그 라벨을, 아니면 러브버그 문구를 쓴다.
 function getForecastRiskLabel(risk) {
-  if (risk.tone === 'danger') return '🔴 출몰 많음';
-  if (risk.tone === 'warning') return '🟠 출몰 주의';
-  if (risk.tone === 'notice') return '🟡 출몰 보통';
-  return '🟢 출몰 적음';
+  const tone = risk.tone ?? 'calm';
+  const label = risk.label && !['매우 높음', '높음', '보통', '낮음'].includes(risk.label)
+    ? risk.label
+    : LOVEBUG_LABELS[tone];
+  return `${TONE_EMOJI[tone]} ${label}`;
 }
 
 // 오늘로부터 index일 뒤의 표시 라벨. 오늘/내일은 상대표현, 그 외는 날짜(요일).
@@ -959,7 +1027,7 @@ function formatForecastDay(index) {
   return relative ? `${relative} ${md}` : `${md}(${weekday})`;
 }
 
-function makeForecast(region, reportCount, dongRisk) {
+function makeForecast(region, reportCount, dongRisk, riskFn = getRisk) {
   const dongAdjustment = dongRisk ? Math.round((dongRisk.score - 55) / 8) : 0;
 
   // 예보일별 제보 기여 태이퍼 — 오늘 목격담이 미래 예보까지 같은 강도로 밀어올리지 않게.
@@ -981,7 +1049,7 @@ function makeForecast(region, reportCount, dongRisk) {
         recentRainMm: prev ? prev.precip : undefined,
         reports: Math.max(0, reportCount * taper + dongAdjustment),
       };
-      return { day: day.date, temp: day.temp, weather: day.label, risk: getRisk(simulated) };
+      return { day: day.date, temp: day.temp, weather: day.label, risk: riskFn(simulated) };
     });
   }
 
@@ -998,12 +1066,12 @@ function makeForecast(region, reportCount, dongRisk) {
     return {
       ...day,
       temp: simulated.temp,
-      risk: getRisk(simulated),
+      risk: riskFn(simulated),
     };
   });
 }
 
-function getDongRisk(region, reportCount, dongCounts = {}) {
+function getDongRisk(region, reportCount, dongCounts = {}, riskFn = getRisk) {
   const dongs = DISTRICT_DONGS[region.id] ?? [`${region.name.replace(/구$/, '')}1동`];
   return dongs.map((name) => {
     const dongReports = dongCounts[name] ?? 0;
@@ -1012,7 +1080,7 @@ function getDongRisk(region, reportCount, dongCounts = {}) {
     const reports = reportCount + dongReports * 3;
     return {
       name,
-      risk: getRisk({ ...region, reports }),
+      risk: riskFn({ ...region, reports }),
       reports: dongReports,
     };
   });
@@ -1039,6 +1107,8 @@ function App() {
   const [citizen, setCitizen] = useState(null);
   const [reports, setReports] = useState([]);
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  // 보고 있는 벌레 종. null = 오늘 위험이 가장 높은 종 자동 선택.
+  const [speciesId, setSpeciesId] = useState(null);
   const [favorites, setFavorites] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('lovebug-favorites') || '[]');
@@ -1095,24 +1165,57 @@ function App() {
   }, [query]);
 
   const filteredIds = new Set(filteredRegions.map((region) => region.id));
-  // 실제 제보 집계 — 지수 계산엔 최근성 가중치(weighted), 화면 표시엔 원시 건수(raw)를 쓴다.
-  // 시드(REGIONS.reports)는 추정 기준선이라 blendReports로 실제 제보가 쌓일수록 감쇠된다.
-  const liveReportsByRegion = useMemo(() => weightedCountByRegion(reports), [reports]);
-  const liveCountsByRegion = useMemo(() => countByRegion(reports), [reports]);
+
+  // ── 다종 예보 ──────────────────────────────────────────────────────────────
+  // speciesId가 null이면 '오늘 가장 위험한 종'을 자동 선택(계절에 따라 히어로가 바뀐다).
+  // 각 종의 점수는 그 종의 제보만으로 계산한다(시드 제보는 러브버그 기준선이라 타 종엔 미적용)
+  // — 그래야 칩 점수와 히어로 점수가 일치한다.
+  const todaySpecies = useMemo(
+    () =>
+      SPECIES_ORDER.filter((id) => speciesSeason(id) >= 0.3)
+        .map((id) => {
+          const weighted = weightedCountByRegion(reports, id)[selected.id] ?? 0;
+          const rc = blendReports(id === 'lovebug' ? selected.reports : 0, weighted);
+          return { id, risk: computeSpeciesRisk(id, { ...selected, reports: rc }) };
+        })
+        .sort((a, b) => b.risk.score - a.risk.score),
+    [selected, reports]
+  );
+  const activeSpeciesId = speciesId ?? todaySpecies[0]?.id ?? 'lovebug';
+  const species = SPECIES[activeSpeciesId];
+  // 시드 제보(REGIONS.reports)는 러브버그 기준선이라 다른 종엔 쓰지 않는다.
+  const seedFor = (region) => (activeSpeciesId === 'lovebug' ? region.reports : 0);
+  const riskFn = (region) => computeSpeciesRisk(activeSpeciesId, region);
+
+  // 실제 제보 집계 — 선택한 종의 제보만 센다(종 필드가 없는 과거 제보는 러브버그로 간주).
+  // 지수 계산엔 최근성 가중치(weighted), 화면 표시엔 원시 건수(raw)를 쓴다.
+  const liveReportsByRegion = useMemo(
+    () => weightedCountByRegion(reports, activeSpeciesId),
+    [reports, activeSpeciesId]
+  );
+  const liveCountsByRegion = useMemo(
+    () => countByRegion(reports, activeSpeciesId),
+    [reports, activeSpeciesId]
+  );
   const selectedLiveCount = liveCountsByRegion[selected.id] ?? 0;
-  const totalReports = blendReports(selected.reports, liveReportsByRegion[selected.id] ?? 0);
+  const totalReports = blendReports(seedFor(selected), liveReportsByRegion[selected.id] ?? 0);
   const updatedSelected = { ...selected, reports: totalReports };
-  const updatedRisk = getRisk(updatedSelected);
+  const updatedRisk = riskFn(updatedSelected);
+  const activeAlerts = speciesAlerts(activeSpeciesId);
+  const seasonEvent = currentSeasonEvent();
 
   // 즐겨찾기 — 각 구의 오늘 지수를 미리 계산(즐겨찾기 카드는 원래 구 기준으로 표시).
   const guScoreById = useMemo(() => {
     const map = {};
     regions.forEach((region) => {
-      const rc = blendReports(region.reports, liveReportsByRegion[region.id] ?? 0);
-      map[region.id] = getRisk({ ...region, reports: rc }).score;
+      const rc = blendReports(
+        activeSpeciesId === 'lovebug' ? region.reports : 0,
+        liveReportsByRegion[region.id] ?? 0
+      );
+      map[region.id] = computeSpeciesRisk(activeSpeciesId, { ...region, reports: rc }).score;
     });
     return map;
-  }, [regions, liveReportsByRegion]);
+  }, [regions, liveReportsByRegion, activeSpeciesId]);
   const regionNameById = useMemo(
     () => Object.fromEntries(REGIONS.map((r) => [r.id, r.name])),
     []
@@ -1139,7 +1242,7 @@ function App() {
     if (!weatherReady || changeAlerts !== null) return;
     const scores = {};
     favorites.forEach((f) => {
-      scores[`fav:${f.gu}:${f.name}`] = getPlaceRisk(guScoreById[f.gu] ?? 0, f.env).score;
+      scores[`fav:${f.gu}:${f.name}`] = speciesPlaceRisk(activeSpeciesId, guScoreById[f.gu] ?? 0, f.env).score;
     });
     scores[`gu:${selectedId}`] = updatedRisk.score;
 
@@ -1163,14 +1266,14 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weatherReady, changeAlerts]);
-  const selectedDongs = getDongRisk(selected, totalReports, weightedCountByDong(reports, selected.id));
+  const selectedDongs = getDongRisk(selected, totalReports, weightedCountByDong(reports, selected.id, activeSpeciesId), riskFn);
   // 예보 기준 구: 드롭다운 선택값(forecastRegionId), 없으면 현재 위치(selected)를 기본으로.
   const forecastRegion = regions.find((region) => region.id === forecastRegionId) ?? selected;
   const forecastTotalReports = blendReports(
-    forecastRegion.reports,
+    seedFor(forecastRegion),
     liveReportsByRegion[forecastRegion.id] ?? 0
   );
-  const forecastDongs = getDongRisk(forecastRegion, forecastTotalReports, weightedCountByDong(reports, forecastRegion.id));
+  const forecastDongs = getDongRisk(forecastRegion, forecastTotalReports, weightedCountByDong(reports, forecastRegion.id, activeSpeciesId), riskFn);
   const sortedForecastRegions = useMemo(
     () => [...REGIONS].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
     []
@@ -1178,10 +1281,10 @@ function App() {
   const loginRegion = regions.find((region) => region.id === loginForm.regionId) ?? selected;
   const loginDongs = useMemo(
     () =>
-      getDongRisk(loginRegion, blendReports(loginRegion.reports, liveReportsByRegion[loginRegion.id] ?? 0)).sort(
+      getDongRisk(loginRegion, blendReports(seedFor(loginRegion), liveReportsByRegion[loginRegion.id] ?? 0), {}, riskFn).sort(
         (a, b) => a.name.localeCompare(b.name, 'ko')
       ),
-    [loginRegion, liveReportsByRegion]
+    [loginRegion, liveReportsByRegion, activeSpeciesId]
   );
   const sortedForecastDongs = useMemo(
     () => [...forecastDongs].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
@@ -1191,11 +1294,11 @@ function App() {
     ? forecastDong
     : forecastDongs[0]?.name;
   const activeForecastDongRisk = forecastDongs.find((dong) => dong.name === activeForecastDong)?.risk;
-  const forecast = makeForecast(forecastRegion, forecastTotalReports, activeForecastDongRisk);
+  const forecast = makeForecast(forecastRegion, forecastTotalReports, activeForecastDongRisk, riskFn);
 
   // 홈(원스크롤) 파생값 — 현재 선택 구 기준
-  const homeForecast = makeForecast(updatedSelected, totalReports);
-  const homeHint = hourlyHint(updatedSelected, updatedRisk);
+  const homeForecast = makeForecast(updatedSelected, totalReports, undefined, riskFn);
+  const homeHint = hourlyHint(updatedSelected, updatedRisk, riskFn);
   const homeChips = whyChips(updatedRisk, selected);
   const homeDongs = [...selectedDongs].sort((a, b) => b.risk.score - a.risk.score).slice(0, 4);
   const homePlaces = favorites.length
@@ -1204,7 +1307,7 @@ function App() {
         name: f.name,
         fav: true,
         sub: `${regionNameById[f.gu] ?? ''} · ${PLACE_ENV[f.env]?.label ?? ''}`,
-        r: getPlaceRisk(guScoreById[f.gu] ?? 0, f.env),
+        r: speciesPlaceRisk(activeSpeciesId, guScoreById[f.gu] ?? 0, f.env),
       }))
     : (DISTRICT_PLACES[selectedId] ?? [])
         .map((p) => ({
@@ -1212,15 +1315,15 @@ function App() {
           name: p.name,
           fav: false,
           sub: `${p.act} · ${PLACE_ENV[p.env]?.label ?? ''}`,
-          r: getPlaceRisk(updatedRisk.score, p.env),
+          r: speciesPlaceRisk(activeSpeciesId, updatedRisk.score, p.env),
         }))
         .sort((a, b) => a.r.score - b.r.score)
         .slice(0, 3);
   const riskSummary = regions.reduce(
     (summary, region) => {
-      const regionRisk = getRisk({
+      const regionRisk = riskFn({
         ...region,
-        reports: blendReports(region.reports, liveReportsByRegion[region.id] ?? 0),
+        reports: blendReports(seedFor(region), liveReportsByRegion[region.id] ?? 0),
       });
       summary[regionRisk.tone] += 1;
       return summary;
@@ -1238,13 +1341,13 @@ function App() {
       .map((d) => {
         const region = regionByName[d.name];
         if (!region) return null;
-        const reportCount = blendReports(region.reports, liveReportsByRegion[region.id] ?? 0);
+        const reportCount = blendReports(seedFor(region), liveReportsByRegion[region.id] ?? 0);
         const liveCount = liveCountsByRegion[region.id] ?? 0;
-        const risk = getRisk({ ...region, reports: reportCount });
+        const risk = computeSpeciesRisk(activeSpeciesId, { ...region, reports: reportCount });
         return { region, risk, liveCount, d: d.d, labelX: d.labelX, labelY: d.labelY };
       })
       .filter(Boolean);
-  }, [regionByName, liveReportsByRegion, liveCountsByRegion]);
+  }, [regionByName, liveReportsByRegion, liveCountsByRegion, activeSpeciesId]);
 
   // region.id → 자치구 코드(동 코드 앞 5자리와 매칭하기 위함)
   const regionCodeById = useMemo(() => {
@@ -1270,7 +1373,7 @@ function App() {
       const name = feature.properties.name;
       const info = infoByName[name];
       // 이름이 안 맞는 동(통폐합 등)은 구 지수를 그대로 따른다(상·하위 어긋남 방지).
-      const risk = info ? info.risk : getRisk(selected);
+      const risk = info ? info.risk : riskFn(selected);
       const [cx, cy] = dongCenter(feature.geometry, proj);
       return {
         name,
@@ -1568,10 +1671,34 @@ function App() {
         </p>
       )}
 
+      {/* ⓪ 오늘 조심할 벌레 — 계절에 따라 활동 종이 바뀐다(탭하면 그 종으로 전환) */}
+      {todaySpecies.length > 0 && (
+        <div className="species-bar" role="tablist" aria-label="오늘 조심할 벌레">
+          {todaySpecies.map((s) => {
+            const sp = SPECIES[s.id];
+            const on = s.id === activeSpeciesId;
+            return (
+              <button
+                key={s.id}
+                role="tab"
+                aria-selected={on}
+                className={`species-chip ${on ? 'on' : ''} ${s.risk.tone}`}
+                onClick={() => setSpeciesId(s.id)}
+              >
+                <span className="sp-emoji" aria-hidden="true">{sp.emoji}</span>
+                <span className="sp-name">{sp.name}</span>
+                <b className="sp-score">{s.risk.score}</b>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* ① 3초 답: 지수 + 한 줄 + 시간 힌트 */}
-      <section className="hcard home-hero" aria-label={`오늘 위험도 ${updatedRisk.score}점`}>
+      <section className="hcard home-hero" aria-label={`오늘 ${species.name} 위험도 ${updatedRisk.score}점`}>
         <div className="home-hero-row">
           <div>
+            <p className="home-species">{species.emoji} {species.name}</p>
             <div className="home-score">
               {updatedRisk.score}
               <small> /100</small>
@@ -1584,12 +1711,36 @@ function App() {
             </div>
           </div>
         </div>
-        <p className="home-narr">{riskNarrative(updatedRisk)}</p>
+        {activeAlerts.map((a) => (
+          <div className="official-alert" key={a.label}>
+            📢 <b>{a.label}</b> · {a.source}
+          </div>
+        ))}
+        <p className="home-narr">{riskNarrative(updatedRisk, activeSpeciesId)}</p>
         {homeHint && <div className="time-hint">{homeHint}</div>}
         <span className="hero-src">
           {selectedLiveCount > 0 ? `이웃 제보 ${selectedLiveCount}건 반영 · ` : ''}
           {weatherReady && !usingFallbackWeather ? '기상청 실시간 예보 기준' : '날씨·지형 기반 추정치'}
         </span>
+      </section>
+
+      {/* ①-b 계절 안내 + 종별 안전수칙 */}
+      <section className="hcard season-card" aria-label={`${species.name} 계절 안내`}>
+        <div className="hsec-head">
+          <h3>{species.emoji} {species.name} — 지금 이 계절</h3>
+        </div>
+        <p className="season-note">{species.seasonNote}</p>
+        <ul className="safety-list">
+          {species.tips.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+        {seasonEvent && (
+          <div className="season-event">
+            <strong>{seasonEvent.title}</strong>
+            <p>{seasonEvent.desc}</p>
+          </div>
+        )}
       </section>
 
       {/* ② 앞으로 3일 */}
@@ -2142,7 +2293,7 @@ function App() {
                       <p className="eyebrow">⭐ 내 즐겨찾기 · {favorites.length}곳</p>
                       <div className="spots-list">
                         {favorites.map((f) => {
-                          const risk = getPlaceRisk(guScoreById[f.gu] ?? 0, f.env);
+                          const risk = speciesPlaceRisk(activeSpeciesId, guScoreById[f.gu] ?? 0, f.env);
                           return (
                             <div className={`spot-card ${risk.tone}`} key={`${f.gu}|${f.name}`}>
                               <div className="spot-head">
@@ -2171,7 +2322,7 @@ function App() {
                   <p className="spots-intro">오늘 날씨로 계산한 위험도와 추천 시간이에요. <b>회피보다 대안</b> — 위험한 곳 대신 같은 동네 안전한 곳을 골라보세요. 자주 가는 곳은 ☆를 눌러 즐겨찾기하세요.</p>
                   <div className="spots-list">
                     {(DISTRICT_PLACES[selectedId] ?? []).map((place) => {
-                      const placeRisk = getPlaceRisk(updatedRisk.score, place.env);
+                      const placeRisk = speciesPlaceRisk(activeSpeciesId, updatedRisk.score, place.env);
                       return (
                         <div className={`spot-card ${placeRisk.tone}`} key={place.name}>
                           <div className="spot-head">

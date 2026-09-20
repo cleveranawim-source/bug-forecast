@@ -45,20 +45,27 @@ export function subscribeReports(callback, { max = 300 } = {}) {
 }
 
 // 구별 제보 수 집계 → { [regionId]: count }
-export function countByRegion(reports) {
+// 제보의 종(species). 다종 예보 이전 제보엔 필드가 없으므로 러브버그로 간주한다.
+export function reportSpecies(report) {
+  return report.species ?? 'lovebug';
+}
+const matchSpecies = (report, species) => !species || reportSpecies(report) === species;
+
+// 구별 제보 수 집계 → { [regionId]: count }. species를 주면 그 종만 센다.
+export function countByRegion(reports, species) {
   const counts = {};
   for (const r of reports) {
-    if (!r.regionId) continue;
+    if (!r.regionId || !matchSpecies(r, species)) continue;
     counts[r.regionId] = (counts[r.regionId] ?? 0) + 1;
   }
   return counts;
 }
 
 // 특정 구의 동별 제보 수 집계 → { [dong]: count }
-export function countByDong(reports, regionId) {
+export function countByDong(reports, regionId, species) {
   const counts = {};
   for (const r of reports) {
-    if (r.regionId !== regionId || !r.dong) continue;
+    if (r.regionId !== regionId || !r.dong || !matchSpecies(r, species)) continue;
     counts[r.dong] = (counts[r.dong] ?? 0) + 1;
   }
   return counts;
@@ -79,20 +86,20 @@ export function reportWeight(report) {
 }
 
 // 구별 최근성 가중 제보 수 → { [regionId]: weightedCount } (지수 계산용)
-export function weightedCountByRegion(reports) {
+export function weightedCountByRegion(reports, species) {
   const counts = {};
   for (const r of reports) {
-    if (!r.regionId) continue;
+    if (!r.regionId || !matchSpecies(r, species)) continue;
     counts[r.regionId] = (counts[r.regionId] ?? 0) + reportWeight(r);
   }
   return counts;
 }
 
 // 특정 구의 동별 최근성 가중 제보 수 → { [dong]: weightedCount } (동 지수 계산용)
-export function weightedCountByDong(reports, regionId) {
+export function weightedCountByDong(reports, regionId, species) {
   const counts = {};
   for (const r of reports) {
-    if (r.regionId !== regionId || !r.dong) continue;
+    if (r.regionId !== regionId || !r.dong || !matchSpecies(r, species)) continue;
     counts[r.dong] = (counts[r.dong] ?? 0) + reportWeight(r);
   }
   return counts;

@@ -2337,3 +2337,106 @@ h3 {
   font-weight: 800;
   text-align: center;
 }
+
+/* ───────────── 다종 예보 (2026-09, 종 선택·계절 안내) ───────────── */
+.species-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 13px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.species-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 9px 13px;
+  border: 1px solid #dde7f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #5b6b78;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.species-chip .sp-emoji { font-size: 1.05rem; }
+.species-chip .sp-score { color: #17222b; font-weight: 850; }
+
+.species-chip.on {
+  border-color: #1877C7;
+  background: #eaf3fc;
+  color: #1877C7;
+  box-shadow: 0 2px 8px rgba(24, 119, 199, 0.14);
+}
+.species-chip.on .sp-score { color: #1877C7; }
+
+/* 위험도에 따라 점수 색만 살짝 — 칩 자체는 차분하게 */
+.species-chip.danger .sp-score { color: #c85c3c; }
+.species-chip.warning .sp-score { color: #d98a2b; }
+
+.home-species {
+  margin-bottom: 4px;
+  color: #3d5468;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+/* 공식 경보(질병관리청 등) */
+.official-alert {
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid #f0d5b8;
+  border-radius: 10px;
+  background: #fff6ea;
+  color: #8a5a1c;
+  font-size: 0.83rem;
+  font-weight: 700;
+}
+
+/* 계절 안내 카드 */
+.season-note {
+  margin-bottom: 11px;
+  color: #3d5468;
+  font-size: 0.89rem;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.safety-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 5px;
+}
+
+.safety-list li {
+  color: #46586a;
+  font-size: 0.87rem;
+  font-weight: 620;
+  line-height: 1.5;
+}
+
+.season-event {
+  margin-top: 13px;
+  padding: 12px 13px;
+  border-radius: 12px;
+  background: #f3f8f4;
+  border: 1px solid #dcebe0;
+}
+
+.season-event strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #26643f;
+  font-size: 0.9rem;
+}
+
+.season-event p {
+  color: #46586a;
+  font-size: 0.84rem;
+  font-weight: 620;
+  line-height: 1.55;
+}
