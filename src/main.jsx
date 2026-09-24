@@ -1148,6 +1148,7 @@ const DISTRICT_PLACES = {
   ],
   geomdan: [
     { name: '가현산 진달래 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '황화산 둘레길(무장애 데크길)', act: '🚶 산책', env: 'mountain' },
     { name: '드림파크 야생화단지', act: '👶 나들이', env: 'urban' },
     { name: '경인아라뱃길 북측 자전거길', act: '🚴 라이딩', env: 'riverside' },
   ],
