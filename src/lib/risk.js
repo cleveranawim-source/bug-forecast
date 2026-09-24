@@ -51,7 +51,8 @@ const TERRAIN_WEIGHT = {
   gwangmyeong: 0.75,  // 도덕산·구름산
   bucheon: 0.7,       // 원미산·성주산
   gimpo: 0.6,         // 문수산(대체로 평지)
-  incheonseo: 0.5,    // 매립·평지
+  seohae: 0.5,        // 매립·평지(옛 서구)
+  geomdan: 0.5,       // 가현산 자락, 대체로 평지(옛 서구)
   yeoncheon: 0.95,
   pocheon: 0.95,
   gapyeong: 1.0,
@@ -83,8 +84,8 @@ const TERRAIN_WEIGHT = {
   michuhol: 0.4,
   namdong: 0.5,
   yeonsu: 0.4,
-  incheonjung: 0.4,
-  incheondong: 0.4,
+  jemulpo: 0.4,
+  yeongjong: 0.4,
   ganghwa: 0.85,
 };
 
@@ -227,7 +228,7 @@ const TERRAIN_MOSQUITO = {
   eunpyeong: 0.7, seongbuk: 0.65, nowon: 0.65, dobong: 0.6, gangbuk: 0.6,
   seodaemun: 0.6, jongno: 0.55, jung: 0.55, gwanak: 0.6, geumcheon: 0.7,
   // 수도권 확장 — 한강·굴포천·아라뱃길·논 등 정체수가 많은 지역일수록 높음
-  gimpo: 0.95, goyang: 0.9, incheonseo: 0.9, bucheon: 0.85, gyeyang: 0.85, gwangmyeong: 0.8,
+  gimpo: 0.95, goyang: 0.9, seohae: 0.9, geomdan: 0.9, bucheon: 0.85, gyeyang: 0.85, gwangmyeong: 0.8,
   yeoncheon: 0.75,
   pocheon: 0.6,
   gapyeong: 0.7,
@@ -259,8 +260,8 @@ const TERRAIN_MOSQUITO = {
   michuhol: 0.8,
   namdong: 0.85,
   yeonsu: 0.85,
-  incheonjung: 0.9,
-  incheondong: 0.8,
+  jemulpo: 0.8,
+  yeongjong: 0.9,
   ganghwa: 0.9,
 };
 

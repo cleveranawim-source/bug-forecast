@@ -561,10 +561,21 @@ const REGIONS = [
     wind: 2.0,
     reports: 12,
   },
+  // 인천 서구는 2026-07-01 서해구(아라뱃길 이남)·검단구(이북)로 나뉘었다.
   {
-    id: 'incheonseo',
-    name: '인천 서구',
+    id: 'seohae',
+    name: '인천 서해구',
     zone: '인천 서부',
+    temp: 25,
+    humidity: 74,
+    rain: 45,
+    wind: 2.2,
+    reports: 10,
+  },
+  {
+    id: 'geomdan',
+    name: '인천 검단구',
+    zone: '인천 서북부',
     temp: 25,
     humidity: 74,
     rain: 45,
@@ -883,9 +894,10 @@ const REGIONS = [
     wind: 1.7,
     reports: 8,
   },
+  // 2026-07-01 개편: 옛 중구 내륙 + 동구 = 제물포구, 옛 중구 영종·용유 = 영종구.
   {
-    id: 'incheonjung',
-    name: '인천 중구',
+    id: 'jemulpo',
+    name: '인천 제물포구',
     zone: '인천 중부',
     temp: 25,
     humidity: 73,
@@ -894,9 +906,9 @@ const REGIONS = [
     reports: 8,
   },
   {
-    id: 'incheondong',
-    name: '인천 동구',
-    zone: '인천 중부',
+    id: 'yeongjong',
+    name: '인천 영종구',
+    zone: '인천 서부',
     temp: 25,
     humidity: 73,
     rain: 46,
@@ -921,7 +933,8 @@ const DISTRICT_DONGS = {
   gyeyang: ['계산동', '작전동', '서운동', '효성동', '계양동', '병방동', '임학동'],
   gwangmyeong: ['광명동', '철산동', '하안동', '소하동', '학온동', '일직동'],
   gimpo: ['김포본동', '장기동', '구래동', '마산동', '운양동', '사우동', '풍무동', '고촌읍', '통진읍', '양촌읍'],
-  incheonseo: ['청라동', '검단동', '가정동', '석남동', '검암동', '연희동', '당하동', '원당동', '불로동'],
+  seohae: ['검암경서동', '연희동', '청라1동', '청라2동', '청라3동', '가정1동', '가정2동', '가정3동', '석남1동', '석남2동', '석남3동', '신현원창동', '가좌1동', '가좌2동', '가좌3동', '가좌4동'],
+  geomdan: ['검단동', '불로대곡동', '원당동', '당하동', '오류왕길동', '마전동', '아라1동', '아라2동'],
   eunpyeong: ['녹번동', '불광1동', '불광2동', '갈현1동', '갈현2동', '구산동', '대조동', '응암1동', '응암2동', '응암3동', '역촌동', '신사1동', '신사2동', '증산동', '수색동', '진관동'],
   dobong: ['쌍문1동', '쌍문2동', '쌍문3동', '쌍문4동', '방학1동', '방학2동', '방학3동', '창1동', '창2동', '창3동', '창4동', '창5동', '도봉1동', '도봉2동'],
   nowon: ['월계1동', '월계2동', '월계3동', '공릉1동', '공릉2동', '하계1동', '하계2동', '중계본동', '중계1동', '중계2,3동', '중계4동', '상계1동', '상계2동', '상계3,4동', '상계5동', '상계6,7동', '상계8동', '상계9동', '상계10동'],
@@ -948,7 +961,7 @@ const DISTRICT_DONGS = {
   geumcheon: ['가산동', '독산1동', '독산2동', '독산3동', '독산4동', '시흥1동', '시흥2동', '시흥3동', '시흥4동', '시흥5동'],
   gwanak: ['은천동', '성현동', '청룡동', '보라매동', '청림동', '행운동', '낙성대동', '중앙동', '인헌동', '남현동', '서원동', '신원동', '서림동', '난곡동', '신사동', '신림동', '삼성동', '난향동', '조원동', '대학동', '미성동'],
   // 경기 27·인천 7 — 행정동 경계 vuski/admdongkor ver20260701(행안부 기준). 일반구가 있는 시는 시 단위로 합쳤다.
-  // 인천 중구·동구는 2026-07 개편(제물포구·영종구)으로 사라졌지만 앱 지역은 옛 경계를 쓰므로 옛 구의 동을 그대로 둔다(동 이름은 개편 전후 동일).
+  // 인천은 2026-07-01 개편 후 구 기준(제물포·영종·서해·검단 — 서해·검단은 위쪽 수도권 블록).
   yeoncheon: ['연천읍', '전곡읍', '군남면', '청산면', '백학면', '미산면', '왕징면', '신서면', '중면', '장남면'],
   pocheon: ['소흘읍', '군내면', '내촌면', '가산면', '신북면', '창수면', '영중면', '일동면', '이동면', '영북면', '관인면', '화현면', '포천동', '선단동'],
   gapyeong: ['가평읍', '설악면', '청평면', '상면', '조종면', '북면'],
@@ -981,8 +994,8 @@ const DISTRICT_DONGS = {
   namdong: ['구월1동', '구월2동', '구월3동', '구월4동', '간석1동', '간석2동', '간석3동', '간석4동', '만수1동', '만수2동', '만수3동', '만수4동', '만수5동', '만수6동', '장수서창동', '서창2동', '남촌도림동', '논현1동', '논현2동', '논현고잔동'],
   yeonsu: ['옥련1동', '옥련2동', '선학동', '연수1동', '연수2동', '연수3동', '청학동', '동춘1동', '동춘2동', '동춘3동', '송도1동', '송도2동', '송도3동', '송도4동', '송도5동'],
   ganghwa: ['강화읍', '선원면', '불은면', '길상면', '화도면', '양도면', '내가면', '하점면', '양사면', '송해면', '교동면', '삼산면', '서도면'],
-  incheonjung: ['연안동', '신포동', '신흥동', '도원동', '율목동', '동인천동', '개항동', '영종동', '영종1동', '영종2동', '용유동', '운서1동', '운서2동'],
-  incheondong: ['만석동', '화수1·화평동', '화수2동', '송현1·2동', '송현3동', '송림1동', '송림2동', '송림3·5동', '송림4동', '송림6동', '금창동'],
+  jemulpo: ['신포동', '연안동', '신흥동', '도원동', '율목동', '동인천동', '개항동', '만석동', '화수1·화평동', '화수2동', '송현1·2동', '송현3동', '송림1동', '송림2동', '송림3·5동', '송림4동', '송림6동', '금창동'],
+  yeongjong: ['영종동', '영종1동', '영종2동', '운서1동', '운서2동', '용유동'],
 };
 
 // 실예보(daily) 로드 전에만 쓰는 대체 오프셋 — 기상청 단기예보가 오면 실측 3일로 대체된다.
@@ -1127,12 +1140,16 @@ const DISTRICT_PLACES = {
     { name: '라베니체 수변', act: '👶 나들이', env: 'riverside' },
     { name: '장릉산 산책로', act: '🚶 산책', env: 'mountain' },
   ],
-  incheonseo: [
+  seohae: [
     { name: '청라호수공원', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '경인아라뱃길(정서진)', act: '🚴 라이딩', env: 'riverside' },
-    { name: '검단산 근린공원', act: '🚶 산책', env: 'mountain' },
     { name: '청라 커널웨이', act: '🚶 산책', env: 'riverside' },
-    { name: '서구 중앙공원', act: '👶 나들이', env: 'urban' },
+    { name: '원적산공원 은행나무숲', act: '🚶 산책', env: 'mountain' },
+  ],
+  geomdan: [
+    { name: '가현산 진달래 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '드림파크 야생화단지', act: '👶 나들이', env: 'urban' },
+    { name: '경인아라뱃길 북측 자전거길', act: '🚴 라이딩', env: 'riverside' },
   ],
   gangseo: [
     { name: '강서 한강공원·가양', act: '🚴 라이딩·러닝', env: 'riverside' },
@@ -1596,14 +1613,16 @@ const DISTRICT_PLACES = {
     { name: '승기천 연수 구간', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '청량산 숲길', act: '🚶 산책', env: 'mountain' },
   ],
-  incheonjung: [
-    { name: '월미공원 둘레길', act: '🚶 산책·러닝', env: 'mountain' },
-    { name: '자유공원', act: '🚶 산책', env: 'urban' },
+  yeongjong: [
     { name: '영종 씨사이드파크', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '백운산 영종 숲길', act: '🚶 산책', env: 'mountain' },
     { name: '을왕리해수욕장 해변 산책', act: '🚶 산책', env: 'riverside' },
+    { name: '무의도 하나개해수욕장', act: '🚶 산책', env: 'riverside' },
+    { name: '마시안해변 산책', act: '🚶 산책', env: 'riverside' },
   ],
-  incheondong: [
+  jemulpo: [
+    { name: '월미공원 둘레길', act: '🚶 산책·러닝', env: 'mountain' },
+    { name: '자유공원', act: '🚶 산책', env: 'urban' },
     { name: '송현근린공원', act: '🚶 산책·러닝', env: 'mountain' },
     { name: '화도진공원', act: '🚶 산책', env: 'urban' },
     { name: '만석화수 해안산책로', act: '🚶 산책', env: 'riverside' },
@@ -1869,12 +1888,42 @@ function getDongRisk(region, reportCount, dongCounts = {}, riskFn = getRisk) {
   });
 }
 
+// 2026-07-01 인천 행정개편 전 지역 id → 새 구. 기기에 저장된 즐겨찾기·관찰러 프로필과
+// Firestore의 옛 제보가 옛 id를 들고 있으므로, 읽을 때 동·장소 이름으로 새 구를 가려낸다.
+// 이름으로 못 가리면 인구가 많은 쪽(첫 후보)으로 보낸다.
+const LEGACY_REGIONS = {
+  incheonseo: ['seohae', 'geomdan'],
+  incheonjung: ['yeongjong', 'jemulpo'],
+  incheondong: ['jemulpo'],
+};
+
+function migrateRegionId(id, { dong, place } = {}) {
+  const candidates = LEGACY_REGIONS[id];
+  if (!candidates) return id;
+  const hit = candidates.find(
+    (c) =>
+      (dong && DISTRICT_DONGS[c]?.includes(dong)) ||
+      (place && DISTRICT_PLACES[c]?.some((p) => p.name === place))
+  );
+  return hit ?? candidates[0];
+}
+
+function migrateReport(report) {
+  if (!LEGACY_REGIONS[report.regionId]) return report;
+  return { ...report, regionId: migrateRegionId(report.regionId, { dong: report.dong }) };
+}
+
 // 관찰러 프로필은 localStorage에 보관 — 익명 uid가 기기에 유지되므로 프로필도 함께
 // 유지해, 앱을 껐다 켤 때마다 재등록하는 마찰을 없앤다(이전엔 sessionStorage라 매번 초기화).
 function readCitizenSession() {
   try {
     const saved = window.localStorage.getItem(CITIZEN_SESSION_KEY);
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    const citizen = JSON.parse(saved);
+    const regionId = migrateRegionId(citizen.regionId, { dong: citizen.dong });
+    if (regionId === citizen.regionId) return citizen;
+    const regionName = REGIONS.find((r) => r.id === regionId)?.name ?? citizen.regionName;
+    return { ...citizen, regionId, regionName };
   } catch {
     return null;
   }
@@ -1898,7 +1947,8 @@ function App() {
   const [mapView, setMapView] = useState('seoul');
   const [favorites, setFavorites] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('lovebug-favorites') || '[]');
+      const saved = JSON.parse(localStorage.getItem('lovebug-favorites') || '[]');
+      return saved.map((f) => ({ ...f, gu: migrateRegionId(f.gu, { place: f.name }) }));
     } catch {
       return [];
     }
@@ -2233,7 +2283,7 @@ function App() {
 
   useEffect(() => {
     // Firestore 제보를 실시간 구독. 화면을 떠나면 자동 해제.
-    const unsubscribe = subscribeReports(setReports);
+    const unsubscribe = subscribeReports((rows) => setReports(rows.map(migrateReport)));
     return unsubscribe;
   }, []);
 
