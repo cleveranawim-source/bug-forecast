@@ -1097,59 +1097,69 @@ const BUGS = [
   },
 ];
 
-// 동네별 야외 활동 장소 — 구 id별 대표 장소. env: riverside(물가) / mountain(산자락) / urban(도심)
+// 동네별 야외 활동 장소 — 구 id별 대표 장소. env: riverside(물가) / mountain(산자락) / grass(풀밭 — 목장·초지·꽃밭 들판) / urban(도심)
 // 서울 25구 야외 코스 — 3개 자료(코스DB 좌표·종목적합도 / 활동핫스팟 CSV / 동네시드DB 벌레태그)
 // 교차검증. env는 벌레 발생 환경(riverside 물가·습지 / mountain 산자락·숲 / urban 도심공원),
 // act는 코스DB 종목 적합도(◎○△✕) 반영 — 산·둘레길은 라이딩 제외.
 const DISTRICT_PLACES = {
   goyang: [
-    { name: '일산호수공원', act: '🚶 산책·러닝', env: 'riverside' },
+    { name: '일산호수공원', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '고양 행주산성·한강', act: '🚴 라이딩', env: 'riverside' },
     { name: '북한산 둘레길(효자·사기막)', act: '🚶 산책', env: 'mountain' },
     { name: '고봉산 둘레길', act: '🚶 산책', env: 'mountain' },
     { name: '창릉천 산책로', act: '🏃 러닝·산책', env: 'riverside' },
     { name: '정발산 근린공원', act: '👶 나들이', env: 'urban' },
     { name: '화정 중앙공원', act: '👶 나들이', env: 'urban' },
+    { name: '서오릉 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '원당종마목장', act: '👶 나들이·산책', env: 'grass' },
   ],
   bucheon: [
     { name: '원미산 진달래동산', act: '🚶 산책', env: 'mountain' },
     { name: '성주산 둘레길', act: '🚶 산책', env: 'mountain' },
     { name: '부천중앙공원', act: '👶 나들이', env: 'urban' },
-    { name: '굴포천 산책로', act: '🏃 러닝·산책', env: 'riverside' },
+    { name: '굴포천 산책로', act: '🏃 러닝·산책·라이딩', env: 'riverside' },
     { name: '상동호수공원', act: '🚶 산책', env: 'riverside' },
     { name: '도당산 벚꽃길', act: '🚶 산책', env: 'mountain' },
+    { name: '부천자연생태공원·무릉도원수목원', act: '🚶 산책', env: 'mountain' },
+    { name: '부천둘레길 향토유적숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '시민의강 산책로', act: '🚶 산책·러닝', env: 'riverside' },
+    { name: '오정대공원', act: '🚶 산책·러닝', env: 'urban' },
   ],
   gyeyang: [
-    { name: '계양산 둘레길', act: '🚶 산책·등산', env: 'mountain' },
+    { name: '계양산 둘레길', act: '🚶 산책', env: 'mountain' },
     { name: '굴포천 생태하천', act: '🏃 러닝·산책', env: 'riverside' },
     { name: '경인아라뱃길 자전거길', act: '🚴 라이딩', env: 'riverside' },
-    { name: '계양체육공원', act: '👶 나들이', env: 'urban' },
+    { name: '계산국민체육공원', act: '🚶 산책·러닝', env: 'urban' },
     { name: '천마산 산책로', act: '🚶 산책', env: 'mountain' },
+    { name: '계양꽃마루', act: '👶 나들이·산책', env: 'grass' },
   ],
   gwangmyeong: [
     { name: '안양천 자전거길', act: '🚴 라이딩·러닝', env: 'riverside' },
     { name: '도덕산공원', act: '🚶 산책', env: 'mountain' },
-    { name: '구름산 둘레길', act: '🚶 산책·등산', env: 'mountain' },
+    { name: '구름산 둘레길', act: '🚶 산책', env: 'mountain' },
     { name: '광명동굴 주변', act: '👶 나들이', env: 'urban' },
     { name: '목감천 산책로', act: '🏃 러닝·산책', env: 'riverside' },
   ],
   gimpo: [
     { name: '김포한강신도시 수변공원', act: '🚶 산책', env: 'riverside' },
     { name: '아라마루 아라뱃길', act: '🚴 라이딩', env: 'riverside' },
-    { name: '문수산성 둘레길', act: '🚶 산책·등산', env: 'mountain' },
+    { name: '문수산성 둘레길', act: '🚶 산책', env: 'mountain' },
     { name: '라베니체 수변', act: '👶 나들이', env: 'riverside' },
     { name: '장릉산 산책로', act: '🚶 산책', env: 'mountain' },
+    { name: '평화누리길 1코스 염하강철책길', act: '🚶 산책', env: 'riverside' },
+    { name: '애기봉평화생태공원', act: '🚶 산책', env: 'mountain' },
   ],
   seohae: [
     { name: '청라호수공원', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '경인아라뱃길(정서진)', act: '🚴 라이딩', env: 'riverside' },
     { name: '청라 커널웨이', act: '🚶 산책', env: 'riverside' },
     { name: '원적산공원 은행나무숲', act: '🚶 산책', env: 'mountain' },
+    { name: '공촌천 산책로', act: '🚶 산책·러닝', env: 'riverside' },
   ],
   geomdan: [
     { name: '가현산 진달래 숲길', act: '🚶 산책', env: 'mountain' },
     { name: '황화산 둘레길(무장애 데크길)', act: '🚶 산책', env: 'mountain' },
-    { name: '드림파크 야생화단지', act: '👶 나들이', env: 'urban' },
+    { name: '드림파크 야생화단지', act: '👶 나들이', env: 'grass' },
     { name: '경인아라뱃길 북측 자전거길', act: '🚴 라이딩', env: 'riverside' },
   ],
   gangseo: [
@@ -1403,6 +1413,8 @@ const DISTRICT_PLACES = {
     { name: '재인폭포 탐방로', act: '🚶 산책', env: 'riverside' },
     { name: '임진강 댑싸리공원', act: '🚶 산책', env: 'riverside' },
     { name: '군남홍수조절지 두루미테마파크', act: '🚶 산책', env: 'riverside' },
+    { name: '호로고루', act: '👶 나들이·산책', env: 'grass' },
+    { name: '평화누리 자전거길 연천 구간', act: '🚴 라이딩', env: 'riverside' },
   ],
   pocheon: [
     { name: '산정호수 둘레길', act: '🚶 산책', env: 'riverside' },
@@ -1410,6 +1422,8 @@ const DISTRICT_PLACES = {
     { name: '한탄강 주상절리길 비둘기낭·하늘다리 구간', act: '🚶 산책', env: 'riverside' },
     { name: '포천천 자전거길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '국립수목원 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '포천아트밸리', act: '🚶 산책', env: 'mountain' },
+    { name: '백운계곡', act: '🚶 산책', env: 'riverside' },
   ],
   gapyeong: [
     { name: '자라섬 서도·중도 산책로', act: '🚶 산책·러닝', env: 'riverside' },
@@ -1417,6 +1431,8 @@ const DISTRICT_PLACES = {
     { name: '대성리 국민관광지 강변길', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '경기도 잣향기푸른숲', act: '🚶 산책', env: 'mountain' },
     { name: '호명호수 둘레길', act: '🚶 산책', env: 'riverside' },
+    { name: '아침고요수목원', act: '🚶 산책', env: 'mountain' },
+    { name: '용추계곡(연인산도립공원)', act: '🚶 산책', env: 'riverside' },
   ],
   dongducheon: [
     { name: '신천변 산책로·자전거길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1431,6 +1447,8 @@ const DISTRICT_PLACES = {
     { name: '덕계천 자전거길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '불곡산 둘레길 산대숲길 구간', act: '🚶 산책', env: 'mountain' },
     { name: '장욱진미술관 조각공원', act: '🚶 산책', env: 'urban' },
+    { name: '회암사지', act: '🚶 산책·나들이', env: 'urban' },
+    { name: '송추계곡', act: '🚶 산책', env: 'riverside' },
   ],
   paju: [
     { name: '운정호수공원·소리천', act: '🚶 산책·러닝', env: 'riverside' },
@@ -1438,6 +1456,8 @@ const DISTRICT_PLACES = {
     { name: '율곡수목원', act: '🚶 산책', env: 'mountain' },
     { name: '임진각 평화누리공원', act: '🚶 산책', env: 'urban' },
     { name: '마장호수 둘레길', act: '🚶 산책', env: 'riverside' },
+    { name: '심학산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '헤이리 예술마을', act: '🚶 산책·나들이', env: 'urban' },
   ],
   uijeongbu: [
     { name: '중랑천 의정부 구간', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1445,6 +1465,7 @@ const DISTRICT_PLACES = {
     { name: '백석천 산책로', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '직동근린공원', act: '🚶 산책', env: 'mountain' },
     { name: '추동근린공원', act: '🚶 산책', env: 'mountain' },
+    { name: '도봉산 망월사 탐방로 입구', act: '🚶 산책', env: 'mountain' },
   ],
   namyangju: [
     { name: '물의정원', act: '🚶 산책·러닝', env: 'riverside' },
@@ -1452,6 +1473,9 @@ const DISTRICT_PLACES = {
     { name: '남한강 자전거길 팔당역·능내역 구간', act: '🚴 라이딩', env: 'riverside' },
     { name: '왕숙천 남양주 구간', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '오남호수공원', act: '🚶 산책', env: 'riverside' },
+    { name: '홍유릉 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '광릉숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '북한강 자전거길 운길산역 출발 구간', act: '🚴 라이딩', env: 'riverside' },
   ],
   guri: [
     { name: '구리한강시민공원', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1459,6 +1483,7 @@ const DISTRICT_PLACES = {
     { name: '장자호수공원', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '이문안호수공원', act: '🚶 산책', env: 'riverside' },
     { name: '동구릉 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '아차산 구리 구간·고구려대장간마을', act: '🚶 산책', env: 'mountain' },
   ],
   yangpyeong: [
     { name: '두물머리', act: '🚶 산책', env: 'riverside' },
@@ -1466,6 +1491,8 @@ const DISTRICT_PLACES = {
     { name: '남한강 자전거길 양수역·신원역 구간', act: '🚴 라이딩', env: 'riverside' },
     { name: '용문산관광지·용문사 접근길', act: '🚶 산책', env: 'mountain' },
     { name: '쉬자파크', act: '🚶 산책', env: 'mountain' },
+    { name: '세미원', act: '🚶 산책', env: 'riverside' },
+    { name: '산음자연휴양림 숲길', act: '🚶 산책', env: 'mountain' },
   ],
   yeoju: [
     { name: '강천섬', act: '🚶 산책·러닝', env: 'riverside' },
@@ -1473,6 +1500,8 @@ const DISTRICT_PLACES = {
     { name: '금은모래강변공원', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '남한강 자전거길 여주보 구간', act: '🚴 라이딩', env: 'riverside' },
     { name: '황학산수목원', act: '🚶 산책', env: 'mountain' },
+    { name: '신륵사 강변길', act: '🚶 산책', env: 'riverside' },
+    { name: '영릉(세종대왕릉) 숲길', act: '🚶 산책', env: 'mountain' },
   ],
   gwangju_gg: [
     { name: '청석공원·경안천변', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1480,6 +1509,7 @@ const DISTRICT_PLACES = {
     { name: '팔당물안개공원', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '중대물빛공원', act: '🚶 산책', env: 'riverside' },
     { name: '남한산성 성곽길 산성마을 출발 구간', act: '🚶 산책', env: 'mountain' },
+    { name: '화담숲', act: '🚶 산책', env: 'mountain' },
   ],
   icheon: [
     { name: '설봉공원 호수 산책로', act: '🚶 산책·러닝', env: 'riverside' },
@@ -1487,6 +1517,8 @@ const DISTRICT_PLACES = {
     { name: '안흥지·애련정', act: '🚶 산책', env: 'riverside' },
     { name: '온천공원', act: '🚶 산책·러닝', env: 'urban' },
     { name: '청미천 장호원 구간', act: '🚶 산책·러닝', env: 'riverside' },
+    { name: '설봉산 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '백사 산수유마을', act: '🚶 산책', env: 'mountain' },
   ],
   hanam: [
     { name: '미사경정공원', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1494,6 +1526,8 @@ const DISTRICT_PLACES = {
     { name: '덕풍천 산책로', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '미사호수공원', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '나무고아원', act: '🚶 산책', env: 'urban' },
+    { name: '검단산 입구 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '이성산성', act: '🚶 산책', env: 'mountain' },
   ],
   seongnam: [
     { name: '탄천 성남 구간', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1501,6 +1535,9 @@ const DISTRICT_PLACES = {
     { name: '율동공원 호수 둘레길', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '희망대공원', act: '🚶 산책', env: 'mountain' },
     { name: '대원공원', act: '🚶 산책', env: 'mountain' },
+    { name: '불곡산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '운중천 산책로', act: '🚶 산책·러닝', env: 'riverside' },
+    { name: '남한산성 유원지 숲길', act: '🚶 산책', env: 'mountain' },
   ],
   yongin: [
     { name: '경안천 용인 구간', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1508,6 +1545,8 @@ const DISTRICT_PLACES = {
     { name: '기흥호수공원 순환산책로', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '동백호수공원', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '정암수목공원', act: '🚶 산책', env: 'mountain' },
+    { name: '용인자연휴양림', act: '🚶 산책', env: 'mountain' },
+    { name: '용인농촌테마파크', act: '👶 나들이·산책', env: 'grass' },
   ],
   suwon: [
     { name: '광교호수공원', act: '🚶 산책·러닝', env: 'riverside' },
@@ -1515,6 +1554,9 @@ const DISTRICT_PLACES = {
     { name: '서호공원', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '수원천 화홍문·세류 구간', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '황구지천 자전거길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
+    { name: '광교저수지 수변길', act: '🚶 산책·러닝', env: 'riverside' },
+    { name: '수원화성 성곽길', act: '🚶 산책', env: 'urban' },
+    { name: '일월공원·일월수목원', act: '🚶 산책·러닝', env: 'riverside' },
   ],
   osan: [
     { name: '오산천 산책로·자전거길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1529,6 +1571,7 @@ const DISTRICT_PLACES = {
     { name: '통복천 산책로·자전거길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '내리문화공원·안성천 자전거길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '부락산 둘레길', act: '🚶 산책', env: 'mountain' },
+    { name: '평택호 관광단지 수변', act: '🚶 산책', env: 'riverside' },
   ],
   anseong: [
     { name: '안성천 안성대교 주변 산책로·자전거길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1536,6 +1579,8 @@ const DISTRICT_PLACES = {
     { name: '안성맞춤랜드', act: '🚶 산책·러닝', env: 'urban' },
     { name: '서운산자연휴양림 숲길', act: '🚶 산책', env: 'mountain' },
     { name: '칠장사 접근 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '고삼저수지 둘레', act: '🚶 산책', env: 'riverside' },
+    { name: '안성팜랜드', act: '👶 나들이·산책', env: 'grass' },
   ],
   hwaseong: [
     { name: '동탄호수공원', act: '🚶 산책·러닝', env: 'riverside' },
@@ -1543,6 +1588,9 @@ const DISTRICT_PLACES = {
     { name: '반석산 둘레길', act: '🚶 산책', env: 'mountain' },
     { name: '비봉습지공원', act: '🚶 산책', env: 'riverside' },
     { name: '궁평리 해송군락지·해변 산책로', act: '🚶 산책', env: 'riverside' },
+    { name: '오산천 동탄 구간', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
+    { name: '융건릉 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '제부도 해안 산책로', act: '🚶 산책', env: 'riverside' },
   ],
   ansan: [
     { name: '안산호수공원', act: '🚶 산책·러닝', env: 'riverside' },
@@ -1550,6 +1598,8 @@ const DISTRICT_PLACES = {
     { name: '안산갈대습지', act: '🚶 산책', env: 'riverside' },
     { name: '안산천 산책로·자전거길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '대부해솔길 1코스 구봉도 구간', act: '🚶 산책', env: 'mountain' },
+    { name: '시화나래 조력공원', act: '🚶 산책', env: 'riverside' },
+    { name: '탄도항·누에섬 등대길', act: '🚶 산책', env: 'riverside' },
   ],
   siheung: [
     { name: '갯골생태공원', act: '🚶 산책·러닝', env: 'riverside' },
@@ -1557,6 +1607,8 @@ const DISTRICT_PLACES = {
     { name: '물왕호수 둘레길', act: '🚶 산책', env: 'riverside' },
     { name: '배곧한울공원 해안길', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '소래산 산림욕장', act: '🚶 산책', env: 'mountain' },
+    { name: '오이도 해안산책로', act: '🚶 산책·러닝', env: 'riverside' },
+    { name: '옥구공원', act: '🚶 산책', env: 'mountain' },
   ],
   gunpo: [
     { name: '초막골생태공원', act: '🚶 산책', env: 'mountain' },
@@ -1613,6 +1665,7 @@ const DISTRICT_PLACES = {
     { name: '솔찬공원', act: '🚶 산책·러닝', env: 'riverside' },
     { name: '승기천 연수 구간', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
     { name: '청량산 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '송도 해돋이공원', act: '🚶 산책·러닝', env: 'urban' },
   ],
   yeongjong: [
     { name: '영종 씨사이드파크', act: '🚶 산책·러닝·라이딩', env: 'riverside' },
@@ -1620,6 +1673,7 @@ const DISTRICT_PLACES = {
     { name: '을왕리해수욕장 해변 산책', act: '🚶 산책', env: 'riverside' },
     { name: '무의도 하나개해수욕장', act: '🚶 산책', env: 'riverside' },
     { name: '마시안해변 산책', act: '🚶 산책', env: 'riverside' },
+    { name: '실미해수욕장', act: '🚶 산책', env: 'riverside' },
   ],
   jemulpo: [
     { name: '월미공원 둘레길', act: '🚶 산책·러닝', env: 'mountain' },
@@ -1636,6 +1690,9 @@ const DISTRICT_PLACES = {
     { name: '마니산 치유의숲 산책길', act: '🚶 산책', env: 'mountain' },
     { name: '석모도수목원', act: '🚶 산책', env: 'mountain' },
     { name: '길상공원', act: '🚶 산책', env: 'urban' },
+    { name: '전등사 숲길', act: '🚶 산책', env: 'mountain' },
+    { name: '동막해변', act: '🚶 산책', env: 'riverside' },
+    { name: '고려산 진달래 능선', act: '🚶 산책', env: 'mountain' },
   ],
 };
 
@@ -1643,6 +1700,7 @@ const DISTRICT_PLACES = {
 const PLACE_ENV = {
   riverside: { label: '물가', adj: 8 },
   mountain: { label: '산자락', adj: 5 },
+  grass: { label: '풀밭', adj: 0 },
   urban: { label: '도심', adj: -10 },
 };
 
