@@ -1244,7 +1244,7 @@ const DISTRICT_PLACES = {
     { name: '청계산 자락', act: '🚶 산책', env: 'mountain' },
     { name: '서리풀공원', act: '🚶 산책', env: 'mountain' },
     { name: '몽마르뜨공원', act: '🚶 산책', env: 'urban' },
-    { name: '양재시민의숲', act: '👶 나들이', env: 'urban' },
+    { name: '양재시민의숲', act: '👶 나들이', env: 'mountain' },
   ],
   gangnam: [
     { name: '양재천 산책로', act: '🚴 라이딩·러닝', env: 'riverside' },
@@ -1263,7 +1263,7 @@ const DISTRICT_PLACES = {
     { name: '장지천', act: '🚶 산책', env: 'riverside' },
     { name: '남한산성 자락', act: '🚶 산책', env: 'mountain' },
     { name: '석촌호수', act: '🚶 산책·나들이', env: 'urban' },
-    { name: '올림픽공원', act: '👶 나들이', env: 'urban' },
+    { name: '올림픽공원', act: '👶 나들이', env: 'grass' },
   ],
   gangdong: [
     { name: '광나루 한강공원·암사', act: '🚴 라이딩·러닝', env: 'riverside' },
@@ -1298,7 +1298,7 @@ const DISTRICT_PLACES = {
     { name: '봉화산', act: '🚶 산책', env: 'mountain' },
     { name: '용마폭포공원', act: '👶 나들이', env: 'mountain' },
     { name: '신내근린공원', act: '🚶 산책', env: 'urban' },
-    { name: '망우역사문화공원', act: '🚶 산책', env: 'urban' },
+    { name: '망우역사문화공원', act: '🚶 산책', env: 'mountain' },
     { name: '중랑캠핑숲', act: '👶 나들이', env: 'urban' },
   ],
   dongdaemun: [
@@ -1364,8 +1364,8 @@ const DISTRICT_PLACES = {
     { name: '난지 한강공원', act: '🚴 라이딩', env: 'riverside' },
     { name: '불광천·홍제천', act: '🚶 산책', env: 'riverside' },
     { name: '난지천공원', act: '🚶 산책', env: 'riverside' },
-    { name: '월드컵공원·하늘공원', act: '👶 나들이', env: 'urban' },
-    { name: '노을공원', act: '👶 나들이', env: 'urban' },
+    { name: '월드컵공원·하늘공원', act: '👶 나들이', env: 'grass' },
+    { name: '노을공원', act: '👶 나들이', env: 'grass' },
     { name: '경의선숲길', act: '🚶 산책·러닝', env: 'urban' },
     { name: '절두산·양화진', act: '🚶 산책', env: 'urban' },
   ],
