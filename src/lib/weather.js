@@ -272,6 +272,7 @@ export const DISTRICT_COORDS = {
   jemulpo: { lat: 37.46, lon: 126.623 },
   yeongjong: { lat: 37.4528, lon: 126.503 },
   ganghwa: { lat: 37.7064, lon: 126.3497 },
+  ongjin: { lat: 37.253, lon: 126.475 }, // 영흥도 — 근해 면만 대상
   jongno: { lat: 37.5735, lon: 126.979 },
   jung: { lat: 37.5639, lon: 126.9975 },
   yongsan: { lat: 37.5384, lon: 126.9654 },

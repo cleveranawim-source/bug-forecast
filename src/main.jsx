@@ -925,6 +925,18 @@ const REGIONS = [
     wind: 1.7,
     reports: 17,
   },
+  // 옹진군은 근해 4개 면(영흥·자월·덕적·북도)만 — 서해5도(백령·대청·연평)는 예보 지점(영흥도)에서
+  // 80~200km 떨어져 같은 날씨로 묶으면 오해를 부른다. 필요하면 별도 지역으로 둔다.
+  {
+    id: 'ongjin',
+    name: '인천 옹진군',
+    zone: '인천 도서',
+    temp: 25,
+    humidity: 74,
+    rain: 45,
+    wind: 2.4,
+    reports: 12,
+  },
 ];
 
 const DISTRICT_DONGS = {
@@ -993,6 +1005,7 @@ const DISTRICT_DONGS = {
   michuhol: ['숭의2동', '숭의1·3동', '숭의4동', '용현1·4동', '용현2동', '용현3동', '용현5동', '학익1동', '학익2동', '도화1동', '도화2·3동', '주안1동', '주안2동', '주안3동', '주안4동', '주안5동', '주안6동', '주안7동', '주안8동', '관교동', '문학동'],
   namdong: ['구월1동', '구월2동', '구월3동', '구월4동', '간석1동', '간석2동', '간석3동', '간석4동', '만수1동', '만수2동', '만수3동', '만수4동', '만수5동', '만수6동', '장수서창동', '서창2동', '남촌도림동', '논현1동', '논현2동', '논현고잔동'],
   yeonsu: ['옥련1동', '옥련2동', '선학동', '연수1동', '연수2동', '연수3동', '청학동', '동춘1동', '동춘2동', '동춘3동', '송도1동', '송도2동', '송도3동', '송도4동', '송도5동'],
+  ongjin: ['북도면', '덕적면', '영흥면', '자월면'],
   ganghwa: ['강화읍', '선원면', '불은면', '길상면', '화도면', '양도면', '내가면', '하점면', '양사면', '송해면', '교동면', '삼산면', '서도면'],
   jemulpo: ['신포동', '연안동', '신흥동', '도원동', '율목동', '동인천동', '개항동', '만석동', '화수1·화평동', '화수2동', '송현1·2동', '송현3동', '송림1동', '송림2동', '송림3·5동', '송림4동', '송림6동', '금창동'],
   yeongjong: ['영종동', '영종1동', '영종2동', '운서1동', '운서2동', '용유동'],
@@ -1684,6 +1697,12 @@ const DISTRICT_PLACES = {
     { name: '인천교공원', act: '🚶 산책·러닝', env: 'urban' },
     { name: '배다리 역사문화마을·배다리공원', act: '🚶 산책', env: 'urban' },
   ],
+  ongjin: [
+    { name: '십리포해수욕장 소사나무숲', act: '🚶 산책', env: 'riverside' },
+    { name: '장경리해수욕장 솔숲', act: '🚶 산책', env: 'riverside' },
+    { name: '선재도 목섬', act: '🚶 산책', env: 'riverside' },
+    { name: '덕적도 서포리해변 솔숲', act: '🚶 산책', env: 'riverside' },
+  ],
   ganghwa: [
     { name: '강화나들길 2코스 광성보 주변', act: '🚶 산책', env: 'riverside' },
     { name: '강화 동쪽 해안 자전거길', act: '🚴 라이딩', env: 'riverside' },
@@ -1834,6 +1853,19 @@ function dongCenter(geometry, proj) {
   const points = flattenCoordinates(geometry.coordinates).map((point) => projectDong(point, proj));
   const totals = points.reduce((sum, [x, y]) => ({ x: sum.x + x, y: sum.y + y }), { x: 0, y: 0 });
   return [totals.x / points.length, totals.y / points.length];
+}
+
+// 여러 조각(섬)으로 된 지역은 가장 큰 조각을 돌려준다 — 라벨을 조각 전체 평균에 두면
+// 옹진군처럼 섬이 흩어진 곳은 글자가 바다 한가운데 뜬다.
+function largestPart(geometry) {
+  if (geometry.type !== 'MultiPolygon') return geometry;
+  const ringArea = (ring) =>
+    Math.abs(ring.reduce((sum, [x1, y1], i) => {
+      const [x2, y2] = ring[(i + 1) % ring.length];
+      return sum + x1 * y2 - x2 * y1;
+    }, 0));
+  const biggest = geometry.coordinates.reduce((best, poly) => (ringArea(poly[0]) > ringArea(best[0]) ? poly : best));
+  return { type: 'Polygon', coordinates: biggest };
 }
 
 function isPointInRing([lon, lat], ring) {
@@ -2263,7 +2295,7 @@ function App() {
             ),
           })
         : null;
-      const [cx, cy] = dongCenter(feature.geometry, proj);
+      const [cx, cy] = dongCenter(largestPart(feature.geometry), proj);
       const path = dongGeometryToPath(feature.geometry, proj);
       return {
         key: feature.properties.code,

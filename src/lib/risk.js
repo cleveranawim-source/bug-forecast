@@ -87,6 +87,7 @@ const TERRAIN_WEIGHT = {
   jemulpo: 0.4,
   yeongjong: 0.4,
   ganghwa: 0.85,
+  ongjin: 0.6,        // 섬 — 국사봉·비조봉 등 낮은 산과 해안 숲
 };
 
 const DEFAULT_TERRAIN = 0.6;
@@ -263,6 +264,7 @@ const TERRAIN_MOSQUITO = {
   jemulpo: 0.8,
   yeongjong: 0.9,
   ganghwa: 0.9,
+  ongjin: 0.7,        // 해안·갯벌 위주, 논·정체수는 강화보다 적다
 };
 
 export const SPECIES = {
