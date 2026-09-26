@@ -359,6 +359,15 @@ export async function fetchSeoulMosquito() {
   }
 }
 
+// 한 지역만 바로 조회 — '내 위치'나 지역 선택으로 옮겨 간 곳이 일괄 조회 대기열 뒤쪽이면
+// 67곳을 4개씩 다 돌 때까지 기다리지 않도록 먼저 가져온다.
+export async function fetchDistrict(id) {
+  const coords = DISTRICT_COORDS[id];
+  if (!coords) throw new Error(`좌표 없는 지역: ${id}`);
+  const w = await fetchWeather(coords.lat, coords.lon);
+  return { temp: w.temp, humidity: w.humidity, rain: w.rain, wind: w.wind, daily: w.daily, hourly: w.hourly };
+}
+
 // 25개 구의 현재 날씨를 한 번에 조회 → { [regionId]: { temp, humidity, rain, wind } }
 // 같은 발표 회차면 캐시를 쓰고, 개별 구 실패는 건너뛴다(해당 구는 기존값 유지).
 // options:

@@ -35,7 +35,7 @@ import {
   weightedCountByRegion,
   weightedCountByDong,
 } from './lib/reports.js';
-import { fetchAllDistricts, fetchSeoulMosquito } from './lib/weather.js';
+import { fetchAllDistricts, fetchDistrict, fetchSeoulMosquito, DISTRICT_COORDS } from './lib/weather.js';
 import { Capacitor } from '@capacitor/core';
 import { signInAnonymous, signOutUser } from './lib/auth.js';
 
@@ -1895,6 +1895,28 @@ function findFeatureByCoordinate(geo, longitude, latitude) {
   return geo.features.find((feature) => geometryContainsPoint(feature.geometry, [longitude, latitude]));
 }
 
+// 좌표 → 지역 id. 서울 경계 → 수도권 경계 순으로 찾고, 단순화된 경계에서 빠진 해안·매립지
+// (송도·청라 끝자락 등)는 가장 가까운 지역 중심(6km 이내)으로 잡는다. 예전엔 서울만 찾아
+// 경기·인천에서는 '경계 밖'으로 끝났다.
+function findRegionIdByCoordinate(longitude, latitude) {
+  const seoul = findFeatureByCoordinate(seoulGeo, longitude, latitude);
+  if (seoul) {
+    const region = REGIONS.find((r) => r.name === seoul.properties.name);
+    if (region) return region.id;
+  }
+  const metro = findFeatureByCoordinate(metroGeo, longitude, latitude);
+  if (metro?.properties.regionId) return metro.properties.regionId;
+
+  let best = null;
+  for (const [id, c] of Object.entries(DISTRICT_COORDS)) {
+    const dy = (c.lat - latitude) * 111;
+    const dx = (c.lon - longitude) * 88;
+    const km = Math.hypot(dx, dy);
+    if (!best || km < best.km) best = { id, km };
+  }
+  return best && best.km <= 6 ? best.id : null;
+}
+
 const TONE_EMOJI = { danger: '🔴', warning: '🟠', notice: '🟡', calm: '🟢' };
 const LOVEBUG_LABELS = { danger: '출몰 많음', warning: '출몰 주의', notice: '출몰 보통', calm: '출몰 적음' };
 
@@ -2391,6 +2413,18 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 보고 있는 지역의 실날씨가 아직 없으면 대기열을 건너뛰고 그 지역부터 바로 가져온다.
+  // ('내 위치'로 옮겨 간 지역이 일괄 조회 뒤쪽이면 수십 초 동안 시드값이 보이던 문제)
+  const weatherRequestedRef = useRef(new Set());
+  useEffect(() => {
+    if (liveWeather[selectedId] || weatherRequestedRef.current.has(selectedId)) return;
+    weatherRequestedRef.current.add(selectedId);
+    fetchDistrict(selectedId)
+      .then((entry) => setLiveWeather((prev) => (prev[selectedId] ? prev : { ...prev, [selectedId]: entry })))
+      .catch(() => weatherRequestedRef.current.delete(selectedId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+
   useEffect(() => {
     // 실날씨가 안 오면(폰 지연·실패) 시드값으로라도 표시 — 지도가 계속 회색으로 남지 않게.
     // 25개 구 일괄 조회가 느린 회선에서 20초 가까이 걸릴 수 있어, 임시 안내가 성급히 뜨지 않도록 12초로 둔다.
@@ -2514,13 +2548,13 @@ function App() {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
     };
-    const feature = findFeatureByCoordinate(seoulGeo, coords.longitude, coords.latitude);
-    const matchedRegion = feature ? regionByName[feature.properties.name] : null;
+    const matchedId = findRegionIdByCoordinate(coords.longitude, coords.latitude);
+    const matchedRegion = matchedId ? regions.find((r) => r.id === matchedId) : null;
 
     if (!matchedRegion) {
       setLocationAuth({
         status: 'error',
-        message: '현재 위치가 서울 자치구 경계 밖으로 확인되어 지역 예보에 적용하지 않았어요.',
+        message: '현재 위치가 예보 지역(서울·경기·인천) 밖으로 확인되어 적용하지 않았어요.',
         coords,
       });
       return;
@@ -2560,16 +2594,29 @@ function App() {
       coords: null,
     });
 
+    // 구·동 판정엔 와이파이·기지국 수준(수십~수백 m)이면 충분하다. 예전엔 GPS 고정밀을
+    // 요구해 실내에서 최대 10초를 기다렸다. 빠른 저정밀을 먼저 쓰고, 그게 실패할 때만 GPS로.
+    const fail = (error) => {
+      setLocationAuth({
+        status: 'error',
+        message:
+          error?.code === 1
+            ? '위치 권한이 허용되지 않아 제보 등록을 잠시 막아두었어요.'
+            : '현재 위치를 찾지 못했어요. 잠시 후 다시 눌러 주세요.',
+        coords: null,
+      });
+    };
     navigator.geolocation.getCurrentPosition(
       applyCurrentLocation,
-      () => {
-        setLocationAuth({
-          status: 'error',
-          message: '위치 권한이 허용되지 않아 제보 등록을 잠시 막아두었어요.',
-          coords: null,
+      (error) => {
+        if (error?.code === 1) return fail(error);
+        navigator.geolocation.getCurrentPosition(applyCurrentLocation, fail, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000,
         });
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
     );
   }
 
