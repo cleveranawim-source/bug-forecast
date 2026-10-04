@@ -1604,8 +1604,17 @@ h3 {
   font-size: 1rem;
 }
 
+.bug-img {
+  display: inline-block;
+  flex: none;
+  object-fit: contain;
+  vertical-align: -0.35em;
+}
+
 .bug-icon {
-  font-size: 1.2rem;
+  width: 34px;
+  height: 34px;
+  margin-right: 2px;
 }
 
 .bug-sub {
@@ -2362,7 +2371,7 @@ h3 {
   font-weight: 750;
 }
 
-.species-chip .sp-emoji { font-size: 1.05rem; }
+.species-chip .sp-emoji { width: 22px; height: 22px; }
 .species-chip .sp-score { color: #17222b; font-weight: 850; }
 
 .species-chip.on {
@@ -2455,9 +2464,8 @@ h3 {
 }
 
 .report-emoji {
-  flex: none;
-  font-size: 1.1rem;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
 }
 
 .report-item.wasp {

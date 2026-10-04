@@ -269,7 +269,7 @@ const TERRAIN_MOSQUITO = {
 
 export const SPECIES = {
   lovebug: {
-    id: 'lovebug', name: '러브버그', emoji: '🐞', kind: 'index',
+    id: 'lovebug', name: '러브버그', emoji: '🪰', img: 'lovebug', kind: 'index',
     // 장소 환경 보정(구 지수 대비 ±점) — 물가·산자락에서 많고 도심에서 적다.
     // 애벌레가 숲 낙엽층에서 자라 트인 풀밭은 발생원이 아니다(grass 0).
     envAdj: { riverside: 8, mountain: 5, grass: 0, urban: -10 },
@@ -287,7 +287,7 @@ export const SPECIES = {
     ],
   },
   mosquito: {
-    id: 'mosquito', name: '모기', emoji: '🦟', kind: 'index',
+    id: 'mosquito', name: '모기', emoji: '🦟', img: 'mosquito', kind: 'index',
     // 풀밭: 고인 물이 없어 물가보다 낮지만, 풀숲에 숨어 있다 달려드는 흰줄숲모기류가 있어 도심과 비슷
     envAdj: { riverside: 12, urban: 3, grass: 3, mountain: -6 },
     // 5월 시작, 한여름, 8월 중순~10월 중순 '가을 모기' 피크(일본뇌염 환자 9~10월 집중), 11월 초까지
@@ -307,7 +307,7 @@ export const SPECIES = {
     alerts: [{ label: '일본뇌염 경보 발령 중', source: '질병관리청', since: '2026-06-17', until: '1130' }],
   },
   tick: {
-    id: 'tick', name: '진드기', emoji: '🕷️', kind: 'grade',
+    id: 'tick', name: '진드기', emoji: '🕷️', img: 'tick', kind: 'grade',
     // 풀밭(목장·초지·꽃밭 들판)은 산과 같은 급 — SFTS·쯔쯔가무시 감염은 풀숲 접촉(벌초·풀밭 앉기)에서 주로 일어난다
     envAdj: { mountain: 15, grass: 15, riverside: 5, urban: -15 },
     // 가을(SFTS·쯔쯔가무시) 10~11월 집중, 봄 SFTS 4~6월
@@ -326,7 +326,7 @@ export const SPECIES = {
     ],
   },
   wasp: {
-    id: 'wasp', name: '말벌', emoji: '🐝', kind: 'grade',
+    id: 'wasp', name: '말벌', emoji: '🐝', img: 'hornet', kind: 'grade',
     // 풀밭: 꽃에 먹이 찾으러 오지만 집(나무·처마·땅속)은 숲보다 적다
     envAdj: { mountain: 12, grass: 6, riverside: 2, urban: -8 },
     // 벌 쏘임 119 이송의 29%가 9월(연중 최다), 8~10월 벌초·산행철

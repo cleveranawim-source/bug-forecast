@@ -1042,69 +1042,70 @@ const ACTION_GUIDES = [
 ];
 
 // 출몰 곤충 도감 — good:true 이로운 곤충(익충) / false 주의해야 할 곤충
+// img = public/bugs/<img>.webp (Higgsfield 3D 클레이 그림, 2026-10-04). 이모지엔 잠자리·진드기·깔따구가 없어 그림으로 바꿨다.
 const BUGS = [
   {
-    icon: '🪲', name: '러브버그', sub: '붉은등우단털파리', good: true, tag: '익충',
+    img: 'lovebug', name: '러브버그', sub: '붉은등우단털파리', good: true, tag: '익충',
     desc: '애벌레는 낙엽과 흙을 분해해 땅을 기름지게 하고, 어른벌레는 꽃가루받이를 도와요. 독이 없고 병도 옮기지 않아요.',
     tip: '사람을 물지 않아요. 2주쯤이면 자연히 사라지니, 징그러워도 죽이지 말고 기다려 주세요. 차나 옷에 붙으면 굳기 전에 물로 씻어내요.',
   },
   {
-    icon: '🦋', name: '동양하루살이', sub: '팅커벨', good: true, tag: '무해',
+    img: 'mayfly', name: '동양하루살이', sub: '팅커벨', good: true, tag: '무해',
     desc: '한강변(송파·강동·암사)에서 5~6월에 떼로 나타나요. 큰 날개에 긴 꼬리가 우아해 "팅커벨"이라 불려요. 입이 퇴화해 물지도 먹지도 못하고 며칠 살다 가요.',
     tip: '사람을 물거나 병을 옮기지 않아요. 깨끗한 2급수에만 살아서, 오히려 한강이 맑아졌다는 신호예요. 밤 불빛에 모이니 창문·조명만 관리하면 돼요.',
   },
   {
-    icon: '🐞', name: '무당벌레', good: true, tag: '익충',
+    img: 'ladybug', name: '무당벌레', good: true, tag: '익충',
     desc: '하루에 진딧물 수십 마리를 잡아먹는 농사 친구예요. 텃밭과 화단을 지켜줘요.',
     tip: '손에 올라와도 해롭지 않아요. 그대로 두면 해충을 알아서 줄여줍니다.',
   },
   {
-    icon: '🐝', name: '꿀벌', good: true, tag: '익충',
+    img: 'honeybee', name: '꿀벌', good: true, tag: '익충',
     desc: '꽃가루를 옮겨 열매와 채소가 맺히게 하는 고마운 곤충이에요. 먼저 건드리지 않으면 쏘지 않아요.',
     tip: '주변을 날아도 손을 휘젓지 말고 가만히 있다가 천천히 자리를 옮겨요. 벌집은 직접 건드리지 말고 어른이나 전문가에게 알려요.',
   },
   {
-    icon: '🦋', name: '나비', good: true, tag: '익충',
+    img: 'butterfly', name: '나비', good: true, tag: '익충',
     desc: '꿀벌과 함께 꽃가루받이를 돕는 곤충이에요. 깨끗한 환경일수록 잘 보여요.',
     tip: '물거나 쏘지 않아요. 손으로 잡으면 날개 가루가 상하니 눈으로만 구경해요.',
   },
   {
-    icon: '🦗', name: '잠자리', good: true, tag: '익충',
+    img: 'dragonfly', name: '잠자리', good: true, tag: '익충',
     desc: '모기와 작은 날벌레를 잡아먹는 하늘의 사냥꾼이에요. 잠자리가 많다는 건 물가가 건강하다는 뜻이기도 해요.',
     tip: '사람을 물지 않아요. 가까이 와도 놀라지 말고 지나가게 두면 돼요.',
   },
   {
-    icon: '🦋', name: '나방', good: true, tag: '무해',
+    img: 'moth', name: '나방', good: true, tag: '무해',
     desc: '대부분의 나방은 물거나 쏘지 않아요. 밤에 꽃가루받이를 돕고 새·박쥐의 먹이가 되는 생태계 일꾼이에요. 빛에 모이는 습성이 있어요.',
     tip: '성충은 손대도 해롭지 않아요. 단, 털 달린 애벌레(쐐기·독나방 애벌레)는 독털이 있어 만지면 따갑고 발진이 나니 눈으로만 보세요.',
   },
   {
-    icon: '🦟', name: '모기', good: false, tag: '해충',
+    img: 'mosquito', name: '모기', good: false, tag: '해충',
     desc: '피를 빨고 일본뇌염 같은 병을 옮길 수 있어요. 고인 물에 알을 낳아 빠르게 늘어나요. 가을 모기는 11월 초까지 활동하고, 일본뇌염 환자는 9~10월에 가장 많아요.',
     tip: '집 주변 고인 물(화분 받침·빈 그릇)을 비워요. 해질녘부터 밤까지는 긴 옷이나 기피제로 막아요.',
   },
   {
-    icon: '🕷️', name: '진드기', good: false, tag: '주의',
+    img: 'tick', name: '진드기', good: false, tag: '주의',
     desc: '풀숲에 숨어 피를 빨고, 중증열성혈소판감소증(SFTS)·쯔쯔가무시증 같은 감염병을 옮겨요. SFTS는 백신·치료제가 없어 더 조심해야 하고, 쯔쯔가무시는 10~11월에 가장 많아요.',
     tip: '풀밭에선 긴 옷·양말을 신고 돗자리를 깔아요. 물렸다면 비비지 말고 핀셋으로 천천히 빼낸 뒤 병원에 가요. 벌초·성묘 뒤 2주 안에 열이 나면 야외활동을 했다고 꼭 알려요.',
   },
   {
-    icon: '🐝', name: '말벌', good: false, tag: '위험',
+    img: 'hornet', name: '말벌', good: false, tag: '위험',
     desc: '벌 쏘임 사고의 30%가 9월에 몰려요. 꿀벌과 달리 여러 번 쏠 수 있고, 벌집을 건드리면 떼로 공격해요. 벌초·성묘·산행 때 특히 조심해야 해요.',
     tip: '검은 옷·향수·단 음료를 피해요. 벌집을 보면 절대 건드리지 말고 119에 신고해요. 쏘이면 카드로 침을 긁어내고 차갑게 식히되, 어지럽거나 숨이 차면 바로 119를 불러요.',
   },
   {
-    icon: '🌰', name: '갈색여치', good: false, tag: '주의',
+    img: 'katydid', name: '갈색여치', good: false, tag: '주의',
     desc: '따뜻한 겨울 뒤 일부 지역에서 갑자기 늘어나는 토종 곤충이에요. 과수·콩 같은 농작물을 갉아먹고, 손으로 잡으면 물 수도 있어요.',
     tip: '맨손으로 잡지 말고 도구를 써요. 농작물 피해가 크면 지자체 농업기술센터에 알려요.',
   },
   {
-    icon: '🪰', name: '등에', good: false, tag: '주의',
+    img: 'horsefly', name: '등에', good: false, tag: '주의',
     desc: '소나 사람의 피를 빠는 곤충이에요. 물리면 따갑고 부어올라요. 한여름 물가나 풀밭에 많아요.',
     tip: '물가·풀밭에선 살갗을 가리고, 물렸다면 깨끗이 씻고 차갑게 식혀요. 가려워도 긁지 말아요.',
   },
   {
-    icon: '🐛', name: '깔따구', good: false, tag: '주의',
+    img: 'midge', name: '깔따구', good: false, tag: '주의',
     desc: '물지는 않지만 떼로 날아다녀 불쾌하고, 사체 가루가 알레르기나 천식을 일으킬 수 있어요. 물이 더러운 곳에 많아요.',
     tip: '저녁 불빛에 모이니 창문과 조명을 관리해요. 떼를 만나면 입과 코를 막고 빠르게 벗어나요.',
   },
@@ -1724,6 +1725,11 @@ const PLACE_ENV = {
 };
 
 // 구 지수(0~100)에 장소 환경 보정을 더해 장소별 위험 산출(risk.js band와 동일 기준)
+// 곤충 그림(public/bugs). 장식이라 스크린리더에선 숨기고, 이름은 옆 글자가 읽는다.
+function BugImg({ name, size = 24, className = 'bug-img' }) {
+  return <img className={className} src={`/bugs/${name}.webp`} alt="" aria-hidden="true" width={size} height={size} />;
+}
+
 function getPlaceRisk(regionScore, env) {
   const score = Math.max(0, Math.min(100, regionScore + (PLACE_ENV[env]?.adj ?? 0)));
   if (score >= 75) return { score, tone: 'danger', label: '매우 높음' };
@@ -2730,7 +2736,7 @@ function App() {
                 className={`species-chip ${on ? 'on' : ''} ${s.risk.tone}`}
                 onClick={() => setSpeciesId(s.id)}
               >
-                <span className="sp-emoji" aria-hidden="true">{sp.emoji}</span>
+                <BugImg name={sp.img} size={22} className="bug-img sp-emoji" />
                 <span className="sp-name">{sp.name}</span>
                 <b className="sp-score">{s.risk.score}</b>
               </button>
@@ -2743,7 +2749,7 @@ function App() {
       <section className="hcard home-hero" aria-label={`오늘 ${species.name} 위험도 ${updatedRisk.score}점`}>
         <div className="home-hero-row">
           <div>
-            <p className="home-species">{species.emoji} {species.name}</p>
+            <p className="home-species"><BugImg name={species.img} size={24} /> {species.name}</p>
             <div className="home-score">
               {updatedRisk.score}
               <small> /100</small>
@@ -2789,7 +2795,7 @@ function App() {
       {/* ①-b 계절 안내 + 종별 안전수칙 */}
       <section className="hcard season-card" aria-label={`${species.name} 계절 안내`}>
         <div className="hsec-head">
-          <h3>{species.emoji} {species.name} — 지금 이 계절</h3>
+          <h3><BugImg name={species.img} size={24} /> {species.name} — 지금 이 계절</h3>
         </div>
         <p className="season-note">{species.seasonNote}</p>
         <ul className="safety-list">
@@ -3363,7 +3369,7 @@ function App() {
                   const isWasp = (item.species ?? 'lovebug') === 'wasp';
                   return (
                     <div className={`report-item ${isWasp ? 'wasp' : ''}`} key={item.id}>
-                      <span className="report-emoji" aria-hidden="true">{sp.emoji}</span>
+                      <BugImg name={sp.img} size={28} className="bug-img report-emoji" />
                       <span>
                         <strong>
                           {sp.name}{isWasp ? '집' : ''} · {item.regionName}{item.dong ? ` ${item.dong}` : ''} · {item.place}
@@ -3572,7 +3578,7 @@ function App() {
                   <div className="bug-card good" key={bug.name}>
                     <div className="bug-head">
                       <strong>
-                        <span className="bug-icon" aria-hidden="true">{bug.icon}</span>{bug.name}
+                        <BugImg name={bug.img} size={34} className="bug-img bug-icon" />{bug.name}
                         {bug.sub && <span className="bug-sub">{bug.sub}</span>}
                       </strong>
                       <b className="bug-tag good">{bug.tag}</b>
@@ -3589,7 +3595,7 @@ function App() {
                   <div className="bug-card bad" key={bug.name}>
                     <div className="bug-head">
                       <strong>
-                        <span className="bug-icon" aria-hidden="true">{bug.icon}</span>{bug.name}
+                        <BugImg name={bug.img} size={34} className="bug-img bug-icon" />{bug.name}
                         {bug.sub && <span className="bug-sub">{bug.sub}</span>}
                       </strong>
                       <b className="bug-tag bad">{bug.tag}</b>
