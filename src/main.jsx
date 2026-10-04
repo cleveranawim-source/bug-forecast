@@ -218,18 +218,30 @@ function hourlyHint(region, baseRisk, riskFn = getRisk) {
   return null;
 }
 
+// 종별 '피크' 설명 — 시즌 계수가 1(최성기)일 때 근거 칩에 쓴다(risk.js seasonWindows의 f:1 구간).
+const PEAK_NOTES = {
+  lovebug: '📅 6월 중순~7월 초 활동 피크',
+  mosquito: '📅 8월 중순~10월 중순 가을 모기 피크',
+  tick: '📅 10월~11월 중순 감염 집중 시기',
+  wasp: '📅 9월 — 벌 쏘임 사고가 가장 많은 달',
+};
+
 // '왜 오늘 이 지수인가' 근거 칩(최대 3개) — 위험모델 factors에서 실제 기여 요인만 뽑는다.
-function whyChips(risk, region) {
+// 종마다 factors 구성과 뜻이 달라(진드기는 비·바람 없음, 말벌의 rain은 '맑을수록 1') 문구도 종별로.
+// 예전엔 러브버그 문구 하나뿐이라 진드기 화면에 '6월 중순~7월 초 활동 피크'가 떴다.
+function whyChips(risk, region, speciesId = 'lovebug') {
   const f = risk.factors;
   const chips = [];
-  if (f.rain >= 0.55) chips.push('🌧️ 비 온 뒤 — 우화 최적 조건');
+  if (speciesId === 'lovebug' && f.rain >= 0.55) chips.push('🌧️ 비 온 뒤 — 우화 최적 조건');
+  if (speciesId === 'mosquito' && f.rain >= 0.55) chips.push('🌧️ 비 온 뒤 — 고인 물에서 번식');
+  if (speciesId === 'wasp' && f.rain >= 0.85) chips.push('☀️ 비 소식 없음 — 활동 활발');
   if (f.humidity >= 0.7) chips.push(`💧 습도 ${region.humidity}% — 활동 최적`);
   else if (f.humidity <= 0.25) chips.push(`🏜️ 습도 ${region.humidity}% — 건조`);
   if (f.wind >= 0.9) chips.push(`🍃 바람 ${region.wind}m/s — 잔잔함`);
   else if (f.wind <= 0.3) chips.push(`💨 바람 ${region.wind}m/s — 비행 어려움`);
   if (f.temp >= 0.9) chips.push(`🌡️ ${region.temp}℃ — 최적 기온`);
-  if (f.season >= 1) chips.push('🐞 6월 중순~7월 초 활동 피크');
-  else if (f.season <= 0.3) chips.push('📉 활동기가 지나는 중');
+  if (f.season >= 1) chips.push(PEAK_NOTES[speciesId] ?? PEAK_NOTES.lovebug);
+  else if (f.season <= 0.3) chips.push('📉 활동이 적은 시기');
   return chips.slice(0, 3);
 }
 
@@ -2256,7 +2268,7 @@ function App() {
   // 홈(원스크롤) 파생값 — 현재 선택 구 기준
   const homeForecast = makeForecast(updatedSelected, totalReports, undefined, riskFn);
   const homeHint = hourlyHint(updatedSelected, updatedRisk, riskFn);
-  const homeChips = whyChips(updatedRisk, selected);
+  const homeChips = whyChips(updatedRisk, selected, activeSpeciesId);
   const homeDongs = [...selectedDongs].sort((a, b) => b.risk.score - a.risk.score).slice(0, 4);
   const homePlaces = favorites.length
     ? favorites.slice(0, 3).map((f) => ({
