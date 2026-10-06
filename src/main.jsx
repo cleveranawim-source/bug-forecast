@@ -14,6 +14,7 @@ import {
   Wind,
 } from 'lucide-react';
 import './styles.css';
+import { GUIDE } from './guideContent.js';
 import seoulGeo from './seoul_municipalities_geo_simple.json';
 import seoulSubGeo from './seoul_submunicipalities_geo_simple.json';
 import aiMap from './seoul_ai_map.json';
@@ -1030,28 +1031,7 @@ const FORECAST_OFFSETS = [
   { day: '모레', temp: 1, humidity: 6, rain: 12, reports: 2, weather: '비 뒤 갬' },
 ];
 
-// 야외활동 장소별 러브버그 위험 — 나들이·런닝·자전거 타는 사람 기준
-const HOTSPOTS = [
-  { icon: '🌊', place: '한강공원·하천변', level: '🔴 많음', why: '물가의 습한 풀숲이라 러브버그가 가장 많이 모여요.', tip: '돗자리는 물에서 떨어진 트인 잔디에. 밝은 색 옷·텐트는 피해요.' },
-  { icon: '⛰️', place: '산 둘레길·숲길', level: '🔴 많음', why: '러브버그 발생원인 산자락이라 떼로 날아다녀요.', tip: '북한산·관악산 자락은 한낮·해질녘을 피하고 버프로 얼굴을 가려요.' },
-  { icon: '🚴', place: '자전거길(한강·안양천)', level: '🟠 주의', why: '하천변 자전거 도로는 물가라 달릴 때 얼굴에 부딪혀요.', tip: '고글·버프 착용, 빨라도 입은 다물기. 옷에 붙으면 물로 씻어내요.' },
-  { icon: '🌳', place: '도심 공원', level: '🟡 보통', why: '물·산과 멀면 비교적 적지만 저녁 조명 주변은 모여요.', tip: '조명 켜진 정자·벤치보다 트인 잔디밭이 나아요.' },
-  { icon: '🏟️', place: '운동장·아파트 단지', level: '🟡 보통', why: '밝은 외벽·운동장 조명에 끌려 몰려요.', tip: '형광·흰색 운동복은 더 꼬여요. 저녁 조명 옆은 피해요.' },
-];
-
-// 활동별 대비 팁
-const ACTIVITY_TIPS = [
-  { icon: '🏃', title: '러닝', detail: '러브버그는 한낮~해질녘에 가장 활발해요. 이른 아침이 벌레가 가장 적어요. 형광·밝은 운동복은 빛에 끌려 더 꼬이니 어두운 색이 나아요. 저녁엔 가로등·조명 주변을 피하세요.' },
-  { icon: '🚴', title: '자전거', detail: '하천변 코스는 떼로 부딪혀요. 고글·버프로 눈·입을 막고, 속도 낼 땐 특히 입을 다물어요. 붙은 건 문지르지 말고 물로 씻어내요.' },
-  { icon: '👨‍👩‍👧', title: '나들이·소풍', detail: '돗자리는 물가·풀숲·조명에서 떨어진 트인 곳에. 밝은 색 텐트·옷은 더 모여요. 음식은 덮어두고, 저녁 랜턴은 자리에서 떨어뜨려 둬요.' },
-];
-
-const ACTION_GUIDES = [
-  { icon: '💡', title: '조명 낮추기', detail: '저녁 시간에는 현관, 베란다, 교실 창가 조명을 필요한 만큼만 켜요.' },
-  { icon: '🪟', title: '방충망 확인', detail: '창문 틈, 방충망 찢어진 곳, 배수구 주변을 먼저 확인해요.' },
-  { icon: '🚿', title: '물청소 우선', detail: '차량이나 창문에 붙었을 때는 오래 문지르기보다 물로 씻어내요.' },
-  { icon: '🏫', title: '학교 주변 점검', detail: '운동장 조명, 급식실 출입구, 쓰레기장 주변을 하교 전후로 살펴요.' },
-];
+// 가이드 탭(출몰장소·활동 팁·물렸을 때·예방·지수 설명)은 벌레별로 src/guideContent.js
 
 // 출몰 곤충 도감 — good:true 이로운 곤충(익충) / false 주의해야 할 곤충
 // img = public/bugs/<img>.webp (Higgsfield 3D 클레이 그림, 2026-10-04). 이모지엔 잠자리·진드기·깔따구가 없어 그림으로 바꿨다.
@@ -1099,12 +1079,12 @@ const BUGS = [
   {
     img: 'tick', name: '진드기', good: false, tag: '주의',
     desc: '풀숲에 숨어 피를 빨고, 중증열성혈소판감소증(SFTS)·쯔쯔가무시증 같은 감염병을 옮겨요. SFTS는 백신·치료제가 없어 더 조심해야 하고, 쯔쯔가무시는 10~11월에 가장 많아요.',
-    tip: '풀밭에선 긴 옷·양말을 신고 돗자리를 깔아요. 물렸다면 비비지 말고 핀셋으로 천천히 빼낸 뒤 병원에 가요. 벌초·성묘 뒤 2주 안에 열이 나면 야외활동을 했다고 꼭 알려요.',
+    tip: '풀밭에선 긴 옷·양말을 신고 돗자리를 깔아요. 물렸다면 무리하게 당기지 말고 병원에서 떼어 내요(어렵다면 핀셋으로 천천히 떼고 소독). 2주 안에 열·구토·설사가 나면 진드기에 물렸다고 꼭 알려요.',
   },
   {
     img: 'hornet', name: '말벌', good: false, tag: '위험',
     desc: '벌 쏘임 사고의 30%가 9월에 몰려요. 꿀벌과 달리 여러 번 쏠 수 있고, 벌집을 건드리면 떼로 공격해요. 벌초·성묘·산행 때 특히 조심해야 해요.',
-    tip: '검은 옷·향수·단 음료를 피해요. 벌집을 보면 절대 건드리지 말고 119에 신고해요. 쏘이면 카드로 침을 긁어내고 차갑게 식히되, 어지럽거나 숨이 차면 바로 119를 불러요.',
+    tip: '검은 옷·향수·단 음료를 피해요. 벌집을 보면 절대 건드리지 말고 119에 신고해요. 쏘이면 깨끗이 씻고 차갑게 식혀요(말벌은 대개 침이 남지 않아요). 어지럽거나 숨이 차면 바로 119를 불러요.',
   },
   {
     img: 'katydid', name: '갈색여치', good: false, tag: '주의',
@@ -1742,6 +1722,27 @@ function BugImg({ name, size = 24, className = 'bug-img' }) {
   return <img className={className} src={`/bugs/${name}.webp`} alt="" aria-hidden="true" width={size} height={size} />;
 }
 
+// 가이드 탭 위쪽 벌레 고르기 — 홈의 벌레 칩과 같은 상태(speciesId)를 쓴다.
+function GuideSpeciesPicker({ activeId, onPick }) {
+  return (
+    <div className="guide-species" role="tablist" aria-label="벌레 고르기">
+      {SPECIES_ORDER.map((id) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={id === activeId}
+          className={`guide-species-btn ${id === activeId ? 'on' : ''}`}
+          onClick={() => onPick(id)}
+        >
+          <BugImg name={SPECIES[id].img} size={22} />
+          {SPECIES[id].name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function getPlaceRisk(regionScore, env) {
   const score = Math.max(0, Math.min(100, regionScore + (PLACE_ENV[env]?.adj ?? 0)));
   if (score >= 75) return { score, tone: 'danger', label: '매우 높음' };
@@ -2269,6 +2270,7 @@ function App() {
   const homeForecast = makeForecast(updatedSelected, totalReports, undefined, riskFn);
   const homeHint = hourlyHint(updatedSelected, updatedRisk, riskFn);
   const homeChips = whyChips(updatedRisk, selected, activeSpeciesId);
+  const guide = GUIDE[activeSpeciesId] ?? GUIDE.lovebug;
   const homeDongs = [...selectedDongs].sort((a, b) => b.risk.score - a.risk.score).slice(0, 4);
   const homePlaces = favorites.length
     ? favorites.slice(0, 3).map((f) => ({
@@ -3456,12 +3458,13 @@ function App() {
               <div className="section-heading compact">
                 <div>
                   <p className="eyebrow">야외 나들이 가이드</p>
-                  <h3>오늘 어디가 위험할까?</h3>
+                  <h3>{species.name}, 어디서 조심할까?</h3>
                 </div>
                 <AlertTriangle size={20} />
               </div>
+              <GuideSpeciesPicker activeId={activeSpeciesId} onPick={setSpeciesId} />
               <div className="outdoor-list">
-                {HOTSPOTS.map((spot) => (
+                {guide.hotspots.map((spot) => (
                   <div className="outdoor-card" key={spot.place}>
                     <div className="outdoor-head">
                       <strong><span className="outdoor-icon" aria-hidden="true">{spot.icon}</span>{spot.place}</strong>
@@ -3475,7 +3478,7 @@ function App() {
 
               <p className="eyebrow activity-eyebrow">활동별 대비 팁</p>
               <div className="activity-list">
-                {ACTIVITY_TIPS.map((act) => (
+                {guide.activities.map((act) => (
                   <div className="activity-card" key={act.title}>
                     <strong><span className="activity-icon" aria-hidden="true">{act.icon}</span>{act.title}</strong>
                     <p>{act.detail}</p>
@@ -3625,12 +3628,27 @@ function App() {
               <div className="section-heading compact">
                 <div>
                   <p className="eyebrow">행동 안내</p>
-                  <h3>오늘의 대응 가이드</h3>
+                  <h3>{species.name} 대처 가이드</h3>
                 </div>
                 <Bug size={20} />
               </div>
+              <GuideSpeciesPicker activeId={activeSpeciesId} onPick={setSpeciesId} />
+
+              <div className="care-card">
+                <h4><BugImg name={species.img} size={26} /> {guide.care.title}</h4>
+                <ol className="care-steps">
+                  {guide.care.steps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
+                {guide.care.danger && <p className="care-danger">🚨 {guide.care.danger}</p>}
+                {guide.care.note && <p className="care-note">💡 {guide.care.note}</p>}
+                {guide.care.source && <p className="care-source">출처: {guide.care.source}</p>}
+              </div>
+
+              <p className="eyebrow activity-eyebrow">미리 막는 법</p>
               <div className="guide-list">
-                {ACTION_GUIDES.map((item) => (
+                {guide.actions.map((item) => (
                   <div className="guide-card" key={item.title}>
                     <strong><span aria-hidden="true">{item.icon}</span> {item.title}</strong>
                     <p>{item.detail}</p>
@@ -3639,21 +3657,14 @@ function App() {
               </div>
 
               <div className="index-explainer">
-                <h4>🐞 출몰지수는 어떻게 나오나요?</h4>
-                <p>
-                  각 동네의 <b>날씨</b>(기온·습도·강수·바람)와 <b>지형</b>(산자락 인접도), 그리고
-                  <b> 시민 제보</b>를 합쳐 0~100으로 계산해요. 러브버그는 25~30℃·고습·약풍·비 온
-                  직후·산 근처에서 많이 나오는 특성을 반영합니다.
-                </p>
+                <h4><BugImg name={species.img} size={22} /> {species.name} 지수는 어떻게 나오나요?</h4>
+                <p>{guide.index.body}</p>
                 <ul className="index-factors">
-                  <li><b>🌡️ 날씨·지형 60%</b> — 기상청 실시간 예보로 ‘오늘 나오기 좋은 조건인지’ 판단</li>
-                  <li><b>📝 시민 제보 40%</b> — 실제 목격담. 쌓일수록 추정이 실측으로 바뀌어 정확해져요</li>
+                  {guide.index.factors.map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
                 </ul>
-                <p className="index-note">
-                  💡 지금은 제보 초기라 날씨·지형 비중이 커요. <b>제보가 모일수록</b> 우리 동네 예보가
-                  더 정확해집니다. 같은 구라도 제보가 많은 동이 더 높게 표시돼요. 그리고 러브버그
-                  활동기(6월 중순~7월 초)에서 멀어질수록 지수는 자연히 낮아져요.
-                </p>
+                <p className="index-note">💡 {guide.index.note} 제보가 모일수록 우리 동네 예보가 더 정확해져요.</p>
               </div>
             </div>
           )}

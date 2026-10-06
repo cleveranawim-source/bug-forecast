@@ -2591,3 +2591,87 @@ h3 {
   font-size: 0.8rem;
   font-weight: 650;
 }
+
+/* 가이드 탭 — 벌레 고르기(홈 벌레 칩과 같은 상태) */
+.guide-species {
+  display: flex;
+  gap: 7px;
+  margin: 2px 0 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.guide-species::-webkit-scrollbar { display: none; }
+
+.guide-species-btn {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px 7px 9px;
+  border: 1px solid #dde7f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #5b6b78;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+.guide-species-btn.on {
+  border-color: #1877C7;
+  background: #eaf3fc;
+  color: #1877C7;
+}
+
+/* 물렸을 때·쏘였을 때 대처 */
+.care-card {
+  padding: 15px 16px;
+  border: 1px solid #f0d5c4;
+  border-radius: 12px;
+  background: #fff8f3;
+}
+.care-card h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  color: #8a3b1c;
+  font-size: 1.02rem;
+}
+.care-steps {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 1.3em;
+  color: #3d2a20;
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.care-danger {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: #fde8e1;
+  color: #b0391b;
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1.5;
+}
+.care-note {
+  margin-top: 10px;
+  color: #6b5a4e;
+  font-size: 0.86rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+.care-source {
+  margin-top: 8px;
+  color: #9a8a7e;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.index-explainer h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
