@@ -2047,6 +2047,39 @@ function migrateReport(report) {
 
 // 관찰러 프로필은 localStorage에 보관 — 익명 uid가 기기에 유지되므로 프로필도 함께
 // 유지해, 앱을 껐다 켤 때마다 재등록하는 마찰을 없앤다(이전엔 sessionStorage라 매번 초기화).
+// 마지막으로 본 지역·최근 위치 인증을 기기에 기억한다. 아이폰은 백그라운드로 간 앱 화면을
+// 메모리 정리로 다시 불러오곤 해서, 예전엔 잠깐 나갔다 오면 늘 은평구로 돌아갔다.
+const REGION_KEY = 'lovebug-region';
+const LOCATION_KEY = 'lovebug-location';
+const LOCATION_TTL_MS = 30 * 60 * 1000; // 위치 인증은 30분만 유지 — 제보 기준이라 너무 오래 두지 않는다
+
+function readSavedRegionId() {
+  try {
+    const raw = window.localStorage.getItem(REGION_KEY);
+    if (!raw) return null;
+    const id = migrateRegionId(raw);
+    return REGIONS.some((r) => r.id === id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+function readSavedLocation() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(LOCATION_KEY) || 'null');
+    if (!saved || Date.now() - saved.at > LOCATION_TTL_MS) return null;
+    const region = REGIONS.find((r) => r.id === saved.regionId);
+    if (!region) return null;
+    return {
+      status: 'verified',
+      message: `${region.name} 현재위치가 인증되어 예보와 제보 기준에 적용됐어요.`,
+      coords: { latitude: saved.lat, longitude: saved.lon },
+    };
+  } catch {
+    return null;
+  }
+}
+
 function readCitizenSession() {
   try {
     const saved = window.localStorage.getItem(CITIZEN_SESSION_KEY);
@@ -2062,12 +2095,12 @@ function readCitizenSession() {
 }
 
 function App() {
-  const [selectedId, setSelectedId] = useState('eunpyeong');
+  const [selectedId, setSelectedId] = useState(() => readSavedRegionId() ?? 'eunpyeong');
   const [query, setQuery] = useState('');
   const [showNearby, setShowNearby] = useState(false);
   const [activeTab, setActiveTab] = useState('main');
   const [forecastDong, setForecastDong] = useState('녹번동');
-  const [forecastRegionId, setForecastRegionId] = useState('eunpyeong');
+  const [forecastRegionId, setForecastRegionId] = useState(() => readSavedRegionId() ?? 'eunpyeong');
   const [citizen, setCitizen] = useState(null);
   const [reports, setReports] = useState([]);
   const [reportSubmitting, setReportSubmitting] = useState(false);
@@ -2095,17 +2128,28 @@ function App() {
   });
   const [changeAlerts, setChangeAlerts] = useState(null);
   const [alertsDismissed, setAlertsDismissed] = useState(false);
-  const [locationAuth, setLocationAuth] = useState({
-    status: 'idle',
-    message: '현재위치를 인증하면 시민관측을 등록할 수 있어요.',
-    coords: null,
-  });
+  const [locationAuth, setLocationAuth] = useState(
+    () =>
+      readSavedLocation() ?? {
+        status: 'idle',
+        message: '현재위치를 인증하면 시민관측을 등록할 수 있어요.',
+        coords: null,
+      }
+  );
   const nearbyRef = useRef(null);
-  const [loginForm, setLoginForm] = useState({
-    nickname: '',
-    regionId: 'eunpyeong',
-    dong: '녹번동',
+  const [loginForm, setLoginForm] = useState(() => {
+    const regionId = readSavedRegionId() ?? 'eunpyeong';
+    return { nickname: '', regionId, dong: DISTRICT_DONGS[regionId]?.[0] ?? '' };
   });
+
+  // 보고 있는 지역을 기억 — 다시 열었을 때 그 지역으로 시작한다.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(REGION_KEY, selectedId);
+    } catch {
+      /* 저장 실패 무시 */
+    }
+  }, [selectedId]);
   const [reportForm, setReportForm] = useState({
     species: 'lovebug',
     dong: '',
@@ -2555,6 +2599,7 @@ function App() {
   function logoutCitizen() {
     signOutUser().catch((error) => console.error('로그아웃 실패:', error));
     window.localStorage.removeItem(CITIZEN_SESSION_KEY);
+    window.localStorage.removeItem(LOCATION_KEY);
     setCitizen(null);
     setLocationAuth({
       status: 'idle',
@@ -2596,6 +2641,20 @@ function App() {
       message: `${matchedRegion.name} 현재위치가 인증되어 예보와 제보 기준에 적용됐어요.`,
       coords,
     });
+    try {
+      // 기기에만 두고, 좌표는 약 110m 단위로 줄여 저장한다(제보 좌표와 같은 정밀도).
+      window.localStorage.setItem(
+        LOCATION_KEY,
+        JSON.stringify({
+          regionId: matchedRegion.id,
+          lat: Math.round(coords.latitude * 1000) / 1000,
+          lon: Math.round(coords.longitude * 1000) / 1000,
+          at: Date.now(),
+        })
+      );
+    } catch {
+      /* 저장 실패 무시 */
+    }
   }
 
   function verifyCurrentLocation() {
