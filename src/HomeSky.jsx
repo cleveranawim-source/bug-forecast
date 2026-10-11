@@ -15,6 +15,14 @@ const reduceMotion = () =>
 // 앞에 붙은 이모지 한 덩어리를 뗀다(카드 안에서는 글자만 쓴다).
 const stripEmoji = (s) => String(s ?? '').replace(/^\p{Extended_Pictographic}\S*\s*/u, '');
 
+// '왜 이 지수일까' 근거 칩 → { 요인, 효과, 방향 }. 효과가 지수를 내리는 쪽이면 down.
+const DOWN_EFFECT = /건조|어려움|적은 시기/;
+function splitWhy(chip) {
+  const text = stripEmoji(chip);
+  const [k, e] = text.split(' — ');
+  return { k: e ? k : '', e: e ?? k, down: DOWN_EFFECT.test(text) };
+}
+
 function useCountUp(target, ms = 900) {
   const [value, setValue] = useState(reduceMotion() ? target : 0);
   const fromRef = useRef(reduceMotion() ? target : 0);
@@ -73,9 +81,9 @@ function Card({ className = '', delay = 0, children, onClick, label }) {
   );
 }
 
-function CardLabel({ icon, children }) {
+function CardLabel({ icon, accent, children }) {
   return (
-    <div className="sky-label">
+    <div className={`sky-label ${accent ? `a-${accent}` : ''}`}>
       {icon}
       <span>{children}</span>
     </div>
@@ -318,7 +326,16 @@ export default function HomeSky({
           <img src={`/bugs/${species.img}.webp`} alt="" width="28" height="28" />
           {level}
         </p>
-        <p className="sky-verdict">{narrative}</p>
+        <p className="sky-verdict">
+          {/* '…영향으로' 와 문장 끝에서 덩어리째 줄이 바뀌게 */}
+          {String(narrative ?? '')
+            .replace(/(영향으로 |\. )/g, '$1\u0000')
+            .split('\u0000')
+            .filter(Boolean)
+            .map((c, i) => (
+              <span key={i}>{c}</span>
+            ))}
+        </p>
         {(alerts.length > 0 || officialIndex) && (
           <div className="sky-pills">
             {alerts.map((a) => (
@@ -335,7 +352,7 @@ export default function HomeSky({
       <div className="sky-cards">
         {hourly.length >= 3 && (
           <Card delay={0}>
-            <CardLabel icon={I.clock}>시간별 {species.name} 지수</CardLabel>
+            <CardLabel icon={I.clock} accent="time">시간별 {species.name} 지수</CardLabel>
             <HourlyChart points={hourly} />
             <p className="sky-best">
               <i />
@@ -345,13 +362,13 @@ export default function HomeSky({
         )}
 
         <Card delay={80} onClick={() => onNav('forecast')} label="3일 예보 자세히 보기">
-          <CardLabel icon={I.cal}>3일 예보</CardLabel>
+          <CardLabel icon={I.cal} accent="time">3일 예보</CardLabel>
           {forecast.map((d, i) => (
             <div className="sky-day" key={String(d.day)}>
               <span className="d">{dayLabel(d.day, i).replace(/\(.\)/, '')}</span>
               <span className="w"><WeatherIcon label={d.weather} /></span>
               <span className="rng"><i style={{ width: `${Math.max(4, d.risk.score)}%` }} /></span>
-              <span className="n">{d.risk.score}</span>
+              <span className={`n t-${d.risk.tone}`}>{d.risk.score}</span>
             </div>
           ))}
         </Card>
@@ -371,7 +388,7 @@ export default function HomeSky({
               >
                 <img src={`/bugs/${s.img}.webp`} alt="" width="44" height="44" />
                 <span className="nm">{s.name}</span>
-                <span className="sc">{s.risk ? s.risk.score : '–'}</span>
+                <span className={`sc ${s.risk ? `t-${s.risk.tone}` : ''}`}>{s.risk ? s.risk.score : '–'}</span>
               </button>
             ))}
           </div>
@@ -382,23 +399,33 @@ export default function HomeSky({
             <CardLabel icon={I.thermo}>왜 이 지수일까</CardLabel>
             <div className="sky-big">{Math.round(region.temp)}°</div>
             <ul className="sky-why">
-              {(whyChips.map((c) => stripEmoji(c)).filter((c) => !/°C/.test(c)).length
-                ? whyChips.map((c) => stripEmoji(c)).filter((c) => !/°C/.test(c))
+              {/* 기온은 위 큰 숫자로 이미 보이므로 뺀다(기호는 ℃) */}
+              {(whyChips.filter((c) => !/℃|°C/.test(c)).length
+                ? whyChips.filter((c) => !/℃|°C/.test(c))
                 : [`습도 ${region.humidity}%`, `바람 ${region.wind}m/s`]
-              ).map((c) => (
-                <li key={c}>{c}</li>
-              ))}
+              ).map((c) => {
+                const w = splitWhy(c);
+                return (
+                  <li key={c}>
+                    {w.k && <span className="k">{w.k}</span>}
+                    <span className={`e ${w.down ? 'dn' : 'up'}`}>
+                      {w.e}
+                      <i aria-hidden="true">{w.down ? '↓' : '↑'}</i>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </Card>
-          <Card delay={80} onClick={() => onNav('guide')} label={`${care.title} 대처 자세히 보기`}>
-            <CardLabel icon={I.alert}>{care.title}</CardLabel>
+          <Card delay={80} className="sky-care" onClick={() => onNav('guide')} label={`${care.title} 대처 자세히 보기`}>
+            <CardLabel icon={I.alert} accent="warn">{care.title}</CardLabel>
             <div className="sky-big sm">{care.short}</div>
             <div className="sky-small">{care.shortNote}</div>
           </Card>
         </div>
 
         <Card delay={0}>
-          <CardLabel icon={I.leaf}>{species.name} · 지금 이 계절</CardLabel>
+          <CardLabel icon={I.leaf} accent="good">{species.name} · 지금 이 계절</CardLabel>
           <p className="sky-lead">{species.seasonNote}</p>
           <ul className="sky-tips">
             {species.tips.map((t) => (
@@ -419,24 +446,23 @@ export default function HomeSky({
             {dongs.map((dg) => (
               <div className="sky-row" key={dg.name}>
                 <span className="t">{dg.name}</span>
-                <span className="n">{dg.risk.score}</span>
+                <span className={`n t-${dg.risk.tone}`}>{dg.risk.score}</span>
               </div>
             ))}
           </Card>
         )}
 
         <Card delay={0} onClick={() => onNav('spots')} label="추천 장소 전체 보기">
-          <CardLabel icon={I.pin}>{favoritesMode ? '내 즐겨찾기' : '오늘 갈 만한 곳'}</CardLabel>
+          <CardLabel icon={I.pin} accent="good">{favoritesMode ? '내 즐겨찾기' : '오늘 갈 만한 곳'}</CardLabel>
           {places.length === 0 && <p className="sky-small">이 지역의 장소 정보가 아직 없어요.</p>}
           {places.map((p) => (
             <div className="sky-row" key={p.key}>
               <span>
                 <span className="t">{p.name}</span>
-                <span className="s">
-                  {p.sub} · {placeAdvice(p.r.tone)}
-                </span>
+                <span className="s">{p.sub}</span>
+                <span className={`a t-${p.r.tone}`}>{placeAdvice(p.r.tone)}</span>
               </span>
-              <span className="n">{p.r.score}</span>
+              <span className={`n t-${p.r.tone}`}>{p.r.score}</span>
             </div>
           ))}
           <span className="sky-more">장소 전체 보기</span>

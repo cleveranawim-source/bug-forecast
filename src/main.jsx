@@ -1766,6 +1766,14 @@ function placeTimeAdvice(tone) {
 }
 
 // 홈 카드용 한 줄 요약 조언(자세한 문장은 placeTimeAdvice — 장소 탭에서 사용)
+// 가이드 문구의 단계 이모지(🔴🟠🟡🟢) → 색 이름
+function levelTone(level = '') {
+  if (level.startsWith('🔴')) return 'danger';
+  if (level.startsWith('🟠')) return 'warning';
+  if (level.startsWith('🟡')) return 'notice';
+  return 'calm';
+}
+
 function shortPlaceAdvice(tone) {
   if (tone === 'danger') return '오늘은 피하는 게 좋아요';
   if (tone === 'warning') return '이른 아침(6~8시) 추천';
@@ -2750,7 +2758,7 @@ function App() {
               {changeAlerts.map((a) => (
                 <li key={a.key}>
                   {a.up ? '🔺' : '🔻'} {a.label} <span>{a.prev} → <b>{a.score}</b></span>{' '}
-                  {a.up ? '상승, 주의하세요' : '완화됐어요'}
+                  <em className={a.up ? 'up' : 'dn'}>{a.up ? '상승, 주의하세요' : '완화됐어요'}</em>
                 </li>
               ))}
             </ul>
@@ -3376,7 +3384,7 @@ function App() {
                     <strong>{formatForecastDay(index)}</strong>
                     <span>{day.temp}°C</span>
                     <small>{day.weather}</small>
-                    <b>{getForecastRiskLabel(day.risk)} · 지수 {day.risk.score}</b>
+                    <b className={`t-${day.risk.tone}`}>{getForecastRiskLabel(day.risk)} · 지수 {day.risk.score}</b>
                   </div>
                 ))}
               </div>
@@ -3398,7 +3406,7 @@ function App() {
                   <div className="outdoor-card" key={spot.place}>
                     <div className="outdoor-head">
                       <strong><span className="outdoor-icon" aria-hidden="true">{spot.icon}</span>{spot.place}</strong>
-                      <b className="outdoor-level">{spot.level}</b>
+                      <b className={`outdoor-level t-${levelTone(spot.level)}`}>{spot.level}</b>
                     </div>
                     <p className="outdoor-why">{spot.why}</p>
                     <p className="outdoor-tip">💡 {spot.tip}</p>

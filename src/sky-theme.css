@@ -4,10 +4,6 @@
 .app-shell.sky {
   --glass-2: rgba(255, 255, 255, 0.08);
   --field: rgba(255, 255, 255, 0.12);
-  --t-calm: #a8f0cf;
-  --t-notice: #ffe58a;
-  --t-warning: #ffb877;
-  --t-danger: #ff8a78;
 }
 
 /* ── 바깥 패널은 걷어내고, 카드가 하늘 위에 바로 뜨게 ── */
@@ -39,6 +35,11 @@
 .app-shell.sky .seoul-map-ai { padding: 10px; overflow: hidden; }
 .app-shell.sky .seoul-map-wrap { gap: 12px; }
 .app-shell.sky .login-form { padding: 16px; }
+
+/* 줄바꿈 — 한국어 낱말 중간에서 끊지 않게(긴 낱말은 넘칠 때만 끊음) */
+.app-shell.sky { word-break: keep-all; overflow-wrap: break-word; }
+.app-shell.sky :is(p, li, small, .outdoor-tip, .bug-tip, .care-danger, .spot-time) { text-wrap: pretty; }
+.app-shell.sky :is(h2, h3, h4) { text-wrap: balance; }
 
 /* 글자 */
 .app-shell.sky :is(h2, h3, h4, strong) { color: var(--ink); }
@@ -149,9 +150,9 @@
 .app-shell.sky .fav-section { border-bottom-color: var(--line); }
 .app-shell.sky .fav-section .eyebrow { color: #ffd66b; }
 
-/* ── 팁 상자(파란 글씨 → 하늘 위 흰 글씨) ── */
+/* ── 팁 상자 — 할 일은 민트(홈 '지금 이 계절'의 ✓ 와 같은 색) ── */
 .app-shell.sky :is(.outdoor-tip, .bug-tip) {
-  color: var(--ink);
+  color: var(--c-good);
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
 }
@@ -175,7 +176,7 @@
 .app-shell.sky .forecast-card { padding: 16px; }
 .app-shell.sky .forecast-card svg { color: var(--ink); }
 .app-shell.sky .forecast-card span { color: var(--ink); font-size: 1.05rem; }
-.app-shell.sky .forecast-card b { color: var(--num); }
+.app-shell.sky .spot-time { color: var(--c-time); }
 
 /* ── 장소 ── */
 .app-shell.sky .spots-loading { color: var(--ink-2); background: var(--glass); border: 0.5px solid var(--line); border-radius: 16px; }
@@ -208,6 +209,24 @@
 .app-shell.sky .care-steps { color: var(--ink); }
 .app-shell.sky .care-danger { color: #fff; background: rgba(255, 255, 255, 0.1); border: 0; border-left: 3px solid var(--t-danger); border-radius: 12px; }
 .app-shell.sky .care-note { color: var(--ink-2); }
+
+/* ── 지난 방문보다 달라졌어요(즐겨찾기 변화) ── */
+.app-shell.sky .change-banner {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  backdrop-filter: blur(28px) saturate(150%);
+  border: 0.5px solid var(--line);
+  border-radius: 18px;
+  box-shadow: none;
+}
+.app-shell.sky .change-banner-body strong { color: var(--ink-3); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; }
+.app-shell.sky .change-banner-body li { color: var(--ink); font-weight: 500; }
+.app-shell.sky .change-banner-body li span { color: var(--ink-2); }
+.app-shell.sky .change-banner-body li b { color: var(--ink); }
+.app-shell.sky .change-banner-body em { font-style: normal; }
+.app-shell.sky .change-banner-body em.up { color: var(--c-warn); }
+.app-shell.sky .change-banner-body em.dn { color: var(--c-good); }
+.app-shell.sky .change-banner-close { color: var(--ink-2); background: rgba(255, 255, 255, 0.12); }
 
 /* ── 바닥글 ── */
 .app-shell.sky .app-footer,

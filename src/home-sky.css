@@ -16,6 +16,14 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --bar: rgba(66, 36, 56, 0.86);
   --num: #ffb877;
+  /* 정보 종류별 색 — 같은 색 하늘 위에서도 읽히게 밝은 쪽으로 */
+  --t-calm: #b5f5d8;
+  --t-notice: #fff0a8;
+  --t-warning: #ffcf9e;
+  --t-danger: #ffb0a2;
+  --c-good: #b5f5d8;
+  --c-time: #c6e6ff;
+  --c-warn: #ffcfae;
   color: var(--ink);
   font-feature-settings: 'tnum';
   transition: --num 1.1s var(--ease);
@@ -187,3 +195,52 @@ button.sky-card:active { background: rgba(255, 255, 255, 0.17); }
   .home-sky *, .home-sky { transition: none !important; animation: none !important; }
   .sky-card { opacity: 1; transform: none; }
 }
+
+/* ── 정보 종류별 색 ──
+   점수 = 그 항목의 단계색 · 언제/좋은 쪽 = 민트 · 올라가는 요인·주의 = 살구 · 이름 = 흰색 · 설명 = 옅게 · 분류 = 더 옅게 */
+:is(.app-shell.sky, .home-sky) .t-calm { color: var(--t-calm); }
+:is(.app-shell.sky, .home-sky) .t-notice { color: var(--t-notice); }
+:is(.app-shell.sky, .home-sky) .t-warning { color: var(--t-warning); }
+:is(.app-shell.sky, .home-sky) .t-danger { color: var(--t-danger); }
+.sky-label.a-time svg { color: var(--c-time); }
+.sky-label.a-good svg { color: var(--c-good); }
+.sky-label.a-warn svg { color: var(--c-warn); }
+.sky-label.a-warn { color: var(--c-warn); }
+
+/* 줄바꿈 — 한국어 낱말 중간에서 끊지 않고, 줄 길이를 고르게 */
+.sky-verdict, .sky-big, .sky-small, .sky-lead, .sky-tips, .sky-event, .sky-why, .sky-row, .sky-cta { word-break: keep-all; overflow-wrap: anywhere; }
+.sky-verdict, .sky-big.sm, .sky-event b { text-wrap: balance; }
+.sky-lead, .sky-tips li, .sky-event span, .sky-small { text-wrap: pretty; }
+.sky-verdict { max-width: 340px; }
+.sky-verdict span { display: inline-block; }
+.sky-grid2 .sky-card { min-width: 0; }
+
+/* 왜 이 지수일까 — 요인(흰색) + 효과(올리면 살구 ↑, 내리면 민트 ↓) */
+.sky-why { gap: 7px; font-size: 13px; }
+.sky-why li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; }
+.sky-why .k { color: var(--ink); font-weight: 500; }
+.sky-why .e { font-weight: 500; }
+.sky-why .e.up { color: var(--c-warn); }
+.sky-why .e.dn { color: var(--c-good); }
+.sky-why .e i { margin-left: 3px; font-style: normal; font-size: 11px; opacity: 0.9; }
+
+/* 물렸을 때 — 따뜻한 카드 */
+.sky-card.sky-care { background: rgba(255, 196, 160, 0.13); border-color: rgba(255, 205, 175, 0.32); }
+.sky-care .sky-big.sm { font-weight: 500; }
+
+/* 지금 이 계절 — 핵심 한 줄(흰색) · 할 일(민트 체크) · 시기 안내(살구 띠) */
+.sky-lead { font-weight: 500; color: var(--ink); }
+.sky-tips { padding-left: 0; list-style: none; gap: 7px; color: var(--ink-2); }
+.sky-tips li { position: relative; padding-left: 22px; }
+.sky-tips li::before {
+  content: '✓'; position: absolute; left: 0; top: 0;
+  width: 16px; text-align: center; font-weight: 700; color: var(--c-good);
+}
+.sky-event { gap: 4px; padding: 11px 13px; background: rgba(255, 200, 165, 0.12); border-left: 3px solid var(--c-warn); }
+.sky-event b { color: var(--c-warn); }
+
+/* 갈 만한 곳 — 이름 / 분류 / 언제 가면 좋은지(단계색) / 점수(단계색) */
+.sky-row .s { margin-top: 2px; }
+.sky-row .a { display: block; margin-top: 3px; font-size: 13px; font-weight: 500; }
+.sky-row .n { font-size: 24px; font-weight: 400; }
+.sky-day .n, .sky-bug .sc { font-weight: 500; }
