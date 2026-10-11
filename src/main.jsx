@@ -19,7 +19,8 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import { GUIDE } from './guideContent.js';
-import HomeSky from './HomeSky.jsx';
+import HomeSky, { SkyBackdrop } from './HomeSky.jsx';
+import './sky-theme.css';
 import seoulGeo from './seoul_municipalities_geo_simple.json';
 import seoulSubGeo from './seoul_submunicipalities_geo_simple.json';
 import aiMap from './seoul_ai_map.json';
@@ -2705,7 +2706,11 @@ function App() {
   }
 
   return (
-    <main className={`app-shell ${activeTab === 'main' ? 'is-home' : ''}`}>
+    <main
+      className={`app-shell sky ${activeTab === 'main' ? 'is-home' : ''}`}
+      data-lv={['calm', 'notice', 'warning', 'danger'].includes(updatedRisk.tone) ? updatedRisk.tone : 'notice'}
+    >
+      <SkyBackdrop tone={updatedRisk.tone} />
       <header className="app-header">
         <button
           className="logo-btn"
@@ -2763,7 +2768,11 @@ function App() {
             <button
               className={active ? 'active' : ''}
               key={group.id}
-              onClick={() => setActiveTab(group.segs[0]?.id ?? group.id)}
+              onClick={() => {
+                setActiveTab(group.segs[0]?.id ?? group.id);
+                // 다른 탭은 맨 위에서 시작, 지금 탭을 한 번 더 누르면 부드럽게 맨 위로(iOS 관례)
+                window.scrollTo(active ? { top: 0, behavior: 'smooth' } : { top: 0 });
+              }}
             >
               <span className="tab-icon" aria-hidden="true">
                 <group.icon size={22} strokeWidth={1.8} />
@@ -2834,7 +2843,10 @@ function App() {
             weatherReady && !usingFallbackWeather ? '기상청 실시간 예보 기준' : '날씨·지형 기반 추정치'
           }`}
           stale={usingFallbackWeather}
-          onNav={setActiveTab}
+          onNav={(tab) => {
+            setActiveTab(tab);
+            window.scrollTo({ top: 0 });
+          }}
         />
       )}
 

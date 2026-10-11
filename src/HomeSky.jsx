@@ -225,6 +225,22 @@ function Dust({ tone }) {
   return <canvas ref={ref} className="sky-dust" aria-hidden="true" />;
 }
 
+// 하늘 배경 — 모든 탭이 같이 쓴다(App에서 한 번만 그림). 위험도가 바뀌면 층을 크로스페이드.
+export function SkyBackdrop({ tone }) {
+  const t = TONES.includes(tone) ? tone : 'notice';
+  return (
+    <>
+      <div className="sky-bg" aria-hidden="true">
+        {TONES.map((k) => (
+          <i key={k} className={`${k} ${k === t ? 'on' : ''}`} />
+        ))}
+      </div>
+      <div className="sky-grain" aria-hidden="true" />
+      <Dust tone={t} />
+    </>
+  );
+}
+
 export default function HomeSky({
   regionName,
   region,
@@ -287,14 +303,6 @@ export default function HomeSky({
 
   return (
     <div className="home-sky" data-lv={tone}>
-      <div className="sky-bg" aria-hidden="true">
-        {TONES.map((t) => (
-          <i key={t} className={`${t} ${t === tone ? 'on' : ''}`} />
-        ))}
-      </div>
-      <div className="sky-grain" aria-hidden="true" />
-      <Dust tone={tone} />
-
       <div className={`sky-compact ${compact ? 'show' : ''}`} aria-hidden={!compact}>
         {regionName}
         <b>·</b>

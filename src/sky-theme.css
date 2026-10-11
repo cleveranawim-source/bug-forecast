@@ -1,0 +1,238 @@
+/* 홈 밖의 탭(지도·제보·가이드·예보·장소)도 홈과 같은 하늘 + 반투명 카드로.
+   구조는 styles.css 그대로 두고 겉모습만 덮는다. 변수(--ink, --glass …)는 home-sky.css 의 .app-shell.sky. */
+
+.app-shell.sky {
+  --glass-2: rgba(255, 255, 255, 0.08);
+  --field: rgba(255, 255, 255, 0.12);
+  --t-calm: #a8f0cf;
+  --t-notice: #ffe58a;
+  --t-warning: #ffb877;
+  --t-danger: #ff8a78;
+}
+
+/* ── 바깥 패널은 걷어내고, 카드가 하늘 위에 바로 뜨게 ── */
+.app-shell.sky .panel {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.app-shell.sky .content-grid,
+.app-shell.sky .single-panel { gap: 12px; }
+
+/* 반투명 카드(공통) */
+.app-shell.sky :is(
+  .seoul-map:not(.seoul-map-ai), .seoul-map-ai,
+  .selected-district, .forecast-picker, .forecast-card,
+  .spot-card, .outdoor-card, .activity-card, .guide-card, .bug-card,
+  .index-explainer, .trust-copy, .location-verification, .google-auth-preview,
+  .login-form, .report-item, .citizen-card, .nearby-panel
+) {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  backdrop-filter: blur(28px) saturate(150%);
+  border: 0.5px solid var(--line);
+  border-radius: 20px;
+  box-shadow: none;
+  color: var(--ink);
+}
+.app-shell.sky .seoul-map-ai { padding: 10px; overflow: hidden; }
+.app-shell.sky .seoul-map-wrap { gap: 12px; }
+.app-shell.sky .login-form { padding: 16px; }
+
+/* 글자 */
+.app-shell.sky :is(h2, h3, h4, strong) { color: var(--ink); }
+.app-shell.sky .section-heading { margin-bottom: 14px; padding: 4px 4px 0; }
+.app-shell.sky .section-heading.compact { flex-direction: row; align-items: flex-end; justify-content: space-between; }
+.app-shell.sky .section-heading.compact > svg { flex: none; color: var(--ink-3); margin: 0 2px 6px 0; }
+.app-shell.sky .section-heading h3 { font-size: 1.32rem; font-weight: 600; letter-spacing: -0.02em; }
+.app-shell.sky .eyebrow {
+  color: var(--ink-3);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+.app-shell.sky :is(
+  .forecast-note, .spots-intro, .bug-intro, .outdoor-why, .bug-desc, .guide-card p,
+  .activity-card p, .index-explainer p, .index-factors li, .trust-copy,
+  .location-verification span, .google-auth-preview small, .citizen-card span, .spot-time
+) { color: var(--ink-2); }
+.app-shell.sky :is(
+  .spot-meta, .bug-sub, .dong-chip small, .selected-district span, .forecast-card small,
+  .report-item small, .metro-note, .dong-fallback-note, .map-legend, .spots-empty, .care-source
+) { color: var(--ink-3); }
+.app-shell.sky :is(.outdoor-head strong, .outdoor-level, .bug-head strong, .spot-title strong) { color: var(--ink); }
+
+/* 굵기 — 홈처럼 본문은 가볍게, 제목만 또렷하게 */
+.app-shell.sky :is(
+  .trust-copy, .location-verification span, .google-auth-preview small, .forecast-note, .forecast-card small,
+  .guide-card p, .outdoor-why, .activity-card p, .bug-intro, .bug-desc, .spots-intro, .spot-meta, .spot-time,
+  .care-steps, .care-note, .selected-district span, .dong-chip small, .map-summary .map-loading, .index-explainer p, .index-factors li
+) { font-weight: 500; }
+.app-shell.sky :is(.outdoor-tip, .bug-tip, .map-summary span, .report-form label, .login-form label) { font-weight: 600; }
+.app-shell.sky .report-item small { color: var(--ink-2); }
+
+/* ── 세그먼트(예보·장소 / 출몰장소·도감·행동요령) ── */
+.app-shell.sky .app-segments {
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 0.5px solid var(--line);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+}
+.app-shell.sky .app-segments button { color: var(--ink-2); font-weight: 600; border-radius: 10px; }
+.app-shell.sky .app-segments button.active {
+  color: #1d2c27;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+}
+
+/* ── 입력칸 ── */
+.app-shell.sky :is(.report-form, .login-form, .forecast-picker, .map-region-select) label,
+.app-shell.sky .map-region-select { color: var(--ink-2); }
+.app-shell.sky :is(.report-form, .login-form, .forecast-picker, .map-region-select) :is(input, select, textarea),
+.app-shell.sky .search-box {
+  color: var(--ink);
+  background-color: var(--field);
+  border: 0.5px solid var(--line);
+  border-radius: 12px;
+}
+.app-shell.sky .search-box input { color: var(--ink); background: transparent; border: 0; }
+.app-shell.sky .search-box svg { color: var(--ink-3); }
+.app-shell.sky :is(input, textarea)::placeholder { color: var(--ink-3); }
+.app-shell.sky select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5l5 5 5-5' fill='none' stroke='white' stroke-opacity='.75' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+}
+.app-shell.sky option { color: #1d2c27; background: #fff; }
+.app-shell.sky :is(input, select, textarea):focus { outline: 2px solid rgba(255, 255, 255, 0.5); outline-offset: 1px; }
+
+/* ── 버튼 ── */
+.app-shell.sky .primary-action { color: #1d2c27; background: #fff; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16); }
+.app-shell.sky .primary-action svg { color: #1d2c27; }
+.app-shell.sky .primary-action:disabled { opacity: 0.55; }
+.app-shell.sky :is(.secondary-action, .text-action, .card-more) {
+  color: var(--ink);
+  background: var(--field);
+  border: 0.5px solid var(--line);
+  border-radius: 14px;
+}
+.app-shell.sky .card-more { font-weight: 600; }
+
+/* ── 단계 배지·점(밝은 하늘색 계열로) ── */
+.app-shell.sky :is(.spot-badge, .selected-risk, .bug-tag) { border: 0.5px solid currentColor; background: rgba(255, 255, 255, 0.1); }
+.app-shell.sky :is(.spot-badge, .selected-risk).calm,
+.app-shell.sky .selected-risk:not(.notice):not(.warning):not(.danger),
+.app-shell.sky .bug-tag.good { color: var(--t-calm); }
+.app-shell.sky :is(.spot-badge, .selected-risk).notice { color: var(--t-notice); }
+.app-shell.sky :is(.spot-badge, .selected-risk).warning { color: var(--t-warning); }
+.app-shell.sky :is(.spot-badge, .selected-risk).danger,
+.app-shell.sky .bug-tag.bad { color: var(--t-danger); }
+/* 범례 점(.legend-dot)은 지도 칠과 같아야 해서 styles.css 색 그대로 */
+
+/* 왼쪽 띠 색 */
+.app-shell.sky :is(.spot-card, .bug-card) { border-left-width: 3px; }
+.app-shell.sky .spot-card.calm, .app-shell.sky .bug-card.good { border-left-color: var(--t-calm); }
+.app-shell.sky .spot-card.notice { border-left-color: var(--t-notice); }
+.app-shell.sky .spot-card.warning, .app-shell.sky .bug-card.bad { border-left-color: var(--t-warning); }
+.app-shell.sky .spot-card.danger { border-left-color: var(--t-danger); }
+.app-shell.sky :is(.spot-card.danger, .bug-card.bad) { background: rgba(255, 150, 120, 0.12); }
+.app-shell.sky .bug-group.good { color: var(--t-calm); }
+.app-shell.sky .bug-group.bad { color: var(--t-warning); }
+.app-shell.sky .spot-fav { color: rgba(255, 255, 255, 0.45); }
+.app-shell.sky .spot-fav.on { color: #ffd66b; }
+.app-shell.sky .fav-section { border-bottom-color: var(--line); }
+.app-shell.sky .fav-section .eyebrow { color: #ffd66b; }
+
+/* ── 팁 상자(파란 글씨 → 하늘 위 흰 글씨) ── */
+.app-shell.sky :is(.outdoor-tip, .bug-tip) {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+.app-shell.sky .bug-card.bad .bug-tip { color: #ffe1d6; background: rgba(255, 140, 110, 0.16); }
+
+/* ── 지도 탭 ── */
+.app-shell.sky .map-view-switch { background: rgba(255, 255, 255, 0.12); border: 0.5px solid var(--line); }
+.app-shell.sky .map-view-switch button { color: var(--ink-2); }
+.app-shell.sky .map-view-switch button.on { color: #1d2c27; background: #fff; }
+.app-shell.sky .map-summary span { color: var(--ink-2); background: var(--field); border: 0.5px solid var(--line); }
+.app-shell.sky .map-summary b { color: var(--num); }
+.app-shell.sky .map-summary .map-loading { color: var(--ink-2); background: var(--field); }
+.app-shell.sky .selected-district { padding: 14px 16px; }
+.app-shell.sky .dong-chip { color: var(--ink); background: var(--glass-2); border: 0.5px solid var(--line); border-radius: 14px; }
+.app-shell.sky .dong-map-block .eyebrow { color: var(--ink-3); padding: 0 4px; }
+.app-shell.sky .seoul-map-scroll { border-radius: 14px; }
+.app-shell.sky .district-group.selected .district-shape,
+.app-shell.sky .district-shape:hover { stroke: #fff; }
+
+/* ── 예보 탭 ── */
+.app-shell.sky .forecast-card { padding: 16px; }
+.app-shell.sky .forecast-card svg { color: var(--ink); }
+.app-shell.sky .forecast-card span { color: var(--ink); font-size: 1.05rem; }
+.app-shell.sky .forecast-card b { color: var(--num); }
+
+/* ── 장소 ── */
+.app-shell.sky .spots-loading { color: var(--ink-2); background: var(--glass); border: 0.5px solid var(--line); border-radius: 16px; }
+
+/* ── 제보 탭 ── */
+.app-shell.sky .location-verification.verified { background: rgba(168, 240, 207, 0.14); border-color: rgba(168, 240, 207, 0.4); }
+.app-shell.sky .location-verification.error { background: rgba(255, 138, 120, 0.14); border-color: rgba(255, 138, 120, 0.4); }
+.app-shell.sky .location-verification.checking { background: var(--glass); }
+.app-shell.sky :is(.google-auth-preview span, .google-mark) { box-shadow: none; }
+.app-shell.sky .report-item svg { color: var(--ink-2); }
+.app-shell.sky .report-item.wasp { border-left: 3px solid var(--t-warning); background: rgba(255, 184, 119, 0.12); }
+.app-shell.sky .report-empty { color: var(--ink-2); background: none; border: 1px dashed rgba(255, 255, 255, 0.28); border-radius: 16px; }
+.app-shell.sky .wasp-warn { color: #ffe3c4; background: rgba(255, 184, 119, 0.16); border: 0.5px solid rgba(255, 184, 119, 0.45); border-radius: 14px; }
+
+/* ── 가이드 탭 ── */
+.app-shell.sky .guide-species-btn { color: var(--ink-2); background: var(--field); border: 0.5px solid var(--line); }
+.app-shell.sky .guide-species-btn.on { color: #1d2c27; background: #fff; border-color: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14); }
+.app-shell.sky .index-explainer h4 { color: var(--ink); }
+.app-shell.sky .index-note { color: var(--ink) !important; background: rgba(255, 255, 255, 0.1); }
+
+/* 물렸을 때 — 따뜻한 반투명 */
+.app-shell.sky .care-card {
+  background: rgba(255, 196, 160, 0.14);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  backdrop-filter: blur(28px) saturate(150%);
+  border: 0.5px solid rgba(255, 200, 170, 0.38);
+  border-radius: 20px;
+}
+.app-shell.sky .care-card h4 { color: #ffd9c4; }
+.app-shell.sky .care-steps { color: var(--ink); }
+.app-shell.sky .care-danger { color: #fff; background: rgba(255, 255, 255, 0.1); border: 0; border-left: 3px solid var(--t-danger); border-radius: 12px; }
+.app-shell.sky .care-note { color: var(--ink-2); }
+
+/* ── 바닥글 ── */
+.app-shell.sky .app-footer,
+.app-shell.sky .app-footer a { color: var(--ink-3); }
+.app-shell.sky .app-footer a:hover { color: var(--ink); }
+
+/* 고무줄 스크롤(당겨서 넘침) 때 보이는 바탕도 하늘 윗색으로 */
+:root:has(.app-shell.sky) { background: #4a2a40; }
+:root:has(.app-shell.sky[data-lv='calm']) { background: #14457a; }
+:root:has(.app-shell.sky[data-lv='notice']) { background: #17404f; }
+:root:has(.app-shell.sky[data-lv='danger']) { background: #2a1224; }
+body:has(.app-shell.sky) { background: transparent; }
+
+/* 홈 밖 탭 — 스크롤하면 글자가 시계·다이내믹 아일랜드 밑으로 비치지 않게 상태바 띠를 깐다
+   (홈은 .sky-compact 가 같은 일을 한다). 웹은 safe-area 가 0이라 높이도 0. */
+.app-shell.sky:not(.is-home)::before {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(26px) saturate(150%);
+  pointer-events: none;
+  transition: background 0.9s var(--ease);
+  -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent);
+  mask-image: linear-gradient(180deg, #000 72%, transparent);
+}
+.cap-native .app-shell.sky:not(.is-home)::before { height: calc(max(env(safe-area-inset-top, 0px), 54px) + 14px); }
