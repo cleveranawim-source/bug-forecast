@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   AlertTriangle,
+  BookOpen,
   Bug,
+  CirclePlus,
+  House,
+  Map as MapIcon,
   CloudRain,
   Droplets,
   MapPin,
@@ -15,6 +19,7 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import { GUIDE } from './guideContent.js';
+import HomeSky from './HomeSky.jsx';
 import seoulGeo from './seoul_municipalities_geo_simple.json';
 import seoulSubGeo from './seoul_submunicipalities_geo_simple.json';
 import aiMap from './seoul_ai_map.json';
@@ -1773,7 +1778,7 @@ const TAB_GROUPS = [
   {
     id: 'home',
     label: '홈',
-    icon: '🏠',
+    icon: House,
     segs: [
       { id: 'main', label: '홈' },
       { id: 'forecast', label: '예보' },
@@ -1783,19 +1788,19 @@ const TAB_GROUPS = [
   {
     id: 'mapTab',
     label: '지도',
-    icon: '🗺️',
+    icon: MapIcon,
     segs: [{ id: 'map', label: '지도' }],
   },
   {
     id: 'report',
     label: '제보',
-    icon: '✍️',
+    icon: CirclePlus,
     segs: [{ id: 'report', label: '제보' }],
   },
   {
     id: 'guideGroup',
     label: '가이드',
-    icon: '📖',
+    icon: BookOpen,
     showSegs: true,
     segs: [
       { id: 'places', label: '출몰장소' },
@@ -2700,7 +2705,7 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${activeTab === 'main' ? 'is-home' : ''}`}>
       <header className="app-header">
         <button
           className="logo-btn"
@@ -2760,7 +2765,9 @@ function App() {
               key={group.id}
               onClick={() => setActiveTab(group.segs[0]?.id ?? group.id)}
             >
-              <span className="tab-icon" aria-hidden="true">{group.icon}</span>
+              <span className="tab-icon" aria-hidden="true">
+                <group.icon size={22} strokeWidth={1.8} />
+              </span>
               {group.label}
             </button>
           );
@@ -2788,195 +2795,47 @@ function App() {
       })()}
 
       {activeTab === 'main' && (
-        <>
-      {usingFallbackWeather && (
-        <p className="stale-notice" role="status">
-          ⚠️ 실시간 예보 연결이 지연되고 있어요 — 임시 추정치를 표시 중입니다.
-        </p>
-      )}
-
-      {/* ⓪ 오늘 조심할 벌레 — 계절에 따라 활동 종이 바뀐다(탭하면 그 종으로 전환) */}
-      {todaySpecies.length > 0 && (
-        <div className="species-bar" role="tablist" aria-label="오늘 조심할 벌레">
-          {todaySpecies.map((s) => {
-            const sp = SPECIES[s.id];
-            const on = s.id === activeSpeciesId;
-            return (
-              <button
-                key={s.id}
-                role="tab"
-                aria-selected={on}
-                className={`species-chip ${on ? 'on' : ''} ${s.risk.tone}`}
-                onClick={() => setSpeciesId(s.id)}
-              >
-                <BugImg name={sp.img} size={22} className="bug-img sp-emoji" />
-                <span className="sp-name">{sp.name}</span>
-                <b className="sp-score">{s.risk.score}</b>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ① 3초 답: 지수 + 한 줄 + 시간 힌트 */}
-      <section className="hcard home-hero" aria-label={`오늘 ${species.name} 위험도 ${updatedRisk.score}점`}>
-        <div className="home-hero-row">
-          <div>
-            <p className="home-species"><BugImg name={species.img} size={24} /> {species.name}</p>
-            <div className="home-score">
-              {updatedRisk.score}
-              <small> /100</small>
-            </div>
-            <b className={`home-badge ${updatedRisk.tone}`}>{getForecastRiskLabel(updatedRisk)}</b>
-          </div>
-          <div className="gauge-ring home-ring" style={{ '--score': `${updatedRisk.score}%` }}>
-            <div className="gauge-core">
-              <Bug size={26} />
-            </div>
-          </div>
-        </div>
-        {activeAlerts.map((a) => (
-          <div className="official-alert" key={a.label}>
-            📢 <b>{a.label}</b> · {a.source}
-          </div>
-        ))}
-        {activeSpeciesId === 'mosquito' && seoulMosquito && (
-          <div className="official-index">
-            <b>서울시 모기예보</b>
-            <span>
-              {['riverside', 'urban', 'mountain'].map((k) => {
-                const v = seoulMosquito[k];
-                if (!v) return null;
-                const name = k === 'riverside' ? '수변부' : k === 'urban' ? '주거지' : '공원';
-                return (
-                  <i key={k}>
-                    {name} {v.step}단계 {v.label}
-                  </i>
-                );
-              })}
-            </span>
-          </div>
-        )}
-        <p className="home-narr">{riskNarrative(updatedRisk, activeSpeciesId)}</p>
-        {homeHint && <div className="time-hint">{homeHint}</div>}
-        <span className="hero-src">
-          {selectedLiveCount > 0 ? `이웃 제보 ${selectedLiveCount}건 반영 · ` : ''}
-          {weatherReady && !usingFallbackWeather ? '기상청 실시간 예보 기준' : '날씨·지형 기반 추정치'}
-        </span>
-      </section>
-
-      {/* ①-b 계절 안내 + 종별 안전수칙 */}
-      <section className="hcard season-card" aria-label={`${species.name} 계절 안내`}>
-        <div className="hsec-head">
-          <h3><BugImg name={species.img} size={24} /> {species.name} — 지금 이 계절</h3>
-        </div>
-        <p className="season-note">{species.seasonNote}</p>
-        <ul className="safety-list">
-          {species.tips.map((t) => (
-            <li key={t}>{t}</li>
-          ))}
-        </ul>
-        {seasonEvent && (
-          <div className="season-event">
-            <strong>{seasonEvent.title}</strong>
-            <p>{seasonEvent.desc}</p>
-          </div>
-        )}
-      </section>
-
-      {/* ② 앞으로 3일 */}
-      <section className="hcard" aria-label="3일 예보">
-        <div className="hsec-head">
-          <h3>앞으로 3일</h3>
-          <button className="link-btn" onClick={() => setActiveTab('forecast')}>시간대별 →</button>
-        </div>
-        <div className="day-strip">
-          {homeForecast.map((d, i) => (
-            <div className="day-cell" key={String(d.day)}>
-              <b>{stripDayLabel(d.day, i)}</b>
-              <span className="day-w">{WEATHER_EMOJI[d.weather] ?? '🌤️'}</span>
-              <span className="day-s">
-                <span className={`legend-dot ${d.risk.tone}`} />
-                {d.risk.score}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ③ 근거 칩 */}
-      {homeChips.length > 0 && (
-        <section className="hcard" aria-label="지수 근거">
-          <div className="hsec-head">
-            <h3>왜 이 지수일까?</h3>
-          </div>
-          <div className="why-chips">
-            {homeChips.map((c) => (
-              <span className="chip" key={c}>{c}</span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ④ 내 주변 동네 — 동 데이터가 있는 지역만 */}
-      {homeDongs.length > 0 && (
-        <section className="hcard" aria-label="동네별 위험도">
-          <div className="hsec-head">
-            <h3>{selected.name} 동네별</h3>
-            <button className="link-btn" onClick={() => setActiveTab('map')}>지도에서 보기 →</button>
-          </div>
-          <div className="home-dongs">
-            {homeDongs.map((dong) => (
-              <div className="home-dong-row" key={dong.name}>
-                <span>{dong.name}</span>
-                <b>
-                  <span className={`legend-dot ${dong.risk.tone}`} />
-                  {dong.risk.score}
-                </b>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ⑤ 추천 장소 (즐겨찾기 우선) */}
-      <section className="hcard" aria-label="추천 장소">
-        <div className="hsec-head">
-          <h3>{favorites.length ? '⭐ 내 즐겨찾기' : '오늘 어디로 나갈까?'}</h3>
-          <button className="link-btn" onClick={() => setActiveTab('spots')}>전체 →</button>
-        </div>
-        <div className="home-places">
-          {homePlaces.length === 0 && (
-            <p className="home-places-empty">이 지역의 장소 정보가 아직 없어요 — 전체에서 다른 구를 볼 수 있어요.</p>
-          )}
-          {homePlaces.map((p) => (
-            <div className="home-place-row" key={p.key}>
-              <div className="hp-name">
-                {p.fav && <span className="hp-star">★</span>}
-                {p.name}
-                <small>{p.sub} — {shortPlaceAdvice(p.r.tone)}</small>
-              </div>
-              <div className={`hp-score ${p.r.tone}`}>
-                {p.r.score}
-                <small>{p.r.label}</small>
-              </div>
-            </div>
-          ))}
-        </div>
-        <button className="card-more" onClick={() => setActiveTab('spots')}>
-          🗂️ 구별 장소 전체 보기 — 다른 동네도 확인해요 →
-        </button>
-      </section>
-
-      {/* ⑥ 제보 루프 */}
-      <section className="hcard report-cta" aria-label="시민 제보 안내">
-        <p>
-          지금 밖에 계세요?
-          <small>30초 제보로 우리 동네 예보가 더 정확해져요</small>
-        </p>
-        <button onClick={() => setActiveTab('report')}>🐞 제보하기</button>
-      </section>
-        </>
+        <HomeSky
+          regionName={selected.name}
+          region={updatedSelected}
+          risk={updatedRisk}
+          levelLabel={getForecastRiskLabel(updatedRisk)}
+          narrative={riskNarrative(updatedRisk, activeSpeciesId)}
+          species={species}
+          speciesId={activeSpeciesId}
+          speciesList={SPECIES_ORDER.map((id) => ({
+            id,
+            name: SPECIES[id].name,
+            img: SPECIES[id].img,
+            risk: todaySpecies.find((s) => s.id === id)?.risk ?? null,
+          }))}
+          onPickSpecies={setSpeciesId}
+          riskFn={riskFn}
+          hint={homeHint}
+          forecast={homeForecast}
+          dayLabel={stripDayLabel}
+          whyChips={homeChips}
+          care={guide.care}
+          seasonEvent={seasonEvent}
+          alerts={activeAlerts}
+          officialIndex={
+            activeSpeciesId === 'mosquito' && seoulMosquito
+              ? `서울시 모기예보 · ${['riverside', 'urban', 'mountain']
+                  .filter((k) => seoulMosquito[k])
+                  .map((k) => `${{ riverside: '수변부', urban: '주거지', mountain: '공원' }[k]} ${seoulMosquito[k].step}단계`)
+                  .join(' · ')}`
+              : null
+          }
+          dongs={homeDongs}
+          places={homePlaces}
+          favoritesMode={favorites.length > 0}
+          placeAdvice={shortPlaceAdvice}
+          sourceLabel={`${selectedLiveCount > 0 ? `이웃 제보 ${selectedLiveCount}건 반영 · ` : ''}${
+            weatherReady && !usingFallbackWeather ? '기상청 실시간 예보 기준' : '날씨·지형 기반 추정치'
+          }`}
+          stale={usingFallbackWeather}
+          onNav={setActiveTab}
+        />
       )}
 
       {activeTab === 'map' && (
