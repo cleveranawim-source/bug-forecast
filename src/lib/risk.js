@@ -322,7 +322,7 @@ export const SPECIES = {
       '긴 소매·긴 바지, 밝은 색 옷 + 기피제',
       '풀밭에 앉거나 눕지 않기, 돗자리 사용',
       '귀가 후 바로 샤워하고 옷 세탁',
-      '2주 안에 발열·두통이 오면 병원에 야외활동을 알리세요',
+      '3주 안에 열·발진이 나거나 검은 딱지가 보이면 병원에 야외활동을 알리세요',
     ],
   },
   wasp: {
@@ -340,7 +340,7 @@ export const SPECIES = {
     tips: [
       '검은 옷·향수·화려한 색 피하기',
       '벌집을 발견하면 건드리지 말고 119',
-      '쏘이면 카드로 침을 긁어내고 냉찜질',
+      '쏘이면 씻고 차갑게 찜질 — 침이 보이면 카드로 밀어 빼기',
       '어지럼·호흡곤란이 오면 즉시 119(과민반응)',
     ],
   },
@@ -360,6 +360,10 @@ function bandFor(speciesId, score) {
   const b = band(score);
   return { ...b, label: SPECIES[speciesId]?.labels?.[b.tone] ?? b.label };
 }
+
+// 등급형(진드기·말벌)의 환경 몫 — 0.75×env 그대로면 env가 0.993만 넘어도 반올림으로 75점(경보)이
+// 되어, 제보 없이 경보가 떴다(은평·가평 습도 80%+). 환경 몫은 74점 아래로 묶는다.
+const gradeEnv = (env) => Math.min(0.75 * env, 0.744);
 
 // 종별 위험 계산. 러브버그는 기존 computeRisk 그대로(라벨만 종 표기).
 export function computeSpeciesRisk(speciesId, region, date = new Date()) {
@@ -397,7 +401,7 @@ export function computeSpeciesRisk(speciesId, region, date = new Date()) {
     };
     const env = 0.55 * factors.terrain + 0.25 * factors.temp + 0.2 * factors.humidity;
     // 등급형은 환경만으로는 '주의'(≤74)까지 — '경보'는 실제 제보(물림·목격)가 쌓일 때만.
-    const score = Math.round(clamp01((0.75 * env + 0.25 * citizen) * season) * 100);
+    const score = Math.round(clamp01((gradeEnv(env) + 0.25 * citizen) * season) * 100);
     return { score, ...bandFor('tick', score), factors };
   }
 
@@ -412,7 +416,7 @@ export function computeSpeciesRisk(speciesId, region, date = new Date()) {
     };
     const env = 0.35 * factors.temp + 0.2 * factors.rain + 0.15 * factors.wind + 0.3 * factors.terrain;
     // 등급형은 환경만으로는 '주의'까지 — '경보'는 말벌집·쏘임 제보가 쌓일 때만.
-    const score = Math.round(clamp01((0.75 * env + 0.25 * citizen) * season) * 100);
+    const score = Math.round(clamp01((gradeEnv(env) + 0.25 * citizen) * season) * 100);
     return { score, ...bandFor('wasp', score), factors };
   }
 
@@ -425,6 +429,17 @@ export function activeSpeciesToday(region, date = new Date(), minSeason = 0.3) {
     .filter((id) => speciesSeason(id, date) >= minSeason)
     .map((id) => ({ id, risk: computeSpeciesRisk(id, region, date) }))
     .sort((a, b) => b.risk.score - a.risk.score);
+}
+
+// 다음 활동 시작 — 오늘부터 하루씩 넘겨 시즌 계수가 minSeason 이상이 되는 첫날(1년 안).
+// 겨울(쉬는 철) 홈의 '봄에 다시 만나요' 달력에 쓴다. 이미 활동 중이면 days 0.
+export function nextSeasonStart(speciesId, date = new Date(), minSeason = 0.3) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  for (let days = 0; days <= 366; days += 1) {
+    if (speciesSeason(speciesId, d) >= minSeason) return { date: new Date(d), days };
+    d.setDate(d.getDate() + 1);
+  }
+  return null;
 }
 
 // 종별 장소 위험(구 지수 + 환경 보정). 기존 getPlaceRisk와 같은 밴드 기준.
@@ -440,7 +455,10 @@ export function speciesAlerts(speciesId, date = new Date()) {
   const p = SPECIES[speciesId];
   if (!p?.alerts) return [];
   const key = (date.getMonth() + 1) * 100 + date.getDate();
+  // 경보는 그해에 발령된 것만 — 연도를 안 보면 이듬해 같은 날짜에 실제 발령과 상관없이 다시 뜬다.
+  // 해마다 질병관리청 발령일을 확인해 alerts를 새로 적을 것.
   return p.alerts.filter((a) => {
+    if (Number(a.since.slice(0, 4)) !== date.getFullYear()) return false;
     const untilKey = Number(a.until);
     const sinceKey = Number(a.since.slice(5, 7)) * 100 + Number(a.since.slice(8, 10));
     return key >= sinceKey && key <= untilKey;

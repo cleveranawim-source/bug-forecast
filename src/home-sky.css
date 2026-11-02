@@ -244,3 +244,10 @@ button.sky-card:active { background: rgba(255, 255, 255, 0.17); }
 .sky-row .a { display: block; margin-top: 3px; font-size: 13px; font-weight: 500; }
 .sky-row .n { font-size: 24px; font-weight: 400; }
 .sky-day .n, .sky-bug .sc { font-weight: 500; }
+
+/* 쉬는 철(12~3월) — 큰 숫자 자리에 '쉬는 철', 봄 달력은 이름·시기 / 남은 날(시간 안내 = 하늘색) */
+.sky-score.rest { font-size: 76px; letter-spacing: -0.04em; line-height: 1.1; margin: 14px 0 10px; }
+.sky-next .who { display: flex; align-items: center; gap: 12px; }
+.sky-next .who img { flex: none; width: 34px; height: 34px; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25)); }
+.sky-next .s { color: var(--c-time); }
+.sky-next .n.d { font-size: 20px; font-weight: 500; color: var(--c-time); font-variant-numeric: tabular-nums; }

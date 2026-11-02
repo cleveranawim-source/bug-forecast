@@ -34,6 +34,7 @@ import {
   speciesSeason,
   speciesPlaceRisk,
   speciesAlerts,
+  nextSeasonStart,
 } from './lib/risk.js';
 import {
   addReport,
@@ -132,6 +133,22 @@ const SEASON_EVENTS = [
       '풀밭·산소 주변은 진드기와 말벌이 가장 많은 시기예요. 긴 옷·기피제를 챙기고, 벌집을 보면 직접 건드리지 말고 119에 신고하세요. 귀가 후엔 바로 샤워하고, 2주 안에 열이 나면 병원에 야외활동 사실을 꼭 알리세요.',
   },
   {
+    id: 'autumn-tick',
+    from: 1016,
+    to: 1130,
+    title: '🍁 단풍 산행·김장철이에요',
+    desc:
+      '쯔쯔가무시증 환자가 한 해 중 가장 많은 때예요. 산길·밭일 중에 풀숲에 앉거나 눕지 말고 긴 옷·기피제를 챙기세요. 다녀와서 1~3주 안에 열·발진이 나거나 몸에 검은 딱지가 보이면 병원에 야외활동을 알리세요.',
+  },
+  {
+    id: 'spring-prep',
+    from: 301,
+    to: 331,
+    title: '🌱 봄 벌레 맞을 준비',
+    desc:
+      '방충망 구멍을 막고 화분 받침·배수구의 고인 물을 비워 두면 5월 모기가 줄어요. 4월부터는 산·풀밭에서 진드기 대비를 다시 시작하세요.',
+  },
+  {
     id: 'lovebug-peak',
     from: 610,
     to: 715,
@@ -140,6 +157,24 @@ const SEASON_EVENTS = [
       '6월 중순~7월 초가 절정이고 7월 중순이면 대부분 사라져요. 사람을 물지 않는 익충이니, 옷에 붙으면 털어내고 물로 씻어내면 돼요.',
   },
 ];
+
+// 쉬는 철(12~3월, 활동 중인 종이 하나도 없을 때) 홈 — 여름 러브버그 화면 대신 보여 준다.
+const REST_SEASON = {
+  verdict: '지금은 벌레가 거의 없는 때예요. 봄까지 마음 편히 다녀오세요.',
+  lead: '벌레 대부분이 알·애벌레로 땅속이나 나무껍질 밑에서 겨울을 나요.',
+  tips: [
+    '집 안 날파리는 화분 흙이 늘 젖어 있을 때 많이 생겨요 — 겉흙이 마르면 물 주기',
+    '음식물 쓰레기는 뚜껑을 덮고 자주 비우면 초파리가 줄어요',
+    '창가에 모인 무당벌레·노린재는 손으로 잡지 말고 종이로 떠서 밖으로',
+    '포근한 날 산에 가도 풀숲에 오래 앉지 않는 습관은 그대로',
+  ],
+};
+
+// 날짜 → '4월 초'·'5월 중순'
+function roughDateLabel(date) {
+  const d = date.getDate();
+  return `${date.getMonth() + 1}월 ${d <= 10 ? '초' : d <= 20 ? '중순' : '말'}`;
+}
 
 function currentSeasonEvent(date = new Date()) {
   const key = (date.getMonth() + 1) * 100 + date.getDate();
@@ -2209,7 +2244,19 @@ function App() {
         .sort((a, b) => b.risk.score - a.risk.score),
     [selected, reports]
   );
-  const activeSpeciesId = speciesId ?? todaySpecies[0]?.id ?? 'lovebug';
+  // 쉬는 철 — 활동 중인 종이 하나도 없으면(12~3월) 홈은 '봄에 다시 만나요' 달력을 보여 주고,
+  // 지도·가이드는 가장 먼저 돌아오는 종(대개 4월 진드기)을 기준으로 한다.
+  const restMode = todaySpecies.length === 0;
+  const upcoming = useMemo(
+    () =>
+      restMode
+        ? SPECIES_ORDER.map((id) => ({ id, next: nextSeasonStart(id) }))
+            .filter((s) => s.next)
+            .sort((a, b) => a.next.days - b.next.days)
+        : [],
+    [restMode]
+  );
+  const activeSpeciesId = speciesId ?? todaySpecies[0]?.id ?? upcoming[0]?.id ?? 'lovebug';
   const species = SPECIES[activeSpeciesId];
   // 시드 제보(REGIONS.reports)는 러브버그 기준선이라 다른 종엔 쓰지 않는다.
   const seedFor = (region) => (activeSpeciesId === 'lovebug' ? region.reports : 0);
@@ -2834,6 +2881,20 @@ function App() {
           whyChips={homeChips}
           care={guide.care}
           seasonEvent={seasonEvent}
+          rest={
+            restMode
+              ? {
+                  ...REST_SEASON,
+                  next: upcoming.map((s) => ({
+                    id: s.id,
+                    name: SPECIES[s.id].name,
+                    img: SPECIES[s.id].img,
+                    when: roughDateLabel(s.next.date),
+                    days: s.next.days,
+                  })),
+                }
+              : null
+          }
           alerts={activeAlerts}
           officialIndex={
             activeSpeciesId === 'mosquito' && seoulMosquito

@@ -23,6 +23,26 @@ function splitWhy(chip) {
   return { k: e ? k : '', e: e ?? k, down: DOWN_EFFECT.test(text) };
 }
 
+// 한 줄 결론 — '…영향으로'와 문장 끝에서 덩어리째 줄이 바뀌게 덩어리마다 inline-block으로 감싼다.
+// 덩어리 사이 띄어쓰기는 span 밖에 둔다(안에 두면 inline-block 끝 공백이 사라져 '영향으로아주'처럼 붙는다).
+function Verdict({ text }) {
+  return (
+    <p className="sky-verdict">
+      {String(text ?? '')
+        .replace(/(영향으로 |\. )/g, '$1\u0000')
+        .split('\u0000')
+        .map((c) => c.trim())
+        .filter(Boolean)
+        .map((c, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && ' '}
+            <span>{c}</span>
+          </React.Fragment>
+        ))}
+    </p>
+  );
+}
+
 function useCountUp(target, ms = 900) {
   const [value, setValue] = useState(reduceMotion() ? target : 0);
   const fromRef = useRef(reduceMotion() ? target : 0);
@@ -266,6 +286,7 @@ export default function HomeSky({
   whyChips,
   care,
   seasonEvent,
+  rest,
   alerts,
   officialIndex,
   dongs,
@@ -309,6 +330,81 @@ export default function HomeSky({
 
   const dongsVary = dongs.length > 1 && new Set(dongs.map((d) => d.risk.score)).size > 1;
 
+  // 쉬는 철(12~3월) — 지수·시간별·3일 예보·제보 대신 '봄에 다시 만나요' 달력과 겨울 팁
+  if (rest) {
+    const first = rest.next[0];
+    return (
+      <div className="home-sky" data-lv="calm">
+        <div className={`sky-compact ${compact ? 'show' : ''}`} aria-hidden={!compact}>
+          {regionName}
+          <b>·</b>
+          쉬는 철
+        </div>
+
+        <section className="sky-hero" ref={heroRef} aria-label={`${regionName}, 지금은 벌레 쉬는 철`}>
+          <p className="sky-place">{regionName}</p>
+          <div className="sky-score rest" aria-hidden="true">쉬는 철</div>
+          {first && (
+            <p className="sky-level">
+              <img src={`/bugs/${first.img}.webp`} alt="" width="28" height="28" />
+              다음은 {first.name} · {first.when}
+            </p>
+          )}
+          <Verdict text={rest.verdict} />
+          <p className="sky-src">계절 활동 달력 기준</p>
+        </section>
+
+        <div className="sky-cards">
+          <Card delay={0}>
+            <CardLabel icon={I.cal} accent="time">봄에 다시 만나요</CardLabel>
+            {rest.next.map((s) => (
+              <div className="sky-row sky-next" key={s.id}>
+                <span className="who">
+                  <img src={`/bugs/${s.img}.webp`} alt="" width="34" height="34" />
+                  <span>
+                    <span className="t">{s.name}</span>
+                    <span className="s">{s.when}부터</span>
+                  </span>
+                </span>
+                <span className="n d">D-{s.days}</span>
+              </div>
+            ))}
+          </Card>
+
+          <Card delay={80}>
+            <CardLabel icon={I.leaf} accent="good">쉬는 철 · 지금 이 계절</CardLabel>
+            <p className="sky-lead">{rest.lead}</p>
+            <ul className="sky-tips">
+              {rest.tips.map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ul>
+            {seasonEvent && (
+              <div className="sky-event">
+                <b>{stripEmoji(seasonEvent.title)}</b>
+                <span>{seasonEvent.desc}</span>
+              </div>
+            )}
+          </Card>
+
+          <Card delay={0} onClick={() => onNav('spots')} label="추천 장소 전체 보기">
+            <CardLabel icon={I.pin} accent="good">{favoritesMode ? '내 즐겨찾기' : '오늘 갈 만한 곳'}</CardLabel>
+            {places.length === 0 && <p className="sky-small">이 지역의 장소 정보가 아직 없어요.</p>}
+            {places.map((p) => (
+              <div className="sky-row" key={p.key}>
+                <span>
+                  <span className="t">{p.name}</span>
+                  <span className="s">{p.sub}</span>
+                </span>
+              </div>
+            ))}
+            <span className="sky-more">장소 전체 보기</span>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="home-sky" data-lv={tone}>
       <div className={`sky-compact ${compact ? 'show' : ''}`} aria-hidden={!compact}>
@@ -326,16 +422,7 @@ export default function HomeSky({
           <img src={`/bugs/${species.img}.webp`} alt="" width="28" height="28" />
           {level}
         </p>
-        <p className="sky-verdict">
-          {/* '…영향으로' 와 문장 끝에서 덩어리째 줄이 바뀌게 */}
-          {String(narrative ?? '')
-            .replace(/(영향으로 |\. )/g, '$1\u0000')
-            .split('\u0000')
-            .filter(Boolean)
-            .map((c, i) => (
-              <span key={i}>{c}</span>
-            ))}
-        </p>
+        <Verdict text={narrative} />
         {(alerts.length > 0 || officialIndex) && (
           <div className="sky-pills">
             {alerts.map((a) => (
